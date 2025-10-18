@@ -1,0 +1,167 @@
+// src/include/common/entities.h
+#ifndef ENTITIES_H
+#define ENTITIES_H
+
+#include <string>
+#include <vector>
+
+/**
+ * @brief 基础实体类，包含所有实体的通用字段
+ */
+struct BaseEntity {
+    int id = 0;                          // 唯一标识
+    std::string created_date;            // 创建时间
+    std::string updated_date;            // 更新时间
+    
+    BaseEntity() = default;
+    virtual ~BaseEntity() = default;
+};
+
+/**
+ * @brief 任务实体 - 核心业务对象
+ * 
+ * 负责人: Kuang Wenqing (任务管理模块)
+ */
+struct Task : BaseEntity {
+    std::string title;                   // 任务标题
+    std::string description;             // 任务描述
+    int priority = 1;                    // 优先级 (0:低, 1:中, 2:高)
+    std::string due_date;                // 截止日期 (ISO格式: YYYY-MM-DD)
+    bool completed = false;              // 完成状态
+    std::string tags;                    // 标签 (逗号分隔)
+    int project_id = 0;                  // 所属项目ID
+    int pomodoro_count = 0;              // 完成的番茄钟数量
+    int estimated_pomodoros = 0;         // 预估番茄钟数
+    std::string completed_date;          // 完成时间
+    std::string reminder_time;           // 提醒时间
+    
+    Task() = default;
+    Task(const std::string& t, const std::string& desc = "", int prio = 1) 
+        : title(t), description(desc), priority(prio) {}
+};
+
+/**
+ * @brief 项目实体 - 任务分组容器
+ * 
+ * 负责人: Zhou Tianjian (项目管理模块)
+ */
+struct Project : BaseEntity {
+    std::string name;                    // 项目名称
+    std::string description;             // 项目描述
+    std::string color_label;             // 颜色标签 (#RRGGBB格式)
+    double progress = 0.0;               // 进度百分比 (0.0 - 1.0)
+    int total_tasks = 0;                 // 总任务数
+    int completed_tasks = 0;             // 已完成任务数
+    std::string target_date;             // 目标完成日期
+    bool archived = false;               // 是否已归档
+    
+    Project() = default;
+    Project(const std::string& n, const std::string& desc = "") 
+        : name(n), description(desc) {}
+};
+
+/**
+ * @brief 挑战实体 - 游戏化功能核心
+ * 
+ * 负责人: Yu Zhixuan (挑战系统)
+ */
+struct Challenge : BaseEntity {
+    std::string title;                   // 挑战标题
+    std::string description;             // 挑战描述
+    std::string type;                    // 类型 ("daily", "weekly", "monthly")
+    std::string criteria;                // 完成条件描述
+    int target_value = 0;                // 目标值
+    int current_value = 0;               // 当前进度值
+    int reward_xp = 0;                   // 奖励经验值
+    bool completed = false;              // 是否完成
+    bool claimed = false;                // 是否已领取奖励
+    std::string expiry_date;             // 过期时间
+    std::string category;                // 分类 ("task", "pomodoro", "project")
+    
+    Challenge() = default;
+    Challenge(const std::string& t, const std::string& desc, const std::string& typ) 
+        : title(t), description(desc), type(typ) {}
+};
+
+/**
+ * @brief 提醒实体 - 时间提醒功能
+ * 
+ * 负责人: Fei Yifan (提醒系统)
+ */
+struct Reminder : BaseEntity {
+    std::string title;                   // 提醒标题
+    std::string message;                 // 提醒消息
+    std::string trigger_time;            // 触发时间
+    std::string recurrence;              // 重复规则 ("once", "daily", "weekly", "monthly")
+    bool triggered = false;              // 是否已触发
+    int task_id = 0;                     // 关联的任务ID
+    bool enabled = true;                 // 是否启用
+    std::string last_triggered;          // 上次触发时间
+    
+    Reminder() = default;
+    Reminder(const std::string& t, const std::string& msg, const std::string& time) 
+        : title(t), message(msg), trigger_time(time) {}
+};
+
+/**
+ * @brief 成就实体 - 用户成就系统
+ * 
+ * 负责人: Fei Yifan (成就系统)
+ */
+struct Achievement : BaseEntity {
+    std::string name;                    // 成就名称
+    std::string description;             // 成就描述
+    std::string icon;                    // 图标标识
+    std::string unlock_condition;        // 解锁条件
+    bool unlocked = false;               // 是否已解锁
+    std::string unlocked_date;           // 解锁时间
+    int reward_xp = 0;                   // 奖励经验值
+    std::string category;                // 分类 ("task", "time", "streak", "special")
+    int progress = 0;                    // 解锁进度 (0-100)
+    int target_value = 0;                // 目标值
+    
+    Achievement() = default;
+    Achievement(const std::string& n, const std::string& desc) 
+        : name(n), description(desc) {}
+};
+
+/**
+ * @brief 用户统计实体 - 数据统计和分析
+ * 
+ * 负责人: Mao Jingqi (统计系统)
+ */
+struct UserStats : BaseEntity {
+    int total_tasks_created = 0;         // 总创建任务数
+    int total_tasks_completed = 0;       // 总完成任务数
+    int total_pomodoros = 0;             // 总番茄钟数
+    int current_streak = 0;              // 当前连续打卡天数
+    int longest_streak = 0;              // 最长连续打卡天数
+    int total_xp = 0;                    // 总经验值
+    int level = 1;                       // 当前等级
+    std::string last_active_date;        // 最后活跃日期
+    double completion_rate = 0.0;        // 平均完成率
+    int achievements_unlocked = 0;       // 已解锁成就数
+    
+    UserStats() = default;
+};
+
+/**
+ * @brief 用户设置实体 - 个性化配置
+ * 
+ * 负责人: Mao Jingqi (UI/设置系统)
+ */
+struct UserSettings : BaseEntity {
+    int pomodoro_duration = 25;          // 番茄钟工作时间 (分钟)
+    int short_break_duration = 5;        // 短休息时间 (分钟)
+    int long_break_duration = 15;        // 长休息时间 (分钟)
+    int pomodoros_until_long_break = 4;  // 长休息间隔
+    bool sound_enabled = true;           // 是否启用声音
+    bool notifications_enabled = true;   // 是否启用通知
+    std::string theme = "default";       // 主题设置
+    std::string language = "zh";         // 语言设置
+    bool auto_start_pomodoros = false;   // 是否自动开始番茄钟
+    
+    UserSettings() = default;
+};
+
+#endif // ENTITIES_H
