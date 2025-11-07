@@ -1,40 +1,96 @@
-// src/database/DatabaseManager.cpp
-#include "include/database/DatabaseManager.h"
-#include "common/entities.h"
+#include "DatabaseManager.h"
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
-DatabaseManager::DatabaseManager(const std::string& dbPath) : dbPath_(dbPath), db_(nullptr) {
-    initialize();
+// 初始化静态成员
+DatabaseManager* DatabaseManager::instance = nullptr;
+
+DatabaseManager::DatabaseManager() 
+    : db(nullptr)
+    , isTransactionActive(false)
+    , totalQueryCount(0)
+    , failedQueryCount(0) {
 }
 
 DatabaseManager::~DatabaseManager() {
-    if (db_) {
-        sqlite3_close(db_);
+    close();
+}
+
+DatabaseManager* DatabaseManager::getInstance() {
+    if (instance == nullptr) {
+        instance = new DatabaseManager();
+    }
+    return instance;
+}
+
+void DatabaseManager::destroyInstance() {
+    if (instance != nullptr) {
+        delete instance;
+        instance = nullptr;
     }
 }
 
-bool DatabaseManager::initialize() {
-    int rc = sqlite3_open(dbPath_.c_str(), &db_);
+bool DatabaseManager::initialize(const std::string& databasePath) {
+    dbPath = databasePath;
+    
+    // 如果数据库已经打开，先关闭
+    if (db != nullptr) {
+        close();
+    }
+    
+    int rc = sqlite3_open(dbPath.c_str(), &db);
     if (rc != SQLITE_OK) {
-        std::cerr << "无法打开数据库: " << sqlite3_errmsg(db_) << std::endl;
+        std::cerr << "无法打开数据库: " << sqlite3_errmsg(db) << std::endl;
         return false;
     }
     
     // 启用外键约束
-    executeQuery("PRAGMA foreign_keys = ON;");
+    execute("PRAGMA foreign_keys = ON;");
+    
+    // 启用WAL模式以提高并发性能
+    execute("PRAGMA journal_mode = WAL;");
     
     // 创建所有表
     return createTables();
 }
 
-bool DatabaseManager::executeQuery(const std::string& query) {
+bool DatabaseManager::close() {
+    if (db != nullptr) {
+        // 如果事务正在进行，回滚
+        if (isTransactionActive) {
+            rollbackTransaction();
+        }
+        
+        int rc = sqlite3_close(db);
+        if (rc != SQLITE_OK) {
+            std::cerr << "关闭数据库时出错: " << sqlite3_errmsg(db) << std::endl;
+            return false;
+        }
+        db = nullptr;
+    }
+    return true;
+}
+
+bool DatabaseManager::isOpen() const {
+    return db != nullptr;
+}
+
+bool DatabaseManager::execute(const std::string& sql) {
+    if (db == nullptr) {
+        std::cerr << "数据库未初始化" << std::endl;
+        return false;
+    }
+    
     char* errorMsg = nullptr;
-    int rc = sqlite3_exec(db_, query.c_str(), nullptr, nullptr, &errorMsg);
+    totalQueryCount++;
+    
+    int rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errorMsg);
     
     if (rc != SQLITE_OK) {
+        failedQueryCount++;
         std::cerr << "SQL错误: " << errorMsg << std::endl;
-        std::cerr << "查询: " << query << std::endl;
+        std::cerr << "查询: " << sql << std::endl;
         sqlite3_free(errorMsg);
         return false;
     }
@@ -42,28 +98,122 @@ bool DatabaseManager::executeQuery(const std::string& query) {
     return true;
 }
 
+int DatabaseManager::getLastInsertId() const {
+    if (db == nullptr) {
+        return -1;
+    }
+    return static_cast<int>(sqlite3_last_insert_rowid(db));
+}
+
+bool DatabaseManager::beginTransaction() {
+    if (isTransactionActive) {
+        return false; // 事务已在进行中
+    }
+    
+    if (execute("BEGIN TRANSACTION;")) {
+        isTransactionActive = true;
+        return true;
+    }
+    return false;
+}
+
+bool DatabaseManager::commitTransaction() {
+    if (!isTransactionActive) {
+        return false; // 没有活动的事务
+    }
+    
+    if (execute("COMMIT;")) {
+        isTransactionActive = false;
+        return true;
+    }
+    return false;
+}
+
+bool DatabaseManager::rollbackTransaction() {
+    if (!isTransactionActive) {
+        return false; // 没有活动的事务
+    }
+    
+    if (execute("ROLLBACK;")) {
+        isTransactionActive = false;
+        return true;
+    }
+    return false;
+}
+
+bool DatabaseManager::isInTransaction() const {
+    return isTransactionActive;
+}
+
+bool DatabaseManager::backupDatabase(const std::string& backupPath) {
+    if (db == nullptr) return false;
+    
+    sqlite3* backupDb;
+    int rc = sqlite3_open(backupPath.c_str(), &backupDb);
+    if (rc != SQLITE_OK) {
+        return false;
+    }
+    
+    sqlite3_backup* backup = sqlite3_backup_init(backupDb, "main", db, "main");
+    if (backup) {
+        sqlite3_backup_step(backup, -1); // 备份所有页面
+        sqlite3_backup_finish(backup);
+    }
+    
+    rc = sqlite3_errcode(backupDb);
+    sqlite3_close(backupDb);
+    
+    return rc == SQLITE_OK;
+}
+
+bool DatabaseManager::restoreDatabase(const std::string& backupPath) {
+    // 先关闭当前数据库连接
+    close();
+    
+    // 备份当前数据库
+    std::string currentBackup = dbPath + ".backup";
+    if (backupDatabase(currentBackup)) {
+        // 复制备份文件到当前数据库位置
+        std::ifstream src(backupPath, std::ios::binary);
+        std::ofstream dst(dbPath, std::ios::binary);
+        dst << src.rdbuf();
+        
+        // 重新初始化数据库
+        return initialize(dbPath);
+    }
+    return false;
+}
+
+bool DatabaseManager::vacuumDatabase() {
+    return execute("VACUUM;");
+}
+
+bool DatabaseManager::checkDatabaseIntegrity() {
+    bool integrityOk = true;
+    
+    sqlite3_exec(db, "PRAGMA integrity_check;", [](void* data, int argc, char** argv, char** colNames) -> int {
+        if (argc > 0 && argv[0]) {
+            std::string result = argv[0];
+            if (result != "ok") {
+                *static_cast<bool*>(data) = false;
+                std::cerr << "数据库完整性检查失败: " << result << std::endl;
+            }
+        }
+        return 0;
+    }, &integrityOk, nullptr);
+    
+    return integrityOk;
+}
+
 bool DatabaseManager::createTables() {
     bool success = true;
     
-    // 创建项目表
     success &= createProjectTable();
-    
-    // 创建任务表（依赖于项目表）
     success &= createTaskTable();
-    
-    // 创建挑战表
     success &= createChallengeTable();
-    
-    // 创建提醒表（依赖于任务表）
     success &= createReminderTable();
-    
-    // 创建成就表
     success &= createAchievementTable();
-    
-    // 创建用户统计表
     success &= createUserStatsTable();
-    
-    // 创建用户设置表
     success &= createUserSettingsTable();
     
     if (success) {
@@ -75,6 +225,94 @@ bool DatabaseManager::createTables() {
     return success;
 }
 
+bool DatabaseManager::dropTables() {
+    std::vector<std::string> tables = {
+        "reminders", "tasks", "projects", "challenges", 
+        "achievements", "user_stats", "user_settings"
+    };
+    
+    bool success = true;
+    for (const auto& table : tables) {
+        std::string sql = "DROP TABLE IF EXISTS " + table + ";";
+        success &= execute(sql);
+    }
+    
+    return success;
+}
+
+bool DatabaseManager::tableExists(const std::string& tableName) {
+    if (db == nullptr) return false;
+    
+    std::string sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='" + tableName + "';";
+    
+    bool exists = false;
+    sqlite3_exec(db, sql.c_str(), [](void* data, int argc, char** argv, char** colNames) -> int {
+        if (argc > 0) {
+            *static_cast<bool*>(data) = true;
+        }
+        return 0;
+    }, &exists, nullptr);
+    
+    return exists;
+}
+
+std::vector<std::string> DatabaseManager::getAllTableNames() {
+    std::vector<std::string> tables;
+    
+    if (db == nullptr) return tables;
+    
+    std::string sql = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';";
+    
+    sqlite3_exec(db, sql.c_str(), [](void* data, int argc, char** argv, char** colNames) -> int {
+        if (argc > 0 && argv[0]) {
+            static_cast<std::vector<std::string>*>(data)->push_back(argv[0]);
+        }
+        return 0;
+    }, &tables, nullptr);
+    
+    return tables;
+}
+
+std::string DatabaseManager::getLastErrorMessage() const {
+    if (db == nullptr) {
+        return "Database not initialized";
+    }
+    return sqlite3_errmsg(db);
+}
+
+int DatabaseManager::getLastErrorCode() const {
+    if (db == nullptr) {
+        return -1;
+    }
+    return sqlite3_errcode(db);
+}
+
+bool DatabaseManager::hasError() const {
+    return getLastErrorCode() != SQLITE_OK;
+}
+
+long DatabaseManager::getTotalQueryCount() const {
+    return totalQueryCount;
+}
+
+long DatabaseManager::getFailedQueryCount() const {
+    return failedQueryCount;
+}
+
+void DatabaseManager::resetStatistics() {
+    totalQueryCount = 0;
+    failedQueryCount = 0;
+}
+
+sqlite3* DatabaseManager::getRawConnection() {
+    return db;
+}
+
+std::string DatabaseManager::getDatabasePath() const {
+    return dbPath;
+}
+
+// 以下是创建各个表的私有方法实现
 bool DatabaseManager::createProjectTable() {
     std::string sql = R"(
         CREATE TABLE IF NOT EXISTS projects (
@@ -92,7 +330,7 @@ bool DatabaseManager::createProjectTable() {
         );
     )";
     
-    if (!executeQuery(sql)) {
+    if (!execute(sql)) {
         std::cerr << "创建项目表失败!" << std::endl;
         return false;
     }
@@ -122,15 +360,15 @@ bool DatabaseManager::createTaskTable() {
         );
     )";
     
-    if (!executeQuery(sql)) {
+    if (!execute(sql)) {
         std::cerr << "创建任务表失败!" << std::endl;
         return false;
     }
     
     // 创建索引以提高查询性能
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id);");
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed);");
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);");
+    execute("CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id);");
+    execute("CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed);");
+    execute("CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);");
     
     std::cout << "任务表创建/检查成功!" << std::endl;
     return true;
@@ -156,15 +394,15 @@ bool DatabaseManager::createChallengeTable() {
         );
     )";
     
-    if (!executeQuery(sql)) {
+    if (!execute(sql)) {
         std::cerr << "创建挑战表失败!" << std::endl;
         return false;
     }
     
     // 创建索引
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_challenges_type ON challenges(type);");
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_challenges_completed ON challenges(completed);");
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_challenges_expiry ON challenges(expiry_date);");
+    execute("CREATE INDEX IF NOT EXISTS idx_challenges_type ON challenges(type);");
+    execute("CREATE INDEX IF NOT EXISTS idx_challenges_completed ON challenges(completed);");
+    execute("CREATE INDEX IF NOT EXISTS idx_challenges_expiry ON challenges(expiry_date);");
     
     std::cout << "挑战表创建/检查成功!" << std::endl;
     return true;
@@ -188,15 +426,15 @@ bool DatabaseManager::createReminderTable() {
         );
     )";
     
-    if (!executeQuery(sql)) {
+    if (!execute(sql)) {
         std::cerr << "创建提醒表失败!" << std::endl;
         return false;
     }
     
     // 创建索引
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_reminders_trigger_time ON reminders(trigger_time);");
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_reminders_enabled ON reminders(enabled);");
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_reminders_task_id ON reminders(task_id);");
+    execute("CREATE INDEX IF NOT EXISTS idx_reminders_trigger_time ON reminders(trigger_time);");
+    execute("CREATE INDEX IF NOT EXISTS idx_reminders_enabled ON reminders(enabled);");
+    execute("CREATE INDEX IF NOT EXISTS idx_reminders_task_id ON reminders(task_id);");
     
     std::cout << "提醒表创建/检查成功!" << std::endl;
     return true;
@@ -221,14 +459,14 @@ bool DatabaseManager::createAchievementTable() {
         );
     )";
     
-    if (!executeQuery(sql)) {
+    if (!execute(sql)) {
         std::cerr << "创建成就表失败!" << std::endl;
         return false;
     }
     
     // 创建索引
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_achievements_category ON achievements(category);");
-    executeQuery("CREATE INDEX IF NOT EXISTS idx_achievements_unlocked ON achievements(unlocked);");
+    execute("CREATE INDEX IF NOT EXISTS idx_achievements_category ON achievements(category);");
+    execute("CREATE INDEX IF NOT EXISTS idx_achievements_unlocked ON achievements(unlocked);");
     
     std::cout << "成就表创建/检查成功!" << std::endl;
     return true;
@@ -253,7 +491,7 @@ bool DatabaseManager::createUserStatsTable() {
         );
     )";
     
-    if (!executeQuery(sql)) {
+    if (!execute(sql)) {
         std::cerr << "创建用户统计表失败!" << std::endl;
         return false;
     }
@@ -264,7 +502,7 @@ bool DatabaseManager::createUserStatsTable() {
                                         current_streak, longest_streak, total_xp, level, completion_rate, achievements_unlocked)
         VALUES (1, 0, 0, 0, 0, 0, 0, 1, 0.0, 0);
     )";
-    executeQuery(initSql);
+    execute(initSql);
     
     std::cout << "用户统计表创建/检查成功!" << std::endl;
     return true;
@@ -288,7 +526,7 @@ bool DatabaseManager::createUserSettingsTable() {
         );
     )";
     
-    if (!executeQuery(sql)) {
+    if (!execute(sql)) {
         std::cerr << "创建用户设置表失败!" << std::endl;
         return false;
     }
@@ -300,24 +538,8 @@ bool DatabaseManager::createUserSettingsTable() {
                                            theme, language, auto_start_pomodoros)
         VALUES (1, 25, 5, 15, 4, 1, 1, 'default', 'zh', 0);
     )";
-    executeQuery(initSql);
+    execute(initSql);
     
     std::cout << "用户设置表创建/检查成功!" << std::endl;
     return true;
-}
-
-sqlite3* DatabaseManager::getDatabase() const {
-    return db_;
-}
-
-bool DatabaseManager::beginTransaction() {
-    return executeQuery("BEGIN TRANSACTION;");
-}
-
-bool DatabaseManager::commitTransaction() {
-    return executeQuery("COMMIT;");
-}
-
-bool DatabaseManager::rollbackTransaction() {
-    return executeQuery("ROLLBACK;");
 }
