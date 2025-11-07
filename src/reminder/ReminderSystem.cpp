@@ -4,7 +4,9 @@
 #include <iomanip>
 #include <ctime>
 
-ReminderSystem::ReminderSystem(DatabaseManager* dm) : dbManager(dm) {
+// 构造函数接收 ReminderDAO
+ReminderSystem::ReminderSystem(std::unique_ptr<ReminderDAO> dao) 
+    : reminderDAO(std::move(dao)) {
     initialize();
 }
 
@@ -17,47 +19,38 @@ void ReminderSystem::initialize() {
 }
 
 bool ReminderSystem::loadRemindersFromDB() {
-    // 这里需要队友在DatabaseManager中实现getAllReminders方法
-    // 暂时用模拟数据
-    std::cout << "从数据库加载提醒数据...\n";
+    if (!reminderDAO) {
+        std::cerr << "ReminderDAO 未初始化\n";
+        return false;
+    }
     
-    // 添加一些示例提醒用于测试
-    reminders.emplace_back(1, "晨会提醒", "记得参加每日晨会", 
-                          "2024-01-15 09:00:00", "daily");
-    reminders.emplace_back(2, "任务截止", "项目报告截止日期", 
-                          "2024-01-20 18:00:00", "once", 101);
-    
-    // TODO: 当队友实现getAllReminders后，替换为：
-    // reminders = dbManager->getAllReminders();
-    
-    return true;
-}
-
-bool ReminderSystem::saveReminderToDB(const Reminder& reminder) {
-    // 这里需要队友在DatabaseManager中实现addReminder方法
-    std::cout << "保存提醒到数据库: " << reminder.title << "\n";
-    // TODO: 调用队友的数据库方法
-    // return dbManager->addReminder(reminder);
-    return true;
-}
-
-bool ReminderSystem::updateReminderInDB(const Reminder& reminder) {
-    // 这里需要队友在DatabaseManager中实现updateReminder方法
-    std::cout << "更新提醒到数据库: " << reminder.title << "\n";
-    // TODO: 调用队友的数据库方法
-    // return dbManager->updateReminder(reminder);
-    return true;
+    try {
+        // 使用DAO获取所有提醒
+        reminders = reminderDAO->getAllReminders();
+        std::cout << "从数据库加载了 " << reminders.size() << " 个提醒\n";
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "加载提醒失败: " << e.what() << "\n";
+        return false;
+    }
 }
 
 void ReminderSystem::checkDueReminders() {
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    if (!reminderDAO) {
+        std::cerr << "ReminderDAO 未初始化\n";
+        return;
+    }
+    
+    auto currentTime = std::chrono::system_clock::now();
     
     std::cout << "=== 检查到期提醒 (" << getCurrentTime() << ") ===\n";
-    int triggeredCount = 0;
     
-    for (auto& reminder : reminders) {
-        if (reminder.enabled && !reminder.triggered && isReminderDue(reminder)) {
+    try {
+        // 使用DAO获取到期的提醒
+        auto dueReminders = reminderDAO->getDueReminders(currentTime);
+        int triggeredCount = 0;
+        
+        for (auto& reminder : dueReminders) {
             // 触发提醒
             std::cout << "🔔 提醒: " << reminder.title << "\n";
             std::cout << "   " << reminder.message << "\n";
@@ -66,25 +59,27 @@ void ReminderSystem::checkDueReminders() {
             }
             std::cout << "   触发时间: " << reminder.trigger_time << "\n\n";
             
-            reminder.triggered = true;
-            reminder.last_triggered = getCurrentTime();
-            
-            // 更新数据库
-            updateReminderInDB(reminder);
-            triggeredCount++;
-            
-            // 处理重复提醒
-            if (reminder.recurrence != "once") {
-                processRecurringReminder(reminder);
+            // 标记为已触发
+            if (reminderDAO->markReminderAsTriggered(reminder.id)) {
+                triggeredCount++;
+                
+                // 处理重复提醒
+                if (reminder.recurrence != "once") {
+                    processRecurringReminder(reminder);
+                }
             }
         }
+        
+        if (triggeredCount == 0) {
+            std::cout << "暂无到期提醒\n";
+        } else {
+            std::cout << "共触发 " << triggeredCount << " 个提醒\n";
+        }
+        
+    } catch (const std::exception& e) {
+        std::cerr << "检查到期提醒失败: " << e.what() << "\n";
     }
     
-    if (triggeredCount == 0) {
-        std::cout << "暂无到期提醒\n";
-    } else {
-        std::cout << "共触发 " << triggeredCount << " 个提醒\n";
-    }
     std::cout << "===================\n\n";
 }
 
@@ -97,8 +92,6 @@ bool ReminderSystem::isReminderDue(const Reminder& reminder) const {
     auto now = std::chrono::system_clock::now();
     std::time_t now_time = std::chrono::system_clock::to_time_t(now);
     
-    // 简单判断：如果提醒时间小于等于当前时间，则认为到期
-    // 实际项目中可能需要更复杂的时间比较逻辑
     return reminderTime <= now_time;
 }
 
@@ -106,14 +99,21 @@ void ReminderSystem::processRecurringReminder(const Reminder& reminder) {
     std::string nextTime = calculateNextTriggerTime(reminder);
     
     // 创建新的提醒记录
-    int newId = reminders.empty() ? 1 : reminders.back().id + 1;
-    Reminder newReminder(newId, reminder.title, reminder.message, 
-                        nextTime, reminder.recurrence, reminder.task_id);
+    Reminder newReminder;
+    newReminder.title = reminder.title;
+    newReminder.message = reminder.message;
+    newReminder.trigger_time = nextTime;
+    newReminder.recurrence = reminder.recurrence;
+    newReminder.task_id = reminder.task_id;
+    newReminder.enabled = true;
+    newReminder.triggered = false;
     
-    reminders.push_back(newReminder);
-    saveReminderToDB(newReminder);
-    
-    std::cout << "已创建下一次提醒，时间: " << nextTime << "\n";
+    // 使用DAO保存新提醒
+    if (reminderDAO->insertReminder(newReminder)) {
+        std::cout << "已创建下一次提醒，时间: " << nextTime << "\n";
+    } else {
+        std::cerr << "创建重复提醒失败\n";
+    }
 }
 
 std::string ReminderSystem::calculateNextTriggerTime(const Reminder& reminder) const {
@@ -137,13 +137,27 @@ std::string ReminderSystem::calculateNextTriggerTime(const Reminder& reminder) c
 void ReminderSystem::addReminder(const std::string& title, const std::string& message,
                                 const std::string& time, const std::string& rule,
                                 int task_id) {
-    int newId = reminders.empty() ? 1 : reminders.back().id + 1;
-    Reminder newReminder(newId, title, message, time, rule, task_id);
+    if (!reminderDAO) {
+        std::cerr << "ReminderDAO 未初始化\n";
+        return;
+    }
     
-    reminders.push_back(newReminder);
-    saveReminderToDB(newReminder);
+    Reminder newReminder;
+    newReminder.title = title;
+    newReminder.message = message;
+    newReminder.trigger_time = time;
+    newReminder.recurrence = rule;
+    newReminder.task_id = task_id;
+    newReminder.enabled = true;
+    newReminder.triggered = false;
     
-    std::cout << "✅ 已添加提醒: " << title << " (时间: " << time << ", 重复: " << rule << ")\n";
+    if (reminderDAO->insertReminder(newReminder)) {
+        std::cout << "✅ 已添加提醒: " << title << " (时间: " << time << ", 重复: " << rule << ")\n";
+        // 重新加载提醒列表以包含新提醒
+        loadRemindersFromDB();
+    } else {
+        std::cerr << "添加提醒失败\n";
+    }
 }
 
 void ReminderSystem::displayAllReminders() {
@@ -169,23 +183,69 @@ void ReminderSystem::displayAllReminders() {
 }
 
 void ReminderSystem::displayPendingReminders() {
-    std::cout << "=== 待处理提醒 ===\n";
-    int count = 0;
-    for (const auto& reminder : reminders) {
-        if (reminder.enabled && !reminder.triggered) {
+    if (!reminderDAO) {
+        std::cerr << "ReminderDAO 未初始化\n";
+        return;
+    }
+    
+    try {
+        auto activeReminders = reminderDAO->getActiveReminders();
+        std::cout << "=== 待处理提醒 ===\n";
+        
+        for (const auto& reminder : activeReminders) {
             std::cout << "⏰ ID: " << reminder.id;
             std::cout << " | 时间: " << reminder.trigger_time;
             std::cout << " | 重复: " << reminder.recurrence << "\n";
             std::cout << "   标题: " << reminder.title << "\n";
-            count++;
         }
+        
+        if (activeReminders.empty()) {
+            std::cout << "暂无待处理提醒\n";
+        } else {
+            std::cout << "共 " << activeReminders.size() << " 个待处理提醒\n";
+        }
+        std::cout << "==================\n\n";
+        
+    } catch (const std::exception& e) {
+        std::cerr << "获取待处理提醒失败: " << e.what() << "\n";
     }
-    if (count == 0) {
-        std::cout << "暂无待处理提醒\n";
-    } else {
-        std::cout << "共 " << count << " 个待处理提醒\n";
+}
+
+// 新增方法实现
+std::vector<Reminder> ReminderSystem::getActiveReminders() {
+    if (reminderDAO) {
+        return reminderDAO->getActiveReminders();
     }
-    std::cout << "==================\n\n";
+    return {};
+}
+
+std::vector<Reminder> ReminderSystem::getRemindersByTask(int taskId) {
+    if (reminderDAO) {
+        return reminderDAO->getRemindersByTask(taskId);
+    }
+    return {};
+}
+
+std::vector<Reminder> ReminderSystem::getDueRemindersForToday() {
+    if (reminderDAO) {
+        return reminderDAO->getRemindersDueToday();
+    }
+    return {};
+}
+
+bool ReminderSystem::markReminderAsTriggered(int reminderId) {
+    if (reminderDAO) {
+        return reminderDAO->markReminderAsTriggered(reminderId);
+    }
+    return false;
+}
+
+bool ReminderSystem::rescheduleReminder(int reminderId, const std::string& newTime) {
+    if (reminderDAO) {
+        auto timePoint = stringToTimePoint(newTime);
+        return reminderDAO->rescheduleReminder(reminderId, timePoint);
+    }
+    return false;
 }
 
 // 时间工具方法
@@ -210,4 +270,12 @@ std::string ReminderSystem::formatTime(std::time_t time) const {
     std::stringstream ss;
     ss << std::put_time(timeinfo, "%Y-%m-%d %H:%M:%S");
     return ss.str();
+}
+
+std::chrono::system_clock::time_point ReminderSystem::stringToTimePoint(const std::string& timeStr) const {
+    std::time_t time = parseTimeString(timeStr);
+    if (time == -1) {
+        return std::chrono::system_clock::time_point{};
+    }
+    return std::chrono::system_clock::from_time_t(time);
 }
