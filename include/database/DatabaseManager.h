@@ -9,15 +9,14 @@
 
 
 // 前置声明
-class Task;
+class HeatmapVisualizer;
+class Pomodoro
+class Achievement;
+class gamification;
 class Project;
 class Reminder;
-class Challenge;
-class Achievement;
-class ChallengeTemplate;
-class UserAchievement;
-class ExperienceRecord;
-class UserRanking;
+class statistics;
+class Task;
 //后续补充
 
 class DatabaseManager {
@@ -96,4 +95,5 @@ public:
 
 
 #endif // DATABASE_MANAGER_H
+
 
