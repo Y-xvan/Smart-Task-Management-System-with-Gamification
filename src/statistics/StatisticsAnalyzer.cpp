@@ -1,4 +1,4 @@
-#include "../../include/statistics/StatisticsAnalyzer.h"
+#include "statistics/StatisticsAnalyzer.h"
 #include <iostream>
 #include <sstream>
 #include <ctime>

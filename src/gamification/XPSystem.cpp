@@ -1,4 +1,4 @@
-#include "../../include/gamification/XPSystem.h"
+#include "gamification/XPSystem.h"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
