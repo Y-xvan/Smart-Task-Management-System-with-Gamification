@@ -1,7 +1,7 @@
 #ifndef STATISTICS_DAO_H
 #define STATISTICS_DAO_H
 
-#include "Entities.h"
+#include "commom/Entities.h"
 #include <vector>
 #include <map>
 
@@ -85,3 +85,4 @@ public:
 };
 
 #endif // STATISTICS_DAO_H
+
