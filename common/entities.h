@@ -1,4 +1,4 @@
-// src/include/common/entities.h
+/common/entities.h
 #ifndef ENTITIES_H
 #define ENTITIES_H
 
