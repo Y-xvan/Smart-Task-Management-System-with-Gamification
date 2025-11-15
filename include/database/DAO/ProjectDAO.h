@@ -1,7 +1,7 @@
 #ifndef PROJECT_DAO_H
 #define PROJECT_DAO_H
 
-#include "Entities.h"
+#include "common/Entities.h"
 #include <vector>
 #include <optional>
 #include <chrono>
@@ -63,3 +63,4 @@ public:
 };
 
 #endif // PROJECT_DAO_H
+
