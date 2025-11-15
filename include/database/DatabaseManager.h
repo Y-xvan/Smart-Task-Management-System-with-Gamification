@@ -14,9 +14,10 @@
 class HeatmapVisualizer;
 class Pomodoro;
 class Achievement;
+class Gamification;  // ✅ 修正：类名首字母大写
 class Project;
 class Reminder;
-class Statistics;    
+class Statistics;    // ✅ 修正：类名首字母大写
 class Task;
 
 // SQLite 删除器
@@ -110,7 +111,7 @@ public:
     // 性能统计
     long getTotalQueryCount() const;
     long getFailedQueryCount() const;
-    double getSuccessRate() const;  
+    double getSuccessRate() const;  // ✅ 新增：成功率
     void resetStatistics();
     
     // 获取原始连接（谨慎使用）
