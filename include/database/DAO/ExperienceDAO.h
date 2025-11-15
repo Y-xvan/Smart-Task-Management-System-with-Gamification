@@ -1,7 +1,7 @@
 #ifndef EXPERIENCE_DAO_H
 #define EXPERIENCE_DAO_H
 
-#include "Entities.h"
+#include "common/Entities.h"
 #include <vector>
 #include <map>
 
@@ -45,3 +45,4 @@ public:
 };
 
 #endif // EXPERIENCE_DAO_H
+
