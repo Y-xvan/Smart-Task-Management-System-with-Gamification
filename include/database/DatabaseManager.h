@@ -12,12 +12,12 @@
 
 // 前置声明
 class HeatmapVisualizer;
-class Pomodoro;  // ✅ 修复：添加分号
+class Pomodoro;
 class Achievement;
-class gamification;
+class Gamification;  // ✅ 修正：类名首字母大写
 class Project;
 class Reminder;
-class statistics;
+class Statistics;    // ✅ 修正：类名首字母大写
 class Task;
 
 // SQLite 删除器
@@ -30,18 +30,19 @@ struct SQLiteDeleter {
 class DatabaseManager {
 private:
     static std::unique_ptr<DatabaseManager> instance;
-    static std::mutex instanceMutex;  // 线程安全
+    static std::mutex instanceMutex;
     
-    std::unique_ptr<sqlite3, SQLiteDeleter> db;  // 智能指针管理
+    std::unique_ptr<sqlite3, SQLiteDeleter> db;
     std::string dbPath;
     std::atomic<bool> isTransactionActive{false};
     std::atomic<long> totalQueryCount{0};
     std::atomic<long> failedQueryCount{0};
     
-    mutable std::mutex dbMutex;  // 数据库操作互斥锁
+    mutable std::mutex dbMutex;
     
     // 预编译语句缓存
     std::unordered_map<std::string, sqlite3_stmt*> preparedStatements;
+    std::mutex stmtMutex;  // ✅ 新增：预编译语句的互斥锁
     
     // 私有方法
     bool createProjectTable();
@@ -51,16 +52,20 @@ private:
     bool createAchievementTable();
     bool createUserStatsTable();
     bool createUserSettingsTable();
+    bool createPomodoroTable();  // ✅ 新增：Pomodoro表
     
+    // 清理预编译语句
+    void cleanupPreparedStatements();
+
+public:
     DatabaseManager();
+    ~DatabaseManager();
+    
     DatabaseManager(const DatabaseManager&) = delete;
     DatabaseManager& operator=(const DatabaseManager&) = delete;
 
-public:
-    ~DatabaseManager();
-    
     // 单例访问
-    static DatabaseManager* getInstance();
+    static DatabaseManager& getInstance();
     static void destroyInstance();
     
     // 数据库连接管理
@@ -72,13 +77,13 @@ public:
     int getLastInsertId() const;
     bool execute(const std::string& sql);
     
-    // ✅ 新增：参数化查询
+    // 参数化查询
     bool executeParameterized(const std::string& sql, 
                              const std::vector<std::string>& params);
     
-    // ✅ 新增：查询结果处理
+    // 查询结果处理
     bool executeQuery(const std::string& sql, 
-                     std::function<void(sqlite3_stmt*)> callback);
+                     std::function<bool(sqlite3_stmt*)> rowCallback);  // ✅ 修改：返回bool表示是否继续
     
     // 事务管理
     bool beginTransaction();
@@ -106,12 +111,17 @@ public:
     // 性能统计
     long getTotalQueryCount() const;
     long getFailedQueryCount() const;
+    double getSuccessRate() const;  // ✅ 新增：成功率
     void resetStatistics();
     
     // 获取原始连接（谨慎使用）
     sqlite3* getRawConnection();
     
     std::string getDatabasePath() const;
+    
+    // ✅ 新增：预编译语句管理
+    sqlite3_stmt* getPreparedStatement(const std::string& sql);
+    void releasePreparedStatement(const std::string& key);
 };
 
 #endif // DATABASE_MANAGER_H
