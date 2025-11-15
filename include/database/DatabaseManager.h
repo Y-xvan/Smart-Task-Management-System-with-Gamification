@@ -11,13 +11,13 @@
 #include <sqlite3.h>
 
 // 前置声明
-class HeatmapVisualizer;
-class Pomodoro;
+class Experience;
 class Achievement;
-class Gamification;  // ✅ 修正：类名首字母大写
+class HearmapVosualizer;  
 class Project;
+class Seetings;
 class Reminder;
-class Statistics;    // ✅ 修正：类名首字母大写
+class Statistics;   
 class Task;
 
 // SQLite 删除器
@@ -52,7 +52,7 @@ private:
     bool createAchievementTable();
     bool createUserStatsTable();
     bool createUserSettingsTable();
-    bool createPomodoroTable();  // ✅ 新增：Pomodoro表
+    bool createHeatmapVisualizerTable();  // 
     
     // 清理预编译语句
     void cleanupPreparedStatements();
@@ -125,3 +125,4 @@ public:
 };
 
 #endif // DATABASE_MANAGER_H
+
