@@ -4,38 +4,34 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <sqlite3.h>
+
 using namespace std;
 
 class HeatmapVisualizer {
 private:
-    // 模拟数据：日期 -> 任务完成数
-    map<string, int> taskData;
+    sqlite3* db;
+    string dbPath;
     
-    // 根据任务数量获取颜色字符
+    bool openDatabase();
+    void closeDatabase();
+    
     string getColorBlock(int count);
-    
-    // 获取某个日期的任务数
     int getTaskCount(string date);
-    
-    // 生成日期列表
+    map<string, int> getTaskDataFromDB(int days);
     vector<string> generateDateRange(int days);
     
 public:
     HeatmapVisualizer();
+    HeatmapVisualizer(string dbPath);
+    ~HeatmapVisualizer();
     
-    // 添加任务数据（模拟）
-    void addTaskData(string date, int count);
+    bool initialize();
     
-    // 生成90天热力图
     string generateHeatmap(int days = 90);
-    
-    // 生成月视图
     string generateMonthView(string month);
-    
-    // 生成周视图
     string generateWeekView(string startDate);
     
-    // 获取统计信息
     int getTotalTasks();
     string getMostActiveDay();
     int getCurrentStreak();
