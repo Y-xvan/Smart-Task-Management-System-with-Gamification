@@ -1,63 +1,68 @@
-#include "project/ProjectManager.h"
+#include "../include/ProjectManager.h"
 #include <iostream>
 
 ProjectManager::ProjectManager() {
-    nextId = 1;
+    dao = new ProjectDAO();
+}
+
+ProjectManager::ProjectManager(string dbPath) {
+    dao = new ProjectDAO(dbPath);
 }
 
 ProjectManager::~ProjectManager() {
-    for (auto& pair : projects) {
-        delete pair.second;
-    }
-    projects.clear();
+    delete dao;
+}
+
+bool ProjectManager::initialize() {
+    return dao->createTable();
 }
 
 int ProjectManager::createProject(const Project& project) {
-    Project* newProject = new Project(project);
-    newProject->setId(nextId);
-    projects[nextId] = newProject;
+    int id = dao->insert(project);
     
-    cout << "✅ 项目创建成功！ID: " << nextId << endl;
-    return nextId++;
+    if (id > 0) {
+        cout << "Project created successfully! ID: " << id << endl;
+    } else {
+        cout << "Project creation failed!" << endl;
+    }
+    
+    return id;
 }
 
 Project* ProjectManager::getProject(int id) {
-    if (projects.find(id) != projects.end()) {
-        return projects[id];
-    }
-    return nullptr;
+    return dao->selectById(id);
 }
 
 vector<Project*> ProjectManager::getAllProjects() {
-    vector<Project*> result;
-    for (auto& pair : projects) {
-        if (!pair.second->isArchived()) {
-            result.push_back(pair.second);
-        }
-    }
-    return result;
+    return dao->selectAll();
+}
+
+vector<Project*> ProjectManager::getAllProjectsIncludingArchived() {
+    return dao->selectAllIncludingArchived();
 }
 
 bool ProjectManager::updateProject(const Project& project) {
-    int id = project.getId();
-    if (projects.find(id) != projects.end()) {
-        *projects[id] = project;
-        cout << "✅ 项目更新成功！" << endl;
-        return true;
+    bool success = dao->update(project);
+    
+    if (success) {
+        cout << "Project updated successfully!" << endl;
+    } else {
+        cout << "Project update failed!" << endl;
     }
-    cout << "❌ 项目不存在！" << endl;
-    return false;
+    
+    return success;
 }
 
 bool ProjectManager::deleteProject(int id) {
-    if (projects.find(id) != projects.end()) {
-        delete projects[id];
-        projects.erase(id);
-        cout << "✅ 项目删除成功！" << endl;
-        return true;
+    bool success = dao->deleteById(id);
+    
+    if (success) {
+        cout << "Project archived successfully!" << endl;
+    } else {
+        cout << "Project archive failed!" << endl;
     }
-    cout << "❌ 项目不存在！" << endl;
-    return false;
+    
+    return success;
 }
 
 double ProjectManager::calculateProgress(int project_id) {
@@ -72,10 +77,16 @@ void ProjectManager::updateProjectProgress(int project_id) {
     Project* p = getProject(project_id);
     if (p != nullptr) {
         p->updateProgress();
-        cout << "📊 项目进度已更新：" << (p->getProgress() * 100) << "%" << endl;
+        dao->update(*p);
+        cout << "Project progress updated: " << (p->getProgress() * 100) << "%" << endl;
+        delete p;
     }
 }
 
 int ProjectManager::getProjectCount() {
-    return projects.size();
+    return dao->count();
+}
+
+int ProjectManager::getActiveProjectCount() {
+    return dao->countActive();
 }
