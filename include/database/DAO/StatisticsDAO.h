@@ -1,9 +1,10 @@
 #ifndef STATISTICS_DAO_H
 #define STATISTICS_DAO_H
 
-#include "entities.h"
+#include "common/entities.h"
 #include <vector>
 #include <map>
+#include <chrono>
 
 struct CompletionTrend {
     std::vector<std::pair<std::chrono::system_clock::time_point, int>> dailyCompletions;
