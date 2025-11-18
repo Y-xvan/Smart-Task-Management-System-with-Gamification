@@ -215,6 +215,44 @@ void AchievementManager::updateAchievementProgress(const std::string& achievemen
     }
 }
 
+void AchievementManager::updateAchievementProgress(int userId, int achievementId, int newValue) {
+    if (!achievementDAO) {
+        std::cerr << "AchievementDAO 未初始化\n";
+        return;
+    }
+
+    try {
+        // 新版进度表：直接写入当前值，由 DAO 负责维护 target_value / updated_date 等信息
+        achievementDAO->updateAchievementProgress(userId, achievementId, newValue);
+    } catch (const std::exception& e) {
+        std::cerr << "更新成就进度失败 (userId=" << userId
+                  << ", achievementId=" << achievementId
+                  << "): " << e.what() << "\n";
+    }
+}
+
+void AchievementManager::incrementAchievementProgress(int userId, int achievementId, int increment) {
+    if (!achievementDAO) {
+        std::cerr << "AchievementDAO 未初始化\n";
+        return;
+    }
+
+    if (increment <= 0) {
+        // 非正增量不做任何事，避免产生奇怪的进度变化
+        return;
+    }
+
+    try {
+        // 新版进度表：由 DAO 在数据库中完成原子自增
+        achievementDAO->incrementAchievementProgress(userId, achievementId, increment);
+    } catch (const std::exception& e) {
+        std::cerr << "增加成就进度失败 (userId=" << userId
+                  << ", achievementId=" << achievementId
+                  << ", increment=" << increment
+                  << "): " << e.what() << "\n";
+    }
+}
+
 void AchievementManager::displayUnlockedAchievements() {
     if (!achievementDAO) {
         std::cerr << "AchievementDAO 未初始化\n";
@@ -342,4 +380,23 @@ void AchievementManager::setCurrentUserId(int userId) {
 
 int AchievementManager::getCurrentUserId() const {
     return currentUserId;
+}
+
+std::vector<AchievementProgress> AchievementManager::getAchievementProgress(int userId) const {
+    std::vector<AchievementProgress> result;
+
+    if (!achievementDAO) {
+        std::cerr << "AchievementDAO 未初始化\n";
+        return result;
+    }
+
+    try {
+        // 让 DAO 直接返回已经计算好的进度信息
+        // DAO 内部根据 achievement_progress 表计算 current / target / 百分比
+        result = achievementDAO->getAchievementProgress(userId);
+    } catch (const std::exception& e) {
+        std::cerr << "获取成就进度失败 (userId=" << userId << "): " << e.what() << "\n";
+    }
+
+    return result;
 }
