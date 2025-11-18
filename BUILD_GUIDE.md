@@ -153,7 +153,7 @@ Smart-Task-Management-System-with-Gamification/
 
 #### 1. 数据库层 (成员D)
 - ✅ DatabaseManager - 数据库连接和管理
-- ✅ 表结构定义（tasks, projects, challenges等）
+- ✅ 表结构定义（tasks, projects等）
 - ⏳ DAO具体实现类 (部分待完成)
 
 #### 2. 项目管理 (成员B)
@@ -199,10 +199,6 @@ Smart-Task-Management-System-with-Gamification/
 #### 2. 成就系统 (成员A/D)
 - ❌ Achievement管理器
 - ❌ 成就解锁逻辑
-
-#### 3. 挑战系统 (成员D)
-- ❌ Challenge管理器
-- ❌ 挑战进度跟踪
 
 ---
 
@@ -315,7 +311,6 @@ chmod +x bin/task_manager
 
 2. **完善游戏化功能**
    - 成就系统界面
-   - 挑战系统界面
 
 3. **数据持久化**
    - 替换ProjectManager的内存存储为数据库

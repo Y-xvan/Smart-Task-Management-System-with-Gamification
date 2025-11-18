@@ -35,7 +35,6 @@
 - `include/database/DAO/TaskDAO.h`
 - `include/database/DAO/ProjectDAO.h`
 - `include/database/DAO/ReminderDAO.h`
-- `include/database/DAO/ChallengeDAO.h`
 - `include/database/DAO/AchievementDAO.h`
 - `include/database/DAO/ExperienceDAO.h`
 - `include/database/DAO/StatisticsDAO.h`
@@ -108,7 +107,6 @@ struct StreakRecord;          // 连续记录 (未定义)
 include/database/DAO/TaskDAO.h
 include/database/DAO/ProjectDAO.h
 include/database/DAO/ReminderDAO.h
-include/database/DAO/ChallengeDAO.h
 include/database/DAO/AchievementDAO.h
 include/database/DAO/ExperienceDAO.h
 include/database/DAO/StatisticsDAO.h
