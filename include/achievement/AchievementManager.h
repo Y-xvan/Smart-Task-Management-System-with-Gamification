@@ -3,22 +3,19 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
-#include "AchievementDAO.h"  // 包含队友的DAO头文件
-
-// 使用 Entities.h 中的 AchievementDefinition 和 UserAchievement
-// 不再需要本地定义的 Achievement 结构体
+#include "AchievementDAO.h"
+#include "Entities.h"  // 包含实体定义
 
 class AchievementManager {
 private:
-    std::unique_ptr<AchievementDAO> achievementDAO;  // 使用智能指针管理DAO
-    int currentUserId;  // 当前用户ID
+    std::unique_ptr<AchievementDAO> achievementDAO;
+    int currentUserId;
     
     // 成就定义缓存
     std::vector<AchievementDefinition> achievementDefinitions;
     std::unordered_map<std::string, UserAchievement> userAchievements;
     
 public:
-    // 构造函数接收 AchievementDAO 和用户ID
     AchievementManager(std::unique_ptr<AchievementDAO> dao, int userId = 1);
     
     // 核心方法
@@ -42,13 +39,12 @@ public:
     void printAchievement(const AchievementDefinition& definition, 
                          const UserAchievement* userAchievement = nullptr) const;
     
-    // 获取统计信息（需要队友实现其他DAO）
+    // 统计信息获取方法（需要队友实现其他DAO）
     int getCompletedTaskCount() const;
     int getCurrentStreak() const;
     int getDailyTaskCount(const std::string& date) const;
     int getTotalPomodoroCount() const;
     
-    // 设置用户ID
     void setCurrentUserId(int userId);
     int getCurrentUserId() const;
 };
