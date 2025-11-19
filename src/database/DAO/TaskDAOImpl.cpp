@@ -1,4 +1,4 @@
-#include "database/DA0/TaskDAO.h"
+#include "database/DAO/TaskDAO.h"
 #include <sqlite3.h>
 #include <iostream>
 #include <sstream>
@@ -67,7 +67,7 @@ int TaskDAOImpl::insertTask(const Task& task) {
     sqlite3* db = getDatabaseConnection();
     if (!db) return -1;
     
-    const char* sql = "INSERT INTO tasks (name, description, completed) VALUES (?, ?, ?)";
+    const char* sql = "INSERT INTO tasks (name, description, completed, project_id) VALUES (?, ?, ?, ?)";
     sqlite3_stmt* stmt;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -79,6 +79,7 @@ int TaskDAOImpl::insertTask(const Task& task) {
     sqlite3_bind_text(stmt, 1, task.getName().c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, task.getDescription().c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt, 3, task.isCompleted() ? 1 : 0);
+    sqlite3_bind_int(stmt, 4, task.getProjectId());  // ⭐ 修复：使用 getProjectId()
     
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         std::cerr << "插入任务失败: " << sqlite3_errmsg(db) << std::endl;
@@ -98,7 +99,8 @@ std::optional<Task> TaskDAOImpl::getTaskById(int id) {
     sqlite3* db = getDatabaseConnection();
     if (!db) return std::nullopt;
     
-    const char* sql = "SELECT name, description, completed FROM tasks WHERE id = ?";
+    // ⭐ 修复：查询时也要获取 ID 和 project_id
+    const char* sql = "SELECT id, name, description, completed, project_id FROM tasks WHERE id = ?";
     sqlite3_stmt* stmt;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -110,14 +112,14 @@ std::optional<Task> TaskDAOImpl::getTaskById(int id) {
     std::optional<Task> result = std::nullopt;
     
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        bool completed = sqlite3_column_int(stmt, 2) == 1;
+        int taskId = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        bool completed = sqlite3_column_int(stmt, 3) == 1;
+        int projectId = sqlite3_column_int(stmt, 4);
         
-        Task task(name, description);
-        if (completed) {
-            task.markCompleted();
-        }
+        // ⭐ 修复：使用包含 ID 的构造函数
+        Task task(taskId, name, description, completed, projectId);
         result = task;
     }
     
@@ -131,7 +133,8 @@ std::vector<Task> TaskDAOImpl::getAllTasks() {
     sqlite3* db = getDatabaseConnection();
     if (!db) return tasks;
     
-    const char* sql = "SELECT name, description, completed FROM tasks ORDER BY created_at DESC";
+    // ⭐ 修复：查询时包含 ID 和 project_id
+    const char* sql = "SELECT id, name, description, completed, project_id FROM tasks ORDER BY created_at DESC";
     sqlite3_stmt* stmt;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -140,14 +143,14 @@ std::vector<Task> TaskDAOImpl::getAllTasks() {
     }
     
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        bool completed = sqlite3_column_int(stmt, 2) == 1;
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        bool completed = sqlite3_column_int(stmt, 3) == 1;
+        int projectId = sqlite3_column_int(stmt, 4);
         
-        Task task(name, description);
-        if (completed) {
-            task.markCompleted();
-        }
+        // ⭐ 修复：使用包含 ID 的构造函数
+        Task task(id, name, description, completed, projectId);
         tasks.push_back(task);
     }
     
@@ -157,9 +160,34 @@ std::vector<Task> TaskDAOImpl::getAllTasks() {
 }
 
 bool TaskDAOImpl::updateTask(const Task& task) {
-    // 注意：需要扩展Task类以包含ID才能实现此方法
-    std::cerr << "updateTask 需要Task类包含ID字段" << std::endl;
-    return false;
+    sqlite3* db = getDatabaseConnection();
+    if (!db) return false;
+    
+    // ⭐ 修复：现在可以实现更新功能了
+    const char* sql = "UPDATE tasks SET name = ?, description = ?, completed = ?, project_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+    sqlite3_stmt* stmt;
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "准备更新语句失败: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_close(db);
+        return false;
+    }
+    
+    sqlite3_bind_text(stmt, 1, task.getName().c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, task.getDescription().c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 3, task.isCompleted() ? 1 : 0);
+    sqlite3_bind_int(stmt, 4, task.getProjectId());
+    sqlite3_bind_int(stmt, 5, task.getId());
+    
+    bool success = sqlite3_step(stmt) == SQLITE_DONE;
+    
+    if (!success) {
+        std::cerr << "更新任务失败: " << sqlite3_errmsg(db) << std::endl;
+    }
+    
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return success;
 }
 
 bool TaskDAOImpl::deleteTask(int id) {
@@ -190,7 +218,8 @@ std::vector<Task> TaskDAOImpl::getTasksByStatus(bool completed) {
     sqlite3* db = getDatabaseConnection();
     if (!db) return tasks;
     
-    const char* sql = "SELECT name, description, completed FROM tasks WHERE completed = ? ORDER BY created_at DESC";
+    // ⭐ 修复：包含 ID 和 project_id
+    const char* sql = "SELECT id, name, description, completed, project_id FROM tasks WHERE completed = ? ORDER BY created_at DESC";
     sqlite3_stmt* stmt;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -201,14 +230,13 @@ std::vector<Task> TaskDAOImpl::getTasksByStatus(bool completed) {
     sqlite3_bind_int(stmt, 1, completed ? 1 : 0);
     
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        bool taskCompleted = sqlite3_column_int(stmt, 2) == 1;
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        bool taskCompleted = sqlite3_column_int(stmt, 3) == 1;
+        int projectId = sqlite3_column_int(stmt, 4);
         
-        Task task(name, description);
-        if (taskCompleted) {
-            task.markCompleted();
-        }
+        Task task(id, name, description, taskCompleted, projectId);
         tasks.push_back(task);
     }
     
@@ -222,7 +250,8 @@ std::vector<Task> TaskDAOImpl::getTasksByProject(int projectId) {
     sqlite3* db = getDatabaseConnection();
     if (!db) return tasks;
     
-    const char* sql = "SELECT name, description, completed FROM tasks WHERE project_id = ? ORDER BY created_at DESC";
+    // ⭐ 修复：包含 ID
+    const char* sql = "SELECT id, name, description, completed, project_id FROM tasks WHERE project_id = ? ORDER BY created_at DESC";
     sqlite3_stmt* stmt;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -233,14 +262,13 @@ std::vector<Task> TaskDAOImpl::getTasksByProject(int projectId) {
     sqlite3_bind_int(stmt, 1, projectId);
     
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        bool completed = sqlite3_column_int(stmt, 2) == 1;
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        bool completed = sqlite3_column_int(stmt, 3) == 1;
+        int projId = sqlite3_column_int(stmt, 4);
         
-        Task task(name, description);
-        if (completed) {
-            task.markCompleted();
-        }
+        Task task(id, name, description, completed, projId);
         tasks.push_back(task);
     }
     
@@ -254,7 +282,8 @@ std::vector<Task> TaskDAOImpl::getOverdueTasks() {
     sqlite3* db = getDatabaseConnection();
     if (!db) return tasks;
     
-    const char* sql = "SELECT name, description, completed FROM tasks WHERE due_date < date('now') AND completed = 0 ORDER BY due_date ASC";
+    // ⭐ 修复：包含 ID 和 project_id
+    const char* sql = "SELECT id, name, description, completed, project_id FROM tasks WHERE due_date < date('now') AND completed = 0 ORDER BY due_date ASC";
     sqlite3_stmt* stmt;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -263,14 +292,13 @@ std::vector<Task> TaskDAOImpl::getOverdueTasks() {
     }
     
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        bool completed = sqlite3_column_int(stmt, 2) == 1;
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        bool completed = sqlite3_column_int(stmt, 3) == 1;
+        int projectId = sqlite3_column_int(stmt, 4);
         
-        Task task(name, description);
-        if (completed) {
-            task.markCompleted();
-        }
+        Task task(id, name, description, completed, projectId);
         tasks.push_back(task);
     }
     
@@ -284,7 +312,8 @@ std::vector<Task> TaskDAOImpl::getTodayTasks() {
     sqlite3* db = getDatabaseConnection();
     if (!db) return tasks;
     
-    const char* sql = "SELECT name, description, completed FROM tasks WHERE due_date = date('now') ORDER BY created_at DESC";
+    // ⭐ 修复：包含 ID 和 project_id
+    const char* sql = "SELECT id, name, description, completed, project_id FROM tasks WHERE due_date = date('now') ORDER BY created_at DESC";
     sqlite3_stmt* stmt;
     
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -293,14 +322,13 @@ std::vector<Task> TaskDAOImpl::getTodayTasks() {
     }
     
     while (sqlite3_step(stmt) == SQLITE_ROW) {
-        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
-        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-        bool completed = sqlite3_column_int(stmt, 2) == 1;
+        int id = sqlite3_column_int(stmt, 0);
+        std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        std::string description = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        bool completed = sqlite3_column_int(stmt, 3) == 1;
+        int projectId = sqlite3_column_int(stmt, 4);
         
-        Task task(name, description);
-        if (completed) {
-            task.markCompleted();
-        }
+        Task task(id, name, description, completed, projectId);
         tasks.push_back(task);
     }
     
