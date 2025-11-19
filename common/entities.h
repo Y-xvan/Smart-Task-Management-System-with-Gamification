@@ -4,6 +4,8 @@
 
 #include <string>
 #include <vector>
+#include <chrono>
+#include <map>
 
 /**
  * @brief 任务状态枚举
@@ -116,19 +118,42 @@ struct Challenge : BaseEntity {
  * 
  * 负责人: Fei Yifan (提醒系统)
  */
-struct Reminder : BaseEntity {
-    std::string title;                   // 提醒标题
-    std::string message;                 // 提醒消息
-    std::string trigger_time;            // 触发时间
-    std::string recurrence;              // 重复规则 ("once", "daily", "weekly", "monthly")
-    bool triggered = false;              // 是否已触发
-    int task_id = 0;                     // 关联的任务ID
-    bool enabled = true;                 // 是否启用
-    std::string last_triggered;          // 上次触发时间
+// 提醒相关实体
+struct Reminder {
+    int id;
+    std::string title;
+    std::string message;
+    std::string trigger_time;
+    std::string recurrence; // "once", "daily", "weekly", "monthly"
+    bool triggered;
+    int task_id;
+    bool enabled;
+    std::string last_triggered;
     
-    Reminder() = default;
-    Reminder(const std::string& t, const std::string& msg, const std::string& time) 
-        : title(t), message(msg), trigger_time(time) {}
+    Reminder() 
+        : id(0), triggered(false), task_id(0), enabled(true) {}
+        
+    Reminder(int id, const std::string& title, const std::string& message, 
+             const std::string& trigger_time, const std::string& recurrence = "once", 
+             int task_id = 0)
+        : id(id), title(title), message(message), trigger_time(trigger_time),
+          recurrence(recurrence), triggered(false), task_id(task_id), enabled(true) {}
+};
+
+// 提醒类型枚举
+enum class ReminderType {
+    ONCE,
+    DAILY,
+    WEEKLY,
+    MONTHLY
+};
+
+// 提醒状态枚举
+enum class ReminderStatus {
+    PENDING,
+    TRIGGERED,
+    COMPLETED,
+    CANCELLED
 };
 
 /**
@@ -136,21 +161,54 @@ struct Reminder : BaseEntity {
  * 
  * 负责人: Fei Yifan (成就系统)
  */
-struct Achievement : BaseEntity {
-    std::string name;                    // 成就名称
-    std::string description;             // 成就描述
-    std::string icon;                    // 图标标识
-    std::string unlock_condition;        // 解锁条件
-    bool unlocked = false;               // 是否已解锁
-    std::string unlocked_date;           // 解锁时间
-    int reward_xp = 0;                   // 奖励经验值
-    std::string category;                // 分类 ("task", "time", "streak", "special")
-    int progress = 0;                    // 解锁进度 (0-100)
-    int target_value = 0;                // 目标值
+// 成就定义实体
+struct AchievementDefinition {
+    std::string id;
+    std::string name;
+    std::string description;
+    std::string icon;
+    int target_value;
+    int reward_xp;
+    std::string category;
+    std::string unlock_condition;
     
-    Achievement() = default;
-    Achievement(const std::string& n, const std::string& desc) 
-        : name(n), description(desc) {}
+    AchievementDefinition() : target_value(0), reward_xp(0) {}
+    
+    AchievementDefinition(const std::string& id, const std::string& name, 
+                         const std::string& description, int target_value, 
+                         const std::string& category, int reward_xp = 0)
+        : id(id), name(name), description(description), target_value(target_value),
+          category(category), reward_xp(reward_xp) {}
+};
+
+// 用户成就实体
+struct UserAchievement {
+    int id;
+    int user_id;
+    std::string achievement_id;
+    bool unlocked;
+    std::string unlocked_date;
+    int progress;
+    
+    UserAchievement() 
+        : id(0), user_id(0), unlocked(false), progress(0) {}
+        
+    UserAchievement(int user_id, const std::string& achievement_id)
+        : id(0), user_id(user_id), achievement_id(achievement_id), 
+          unlocked(false), progress(0) {}
+};
+
+// 成就统计结构
+struct AchievementStats {
+    int totalAchievements;
+    int unlockedAchievements;
+    int lockedAchievements;
+    double unlockRate;
+    std::map<std::string, int> achievementsByCategory;
+    
+    AchievementStats() 
+        : totalAchievements(0), unlockedAchievements(0), 
+          lockedAchievements(0), unlockRate(0.0) {}
 };
 
 /**
