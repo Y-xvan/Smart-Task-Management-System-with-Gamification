@@ -3,9 +3,8 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
-#include "AchievementDAO.h"
-
-#include "Entities.h"  // 包含实体定义
+#include "../database/DAO/AchievementDAO.h"
+#include "entities.h"  // 包含实体定义
 
 // 成就进度信息
 struct AchievementProgress {
@@ -35,8 +34,8 @@ private:
     int currentUserId;
     
     // 成就定义缓存
-    std::vector<AchievementDefinition> achievementDefinitions;
-    std::unordered_map<std::string, UserAchievement> userAchievements;
+    std::vector<Achievement> achievementDefinitions;
+    std::unordered_map<std::string, Achievement> userAchievements;
     
 public:
     AchievementManager(std::unique_ptr<AchievementDAO> dao, int userId = 1);
@@ -55,7 +54,7 @@ public:
     void incrementAchievementProgress(int userId, int achievementId, int increment);
 
     // 获取指定用户的所有成就进度，用于 UI 显示进度条和百分比
-    std::vector<AchievementProgress> getAchievementProgress(int userId) const;
+    std::vector<AchievementProgress> getAchievementProgress(int userId);
 
     void displayUnlockedAchievements();
     void displayAllAchievements();
@@ -70,8 +69,15 @@ public:
     // 工具方法
     bool loadAchievementDefinitions();
     bool loadUserAchievements();
-    void printAchievement(const AchievementDefinition& definition, 
-                         const UserAchievement* userAchievement = nullptr) const;
+    void printAchievement(const Achievement& definition,
+                         const Achievement* userAchievement = nullptr) const;
+
+    // 缓存工具方法
+    const Achievement* findAchievementDefinition(const std::string& key) const;
+    Achievement* findUserAchievement(const std::string& key);
+    bool isAchievementUnlocked(const std::string& key) const;
+    std::string getAchievementKeyById(int achievementId) const;
+    void refreshUserAchievementCache(const std::vector<Achievement>& entries);
     
     // 统计信息获取方法（需要队友实现其他DAO）
     int getCompletedTaskCount() const;
