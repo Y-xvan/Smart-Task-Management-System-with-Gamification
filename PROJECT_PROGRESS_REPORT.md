@@ -29,9 +29,8 @@
 #### ❌ 未完成或待加强的模块
 
 1. **DAO实现类** (成员D): 接口已定义，但具体实现类缺失
-2. **挑战系统** (成员D): 尚未实现
-3. **任务管理核心功能** (成员C): 基础框架存在，业务逻辑不完整
-4. **番茄钟完整功能**: 仅有基础定义
+2. **任务管理核心功能** (成员C): 基础框架存在，业务逻辑不完整
+3. **番茄钟完整功能**: 仅有基础定义
 
 ### 代码统计
 
@@ -59,7 +58,6 @@
 - TaskDAO.h
 - ProjectDAO.h
 - ReminderDAO.h
-- ChallengeDAO.h
 - AchievementDAO.h
 - ExperienceDAO.h
 - StatisticsDAO.h
@@ -422,11 +420,10 @@ struct StreakRecord {
 #### 任务3: 修复所有DAO接口的Include路径 ⭐⭐
 **优先级**: 中高
 
-修复以下9个文件:
+修复以下8个文件:
 - TaskDAO.h
 - ProjectDAO.h
 - ReminderDAO.h
-- ChallengeDAO.h
 - AchievementDAO.h
 - ExperienceDAO.h
 - StatisticsDAO.h
@@ -478,20 +475,7 @@ bool TaskManager::completeTask(int taskId) {
 
 ### 长期任务（1-2周）
 
-#### 任务6: 实现挑战系统 ⭐
-**优先级**: 低
-
-如果成员D没有时间，可以帮助实现：
-- ChallengeManager类
-- 挑战进度跟踪
-- 挑战完成判定
-- UI集成
-
-**预计工作量**: 2-3天
-
----
-
-#### 任务7: 完善成就系统 ⭐
+#### 任务6: 完善成就系统 ⭐
 **优先级**: 低
 
 协助成员A完善：
@@ -503,7 +487,7 @@ bool TaskManager::completeTask(int taskId) {
 
 ---
 
-#### 任务8: 添加单元测试 ⭐
+#### 任务7: 添加单元测试 ⭐
 **优先级**: 低（但重要）
 
 为已完成的模块添加测试：
@@ -515,7 +499,7 @@ bool TaskManager::completeTask(int taskId) {
 
 ---
 
-#### 任务9: 性能优化 ⭐
+#### 任务8: 性能优化 ⭐
 **优先级**: 低
 
 - 数据库查询优化
@@ -828,9 +812,8 @@ public:
 
 ### 需要成员D (Yu Zhixuan) 完成
 
-1. **修复DAO接口include路径**（9个文件）
+1. **修复DAO接口include路径**（8个文件）
 2. **实现DAO具体实现类**（优先级：TaskDAO, ProjectDAO）
-3. **实现挑战系统**
 
 ### 需要成员C (Kuang Wenqing) 完成
 
