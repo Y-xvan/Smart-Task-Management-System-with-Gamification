@@ -48,7 +48,7 @@ private:
     bool executeSQL(const std::string& sql);
     
 public:
-    TaskDAOImpl(const std::string& dbPath = "tasks.db");
+    TaskDAOImpl(const std::string& dbPath = "task_manager.db");
     virtual ~TaskDAOImpl() = default;
     
     bool createTable() override;
@@ -73,3 +73,4 @@ public:
 };
 
 #endif // TASKDAO_H
+
