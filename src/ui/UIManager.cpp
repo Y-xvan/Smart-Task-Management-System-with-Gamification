@@ -33,6 +33,11 @@ const string UIManager::BG_BLUE = "\033[44m";
 const string UIManager::BG_GREEN = "\033[42m";
 const string UIManager::BG_CYAN = "\033[46m";
 
+// 常用消息常量
+static const string MSG_MODULE_IN_DEVELOPMENT = "任务管理模块正在开发中...";
+static const string MSG_SETTINGS_IN_DEVELOPMENT = "设置修改功能开发中...";
+static const string DEFAULT_PROJECT_COLOR = "#3498db";
+
 UIManager::UIManager() {
     running = true;
     
@@ -363,7 +368,7 @@ void UIManager::createTask() {
     cout << "  │  " << COLOR_BRIGHT_YELLOW << "🔧 功能提示" << setw(39) << right << "" << COLOR_BRIGHT_CYAN << "│\n";
     cout << "  ╰───────────────────────────────────────────────────╯" << COLOR_RESET << "\n";
     
-    displayInfo("任务管理模块正在开发中...");
+    displayInfo(MSG_MODULE_IN_DEVELOPMENT);
     displayWarning("需要等待成员C完成TaskManager模块");
     
     pause();
@@ -373,7 +378,7 @@ void UIManager::listTasks() {
     clearScreen();
     printHeader("📋 任务列表");
     
-    displayInfo("任务管理模块正在开发中...");
+    displayInfo(MSG_MODULE_IN_DEVELOPMENT);
     displayWarning("需要等待成员C完成TaskManager模块");
     
     pause();
@@ -383,7 +388,7 @@ void UIManager::updateTask() {
     clearScreen();
     printHeader("✏️  更新任务");
     
-    displayInfo("任务管理模块正在开发中...");
+    displayInfo(MSG_MODULE_IN_DEVELOPMENT);
     
     pause();
 }
@@ -392,7 +397,7 @@ void UIManager::deleteTask() {
     clearScreen();
     printHeader("🗑️  删除任务");
     
-    displayInfo("任务管理模块正在开发中...");
+    displayInfo(MSG_MODULE_IN_DEVELOPMENT);
     
     pause();
 }
@@ -401,7 +406,7 @@ void UIManager::completeTask() {
     clearScreen();
     printHeader("✅ 完成任务");
     
-    displayInfo("任务管理模块正在开发中...");
+    displayInfo(MSG_MODULE_IN_DEVELOPMENT);
     displayInfo("💡 提示: 完成任务后会自动获得经验值奖励哦！");
     
     pause();
@@ -464,7 +469,7 @@ void UIManager::createProject() {
     
     string desc = getInput("项目描述: ");
     string color = getInput("颜色标签 (如 #4CAF50，直接回车使用默认): ");
-    if (color.empty()) color = "#3498db";
+    if (color.empty()) color = DEFAULT_PROJECT_COLOR;
     
     Project project(name, desc, color);
     int id = projectManager->createProject(project);
@@ -494,7 +499,8 @@ void UIManager::listProjects() {
             cout << COLOR_BRIGHT_CYAN << "  ╭───────────────────────────────────────────────────╮\n";
             cout << "  │  " << COLOR_BRIGHT_BLUE << "📁 ID: " << p->getId() 
                  << COLOR_BRIGHT_WHITE << BOLD << " " << p->getName() << COLOR_RESET;
-            cout << setw(35 - p->getName().length()) << right << "" << COLOR_BRIGHT_CYAN << "│\n";
+            // 使用固定填充以避免Unicode宽度问题
+            cout << COLOR_BRIGHT_CYAN << "\n";
             
             // 进度条
             cout << "  │  " << COLOR_BRIGHT_WHITE << "进度: ";
@@ -504,10 +510,14 @@ void UIManager::listProjects() {
             for (int i = 0; i < filled; i++) cout << "█";
             cout << COLOR_WHITE;
             for (int i = filled; i < barWidth; i++) cout << "░";
-            cout << " " << fixed << setprecision(0) << (progress * 100) << "%";
-            cout << setw(5) << right << "" << COLOR_BRIGHT_CYAN << "│\n";
+            cout << " " << fixed << setprecision(0) << (progress * 100) << "%" << COLOR_BRIGHT_CYAN << "\n";
             
-            cout << "  │  " << COLOR_WHITE << "📝 " << setw(44) << left << p->getDescription().substr(0, 40) << COLOR_BRIGHT_CYAN << "│\n";
+            // 描述 - 限制显示长度避免截断Unicode
+            string desc = p->getDescription();
+            if (desc.length() > 35) {
+                desc = desc.substr(0, 35) + "...";
+            }
+            cout << "  │  " << COLOR_WHITE << "📝 " << desc << COLOR_BRIGHT_CYAN << "\n";
             cout << "  ╰───────────────────────────────────────────────────╯" << COLOR_RESET << "\n";
         }
     }
@@ -855,7 +865,7 @@ void UIManager::updateSettings() {
     clearScreen();
     printHeader("✏️  修改设置");
     
-    displayInfo("设置修改功能开发中...");
+    displayInfo(MSG_SETTINGS_IN_DEVELOPMENT);
     
     pause();
 }
