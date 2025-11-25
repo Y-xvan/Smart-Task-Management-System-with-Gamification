@@ -39,3 +39,15 @@
 
 # debug information files
 *.dwo
+
+# Build artifacts
+bin/
+build/
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Test files
+test.db
