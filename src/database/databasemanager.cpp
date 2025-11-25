@@ -64,14 +64,14 @@ bool DatabaseManager::initialize(const std::string& databasePath) {
     
     db.reset(rawDb);
     
-    // 启用外键约束和WAL模式以提高性能
-    execute("PRAGMA foreign_keys = ON;");
-    execute("PRAGMA journal_mode = WAL;");
-    execute("PRAGMA synchronous = NORMAL;");
-    execute("PRAGMA cache_size = -64000;"); // 64MB缓存
+    // 启用外键约束和WAL模式以提高性能 - 使用内部方法避免死锁
+    executeInternal("PRAGMA foreign_keys = ON;");
+    executeInternal("PRAGMA journal_mode = WAL;");
+    executeInternal("PRAGMA synchronous = NORMAL;");
+    executeInternal("PRAGMA cache_size = -64000;"); // 64MB缓存
     
-    // 创建表
-    if (!createTables()) {
+    // 创建表 - createTables内部会调用executeInternal
+    if (!createTablesInternal()) {
         std::cerr << "创建数据库表失败" << std::endl;
         return false;
     }
@@ -103,21 +103,26 @@ bool DatabaseManager::isOpen() const {
 }
 
 bool DatabaseManager::createTables() {
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return createTablesInternal();
+}
+
+bool DatabaseManager::createTablesInternal() {
     bool success = true;
     
-    success = success && createTaskTable();
-    success = success && createProjectTable();
-    success = success && createChallengeTable();
-    success = success && createReminderTable();
-    success = success && createAchievementTable();
-    success = success && createUserStatsTable();
-    success = success && createUserSettingsTable();
-    success = success && createPomodoroTable();
+    success = success && createTaskTableInternal();
+    success = success && createProjectTableInternal();
+    success = success && createChallengeTableInternal();
+    success = success && createReminderTableInternal();
+    success = success && createAchievementTableInternal();
+    success = success && createUserStatsTableInternal();
+    success = success && createUserSettingsTableInternal();
+    success = success && createPomodoroTableInternal();
     
     return success;
 }
 
-bool DatabaseManager::createTaskTable() {
+bool DatabaseManager::createTaskTableInternal() {
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -146,10 +151,15 @@ bool DatabaseManager::createTaskTable() {
         CREATE INDEX IF NOT EXISTS idx_tasks_deleted ON tasks(deleted);
     )";
     
-    return execute(sql);
+    return executeInternal(sql);
 }
 
-bool DatabaseManager::createProjectTable() {
+bool DatabaseManager::createTaskTable() {
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return createTaskTableInternal();
+}
+
+bool DatabaseManager::createProjectTableInternal() {
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS projects (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -169,10 +179,15 @@ bool DatabaseManager::createProjectTable() {
         CREATE INDEX IF NOT EXISTS idx_projects_target_date ON projects(target_date);
     )";
     
-    return execute(sql);
+    return executeInternal(sql);
 }
 
-bool DatabaseManager::createChallengeTable() {
+bool DatabaseManager::createProjectTable() {
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return createProjectTableInternal();
+}
+
+bool DatabaseManager::createChallengeTableInternal() {
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS challenges (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -196,10 +211,15 @@ bool DatabaseManager::createChallengeTable() {
         CREATE INDEX IF NOT EXISTS idx_challenges_category ON challenges(category);
     )";
     
-    return execute(sql);
+    return executeInternal(sql);
 }
 
-bool DatabaseManager::createReminderTable() {
+bool DatabaseManager::createChallengeTable() {
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return createChallengeTableInternal();
+}
+
+bool DatabaseManager::createReminderTableInternal() {
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS reminders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -221,10 +241,15 @@ bool DatabaseManager::createReminderTable() {
         CREATE INDEX IF NOT EXISTS idx_reminders_task_id ON reminders(task_id);
     )";
     
-    return execute(sql);
+    return executeInternal(sql);
 }
 
-bool DatabaseManager::createAchievementTable() {
+bool DatabaseManager::createReminderTable() {
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return createReminderTableInternal();
+}
+
+bool DatabaseManager::createAchievementTableInternal() {
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS achievements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -246,10 +271,15 @@ bool DatabaseManager::createAchievementTable() {
         CREATE INDEX IF NOT EXISTS idx_achievements_category ON achievements(category);
     )";
     
-    return execute(sql);
+    return executeInternal(sql);
 }
 
-bool DatabaseManager::createUserStatsTable() {
+bool DatabaseManager::createAchievementTable() {
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return createAchievementTableInternal();
+}
+
+bool DatabaseManager::createUserStatsTableInternal() {
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS user_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -268,10 +298,15 @@ bool DatabaseManager::createUserStatsTable() {
         );
     )";
     
-    return execute(sql);
+    return executeInternal(sql);
 }
 
-bool DatabaseManager::createUserSettingsTable() {
+bool DatabaseManager::createUserStatsTable() {
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return createUserStatsTableInternal();
+}
+
+bool DatabaseManager::createUserSettingsTableInternal() {
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS user_settings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -289,10 +324,15 @@ bool DatabaseManager::createUserSettingsTable() {
         );
     )";
     
-    return execute(sql);
+    return executeInternal(sql);
 }
 
-bool DatabaseManager::createPomodoroTable() {
+bool DatabaseManager::createUserSettingsTable() {
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return createUserSettingsTableInternal();
+}
+
+bool DatabaseManager::createPomodoroTableInternal() {
     const char* sql = R"(
         CREATE TABLE IF NOT EXISTS pomodoro_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -312,13 +352,18 @@ bool DatabaseManager::createPomodoroTable() {
         CREATE INDEX IF NOT EXISTS idx_pomodoro_completed ON pomodoro_sessions(completed);
     )";
     
-    return execute(sql);
+    return executeInternal(sql);
 }
 
-bool DatabaseManager::execute(const std::string& sql) {
+bool DatabaseManager::createPomodoroTable() {
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return createPomodoroTableInternal();
+}
+
+// 内部执行方法 - 不获取锁，假设调用者已持有锁
+bool DatabaseManager::executeInternal(const std::string& sql) {
     if (!db) return false;
     
-    std::lock_guard<std::mutex> lock(dbMutex);
     totalQueryCount++;
     
     char* errorMsg = nullptr;
@@ -335,6 +380,13 @@ bool DatabaseManager::execute(const std::string& sql) {
     }
     
     return true;
+}
+
+bool DatabaseManager::execute(const std::string& sql) {
+    if (!db) return false;
+    
+    std::lock_guard<std::mutex> lock(dbMutex);
+    return executeInternal(sql);
 }
 
 bool DatabaseManager::executeParameterized(const std::string& sql, 
