@@ -39,6 +39,20 @@ private:
     static const string BOLD;
     static const string UNDERLINE;
     
+    // === 亮色ANSI颜色定义 ===
+    static const string COLOR_BRIGHT_RED;
+    static const string COLOR_BRIGHT_GREEN;
+    static const string COLOR_BRIGHT_YELLOW;
+    static const string COLOR_BRIGHT_BLUE;
+    static const string COLOR_BRIGHT_MAGENTA;
+    static const string COLOR_BRIGHT_CYAN;
+    static const string COLOR_BRIGHT_WHITE;
+    
+    // === 背景色定义 ===
+    static const string BG_BLUE;
+    static const string BG_GREEN;
+    static const string BG_CYAN;
+    
     // === UI辅助方法 ===
     
     /**
@@ -52,9 +66,24 @@ private:
     void printHeader(const string& title);
     
     /**
-     * @brief 打印分隔线
+     * @brief 打印分隔线 (ASCII)
      */
     void printSeparator(char symbol = '=', int length = 50);
+    
+    /**
+     * @brief 打印UTF-8分隔线
+     */
+    void printUTF8Separator(const string& symbol, int count);
+    
+    /**
+     * @brief 打印装饰性边框
+     */
+    void printFancyBox(const string& content, const string& color = "");
+    
+    /**
+     * @brief 打印进度条
+     */
+    void printProgressBar(double progress, int width = 30, const string& label = "");
     
     /**
      * @brief 打印菜单选项

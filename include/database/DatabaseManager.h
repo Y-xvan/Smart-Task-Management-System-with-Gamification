@@ -54,8 +54,22 @@ private:
     bool createUserSettingsTable();
     bool createPomodoroTable();  // ✅ 新增：Pomodoro表
     
+    // 内部版本 (不获取锁，假设调用者已持有锁)
+    bool createTablesInternal();
+    bool createProjectTableInternal();
+    bool createTaskTableInternal();
+    bool createChallengeTableInternal();
+    bool createReminderTableInternal();
+    bool createAchievementTableInternal();
+    bool createUserStatsTableInternal();
+    bool createUserSettingsTableInternal();
+    bool createPomodoroTableInternal();
+    
     // 清理预编译语句
     void cleanupPreparedStatements();
+    
+    // 内部执行方法 (不获取锁，假设调用者已持有锁)
+    bool executeInternal(const std::string& sql);
 
 public:
     DatabaseManager();
