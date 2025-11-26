@@ -2,8 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <limits>
-#include <cstdlib>
-#include <ctime>
+#include <random>
 
 using namespace std;
 
@@ -21,9 +20,6 @@ const string UIManager::UNDERLINE = "\033[4m";
 
 UIManager::UIManager() {
     running = true;
-    
-    // 初始化随机数种子
-    srand(static_cast<unsigned int>(time(nullptr)));
     
     // 创建各模块实例
     statsAnalyzer = new StatisticsAnalyzer();
@@ -205,7 +201,11 @@ void UIManager::printEncouragement() {
         "Your dedication is inspiring! 🏆"
     };
     
-    int index = rand() % quotes.size();
+    // Use C++11 random number generation to avoid modulo bias
+    static random_device rd;
+    static mt19937 gen(rd());
+    uniform_int_distribution<size_t> dis(0, quotes.size() - 1);
+    size_t index = dis(gen);
     cout << "    " << COLOR_YELLOW << quotes[index] << COLOR_RESET << "\n";
 }
 
