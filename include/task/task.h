@@ -13,6 +13,7 @@ private:
 
 public:
     // 构造函数
+    Task();  // 默认构造函数
     Task(const std::string &name, const std::string &desc, int projectId = 0);
     Task(int id, const std::string &name, const std::string &desc, bool completed, int projectId = 0);  // ⭐ 新增
 
@@ -23,6 +24,7 @@ public:
     // 状态管理
     void markCompleted();
     bool isCompleted() const;
+    void setCompleted(bool completed);  // 设置完成状态
 
     // Getters
     std::string getName() const;

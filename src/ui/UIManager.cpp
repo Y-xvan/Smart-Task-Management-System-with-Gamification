@@ -2,6 +2,8 @@
 #include <iostream>
 #include <iomanip>
 #include <limits>
+#include <cstdlib>
+#include <ctime>
 
 using namespace std;
 
@@ -20,11 +22,16 @@ const string UIManager::UNDERLINE = "\033[4m";
 UIManager::UIManager() {
     running = true;
     
+    // 初始化随机数种子
+    srand(static_cast<unsigned int>(time(nullptr)));
+    
     // 创建各模块实例
     statsAnalyzer = new StatisticsAnalyzer();
     xpSystem = new XPSystem();
     heatmap = new HeatmapVisualizer();
     projectManager = new ProjectManager();
+    taskManager = new TaskManager();
+    taskManager->initialize();
     
     cout << "✅ UI管理器初始化成功" << endl;
 }
@@ -34,6 +41,7 @@ UIManager::~UIManager() {
     delete xpSystem;
     delete heatmap;
     delete projectManager;
+    delete taskManager;
 }
 
 // === UI辅助方法 ===
@@ -46,9 +54,9 @@ void UIManager::clearScreen() {
 void UIManager::printHeader(const string& title) {
     cout << "\n";
     cout << BOLD << COLOR_CYAN;
-    printSeparator('═', 55);
+    printSeparator('=', 55);
     cout << "    " << title << "\n";
-    printSeparator('═', 55);
+    printSeparator('=', 55);
     cout << COLOR_RESET << "\n";
 }
 
@@ -124,7 +132,7 @@ void UIManager::displayUserStatusBar() {
     int achievements = statsAnalyzer->getAchievementsUnlocked();
     
     cout << BOLD << COLOR_CYAN;
-    printSeparator('━', 55);
+    printSeparator('-', 55);
     cout << COLOR_RESET;
     
     cout << COLOR_MAGENTA << "👤 " << COLOR_RESET 
@@ -134,8 +142,84 @@ void UIManager::displayUserStatusBar() {
          << COLOR_GREEN << "⭐ 成就: " << COLOR_RESET << achievements << "\n";
     
     cout << BOLD << COLOR_CYAN;
-    printSeparator('━', 55);
+    printSeparator('-', 55);
     cout << COLOR_RESET << "\n";
+}
+
+void UIManager::displayHUD() {
+    int level = xpSystem->getCurrentLevel();
+    int totalXP = xpSystem->getTotalXP();
+    int nextLevelXP = xpSystem->getXPForNextLevel();
+    string title = xpSystem->getCurrentLevelTitle();
+    double progress = xpSystem->getLevelProgress();
+    int achievements = statsAnalyzer->getAchievementsUnlocked();
+    string badge = xpSystem->getLevelBadge(level);
+    
+    // 顶部装饰线
+    cout << BOLD << COLOR_CYAN;
+    printSeparator('=', 55);
+    cout << COLOR_RESET;
+    
+    // 用户信息行
+    cout << " " << badge << " " << BOLD << COLOR_MAGENTA << "Lv." << level << COLOR_RESET 
+         << " " << COLOR_YELLOW << title << COLOR_RESET << "  |  "
+         << COLOR_GREEN << "⭐ " << achievements << " 成就" << COLOR_RESET << "\n";
+    
+    // XP 进度条
+    cout << "    ";
+    printProgressBar(progress, 30);
+    cout << " " << COLOR_CYAN << totalXP << "/" << nextLevelXP << " XP" << COLOR_RESET << "\n";
+    
+    // 励志名言
+    printEncouragement();
+    
+    // 底部装饰线
+    cout << BOLD << COLOR_CYAN;
+    printSeparator('=', 55);
+    cout << COLOR_RESET << "\n";
+}
+
+void UIManager::printProgressBar(double progress, int width) {
+    int filled = static_cast<int>(progress * width);
+    
+    cout << COLOR_GREEN << "[";
+    for (int i = 0; i < width; i++) {
+        if (i < filled) {
+            cout << "#";
+        } else {
+            cout << "-";
+        }
+    }
+    cout << "]" << COLOR_RESET;
+}
+
+void UIManager::printEncouragement() {
+    vector<string> quotes = {
+        "Keep going! You're doing great! 💪",
+        "Every task completed is a step forward! 🚀",
+        "Stay focused and conquer your goals! 🎯",
+        "You're on fire! Keep up the momentum! 🔥",
+        "Success is built one task at a time! ⭐",
+        "Believe in yourself, you can do it! 💫",
+        "Progress, not perfection! 🌟",
+        "Your dedication is inspiring! 🏆"
+    };
+    
+    int index = rand() % quotes.size();
+    cout << "    " << COLOR_YELLOW << quotes[index] << COLOR_RESET << "\n";
+}
+
+void UIManager::showTaskCompleteCelebration(int xpEarned) {
+    cout << "\n";
+    cout << COLOR_GREEN << "  ╔═══════════════════════════════════════╗\n";
+    cout << "  ║      🎉 TASK COMPLETED! 🎉            ║\n";
+    cout << "  ╠═══════════════════════════════════════╣\n";
+    cout << "  ║                                       ║\n";
+    cout << "  ║      +" << setw(4) << xpEarned << " XP EARNED!               ║\n";
+    cout << "  ║                                       ║\n";
+    cout << "  ║    ⭐ ⭐ ⭐ EXCELLENT! ⭐ ⭐ ⭐        ║\n";
+    cout << "  ║                                       ║\n";
+    cout << "  ╚═══════════════════════════════════════╝" << COLOR_RESET << "\n\n";
 }
 
 // === 主界面 ===
@@ -150,7 +234,7 @@ void UIManager::showMainMenu() {
    ╚═══════════════════════════════════════════════════╝
 )" << COLOR_RESET;
     
-    displayUserStatusBar();
+    displayHUD();
     
     vector<string> options = {
         "📋 任务管理",
@@ -233,8 +317,24 @@ void UIManager::createTask() {
     clearScreen();
     printHeader("✨ 创建新任务");
     
-    displayInfo("注意：任务管理模块尚未完全实现");
-    displayWarning("需要等待成员C完成TaskManager模块");
+    string name = getInput("任务名称: ");
+    if (name.empty()) {
+        displayError("任务名称不能为空！");
+        pause();
+        return;
+    }
+    
+    string desc = getInput("任务描述: ");
+    int projectId = getIntInput("关联项目ID (0表示无): ");
+    
+    Task task(name, desc, projectId);
+    int id = taskManager->createTask(task);
+    
+    if (id > 0) {
+        displaySuccess("任务创建成功！ID: " + to_string(id));
+    } else {
+        displayError("任务创建失败！");
+    }
     
     pause();
 }
@@ -243,8 +343,30 @@ void UIManager::listTasks() {
     clearScreen();
     printHeader("📋 任务列表");
     
-    displayInfo("注意：任务管理模块尚未完全实现");
-    displayWarning("需要等待成员C完成TaskManager模块");
+    vector<Task> tasks = taskManager->getAllTasks();
+    
+    if (tasks.empty()) {
+        displayInfo("暂无任务");
+    } else {
+        cout << "\n";
+        printSeparator('-', 55);
+        
+        for (const Task& t : tasks) {
+            string status = t.isCompleted() ? COLOR_GREEN + "[完成]" + COLOR_RESET : COLOR_YELLOW + "[进行中]" + COLOR_RESET;
+            cout << COLOR_BLUE << "ID: " << t.getId() << COLOR_RESET << " " << status << " "
+                 << BOLD << t.getName() << COLOR_RESET << "\n";
+            cout << "  描述: " << t.getDescription() << "\n";
+            if (t.getProjectId() > 0) {
+                cout << "  项目ID: " << t.getProjectId() << "\n";
+            }
+            printSeparator('-', 55);
+        }
+        
+        // 显示统计信息
+        int total = taskManager->getTaskCount();
+        int completed = taskManager->getCompletedTaskCount();
+        cout << "\n" << COLOR_CYAN << "总计: " << total << " 个任务, " << completed << " 个已完成" << COLOR_RESET << "\n";
+    }
     
     pause();
 }
@@ -253,7 +375,34 @@ void UIManager::updateTask() {
     clearScreen();
     printHeader("✏️  更新任务");
     
-    displayInfo("注意：任务管理模块尚未完全实现");
+    int id = getIntInput("请输入任务ID: ");
+    auto taskOpt = taskManager->getTask(id);
+    
+    if (!taskOpt.has_value()) {
+        displayError("任务不存在！");
+        pause();
+        return;
+    }
+    
+    Task task = taskOpt.value();
+    cout << "\n当前任务: " << task.getName() << "\n";
+    cout << "描述: " << task.getDescription() << "\n\n";
+    
+    string name = getInput("新名称 (留空保持不变): ");
+    if (!name.empty()) {
+        task.setName(name);
+    }
+    
+    string desc = getInput("新描述 (留空保持不变): ");
+    if (!desc.empty()) {
+        task.setDescription(desc);
+    }
+    
+    if (taskManager->updateTask(task)) {
+        displaySuccess("任务更新成功！");
+    } else {
+        displayError("任务更新失败！");
+    }
     
     pause();
 }
@@ -262,7 +411,25 @@ void UIManager::deleteTask() {
     clearScreen();
     printHeader("🗑️  删除任务");
     
-    displayInfo("注意：任务管理模块尚未完全实现");
+    int id = getIntInput("请输入要删除的任务ID: ");
+    
+    auto taskOpt = taskManager->getTask(id);
+    if (!taskOpt.has_value()) {
+        displayError("任务不存在！");
+        pause();
+        return;
+    }
+    
+    Task task = taskOpt.value();
+    cout << "\n任务: " << task.getName() << "\n";
+    
+    if (confirmAction("确定要删除这个任务吗？")) {
+        if (taskManager->deleteTask(id)) {
+            displaySuccess("任务删除成功！");
+        } else {
+            displayError("删除失败！");
+        }
+    }
     
     pause();
 }
@@ -271,8 +438,51 @@ void UIManager::completeTask() {
     clearScreen();
     printHeader("✅ 完成任务");
     
-    displayInfo("注意：任务管理模块尚未完全实现");
-    displayInfo("完成任务后会自动获得经验值奖励");
+    // 先显示未完成的任务列表
+    vector<Task> pendingTasks = taskManager->getTasksByCompletion(false);
+    
+    if (pendingTasks.empty()) {
+        displayInfo("没有待完成的任务！");
+        pause();
+        return;
+    }
+    
+    cout << "\n未完成的任务:\n";
+    printSeparator('-', 55);
+    for (const Task& t : pendingTasks) {
+        cout << COLOR_BLUE << "ID: " << t.getId() << COLOR_RESET << " - "
+             << BOLD << t.getName() << COLOR_RESET << "\n";
+    }
+    printSeparator('-', 55);
+    
+    int id = getIntInput("\n请输入要完成的任务ID: ");
+    
+    auto taskOpt = taskManager->getTask(id);
+    if (!taskOpt.has_value()) {
+        displayError("任务不存在！");
+        pause();
+        return;
+    }
+    
+    Task task = taskOpt.value();
+    if (task.isCompleted()) {
+        displayWarning("该任务已经完成！");
+        pause();
+        return;
+    }
+    
+    if (taskManager->completeTask(id)) {
+        // 计算并奖励经验值
+        int xpEarned = xpSystem->getXPForTaskCompletion(1); // 中优先级任务
+        xpSystem->awardXP(xpEarned, "完成任务: " + task.getName());
+        
+        // 显示庆祝动画
+        showTaskCompleteCelebration(xpEarned);
+        
+        displaySuccess("任务 \"" + task.getName() + "\" 已完成！");
+    } else {
+        displayError("完成任务失败！");
+    }
     
     pause();
 }
@@ -336,7 +546,7 @@ void UIManager::listProjects() {
         displayInfo("暂无项目");
     } else {
         cout << "\n";
-        printSeparator('─', 55);
+        printSeparator('-', 55);
         
         for (Project* p : projects) {
             cout << COLOR_BLUE << "ID: " << p->getId() << COLOR_RESET << " | "
@@ -346,7 +556,7 @@ void UIManager::listProjects() {
                  << fixed << setprecision(1) << (p->getProgress() * 100) << "%" 
                  << COLOR_RESET << " ("
                  << p->getCompletedTasks() << "/" << p->getTotalTasks() << ")\n";
-            printSeparator('─', 55);
+            printSeparator('-', 55);
         }
     }
     

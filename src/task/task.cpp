@@ -1,8 +1,11 @@
 #include "task/task.h"
 
+// 默认构造函数
+Task::Task() : id(-1), name(""), description(""), completed(false), projectId(0) {}
+
 // 原有构造函数
 Task::Task(const std::string &name, const std::string &desc, int projectId)
-    : id(-1), name(name), description(desc), projectId(projectId), completed(false) {}
+    : id(-1), name(name), description(desc), completed(false), projectId(projectId) {}
 
 // ⭐ 新增：完整构造函数（从数据库读取时使用）
 Task::Task(int id, const std::string &name, const std::string &desc, bool completed, int projectId)
@@ -24,6 +27,10 @@ void Task::markCompleted() {
 
 bool Task::isCompleted() const {
     return completed;
+}
+
+void Task::setCompleted(bool completed) {
+    this->completed = completed;
 }
 
 // Getters

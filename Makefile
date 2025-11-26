@@ -14,8 +14,11 @@ BIN_DIR = bin
 SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/database/databasemanager.cpp \
        $(SRC_DIR)/database/DAO/ProjectDAO.cpp \
+       $(SRC_DIR)/database/DAO/TaskDAOImpl.cpp \
        $(SRC_DIR)/project/Project.cpp \
        $(SRC_DIR)/project/ProjectManager.cpp \
+       $(SRC_DIR)/task/task.cpp \
+       $(SRC_DIR)/task/TaskManager.cpp \
        $(SRC_DIR)/statistics/StatisticsAnalyzer.cpp \
        $(SRC_DIR)/gamification/XPSystem.cpp \
        $(SRC_DIR)/HeatmapVisualizer/HeatmapVisualizer.cpp \
@@ -37,6 +40,7 @@ directories:
 	@mkdir -p $(BUILD_DIR)/database
 	@mkdir -p $(BUILD_DIR)/database/DAO
 	@mkdir -p $(BUILD_DIR)/project
+	@mkdir -p $(BUILD_DIR)/task
 	@mkdir -p $(BUILD_DIR)/reminder
 	@mkdir -p $(BUILD_DIR)/statistics
 	@mkdir -p $(BUILD_DIR)/gamification
