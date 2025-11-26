@@ -7,6 +7,7 @@
 #include "../gamification/XPSystem.h"
 #include "../HeatmapVisualizer/HeatmapVisualizer.h"
 #include "../project/ProjectManager.h"
+#include "../task/TaskManager.h"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ private:
     XPSystem* xpSystem;
     HeatmapVisualizer* heatmap;
     ProjectManager* projectManager;
+    TaskManager* taskManager;
     
     // UI状态
     bool running;
@@ -94,6 +96,30 @@ private:
      * @brief 显示用户状态栏
      */
     void displayUserStatusBar();
+    
+    /**
+     * @brief 显示游戏化HUD（升级版状态栏）
+     * 包含ASCII进度条和随机励志名言
+     */
+    void displayHUD();
+    
+    /**
+     * @brief 打印ASCII进度条
+     * @param progress 进度 (0.0 - 1.0)
+     * @param width 进度条宽度
+     */
+    void printProgressBar(double progress, int width = 20);
+    
+    /**
+     * @brief 打印随机励志名言
+     */
+    void printEncouragement();
+    
+    /**
+     * @brief 显示任务完成庆祝动画
+     * @param xpEarned 获得的经验值
+     */
+    void showTaskCompleteCelebration(int xpEarned);
     
 public:
     UIManager();
