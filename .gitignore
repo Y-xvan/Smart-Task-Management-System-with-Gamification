@@ -48,3 +48,4 @@ bin/
 *.db
 *.db-shm
 *.db-wal
+_codeql_detected_source_root
