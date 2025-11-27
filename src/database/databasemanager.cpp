@@ -268,7 +268,17 @@ bool DatabaseManager::createUserStatsTable() {
         );
     )";
     
-    return execute(sql);
+    if (!execute(sql)) {
+        return false;
+    }
+    
+    // Initialize default user stats row if not exists
+    const char* initSql = R"(
+        INSERT OR IGNORE INTO user_stats (id, total_xp, level, current_streak, longest_streak)
+        VALUES (1, 0, 1, 0, 0);
+    )";
+    
+    return execute(initSql);
 }
 
 bool DatabaseManager::createUserSettingsTable() {

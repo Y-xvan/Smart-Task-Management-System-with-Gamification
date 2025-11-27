@@ -58,13 +58,13 @@ void UIManager::clearScreen() {
 void UIManager::printHeader(const string& title) {
     cout << "\n";
     cout << BOLD << COLOR_CYAN;
-    printSeparator('═', 55);
+    printSeparator("=", 55);
     cout << "    " << title << "\n";
-    printSeparator('═', 55);
+    printSeparator("=", 55);
     cout << COLOR_RESET << "\n";
 }
 
-void UIManager::printSeparator(char symbol, int length) {
+void UIManager::printSeparator(const string& symbol, int length) {
     for (int i = 0; i < length; i++) {
         cout << symbol;
     }
@@ -169,14 +169,14 @@ void UIManager::displayHUD() {
     int achievements = statsAnalyzer->getAchievementsUnlocked();
     
     cout << BOLD << COLOR_CYAN;
-    printSeparator('━', 60);
+    printSeparator("-", 60);
     cout << COLOR_RESET;
     
     // 第一行：等级与成就
-    cout << " 🛡️  " << BOLD << "Lv." << level << COLOR_RESET 
+    cout << " Lv." << level << COLOR_RESET 
          << " [" << COLOR_MAGENTA << title << COLOR_RESET << "] "
          << string(10, ' ')
-         << "⭐ 成就: " << COLOR_YELLOW << achievements << COLOR_RESET << "\n";
+         << "Achievements: " << COLOR_YELLOW << achievements << COLOR_RESET << "\n";
     
     // 第二行：可视化的 XP 进度条
     cout << " XP: ";
@@ -184,7 +184,7 @@ void UIManager::displayHUD() {
     cout << " (" << currentXP << "/" << nextLevelXP << ")\n";
     
     cout << BOLD << COLOR_CYAN;
-    printSeparator('━', 60);
+    printSeparator("-", 60);
     cout << COLOR_RESET;
     
     printEncouragement();
@@ -430,25 +430,25 @@ void UIManager::createProject() {
 
 void UIManager::listProjects() {
     clearScreen();
-    printHeader("📁 项目列表");
+    printHeader("Project List");
     
     vector<Project*> projects = projectManager->getAllProjects();
     
     if (projects.empty()) {
-        displayInfo("暂无项目");
+        displayInfo("No projects yet");
     } else {
         cout << "\n";
-        printSeparator('─', 55);
+        printSeparator("-", 55);
         
         for (Project* p : projects) {
             cout << COLOR_BLUE << "ID: " << p->getId() << COLOR_RESET << " | "
                  << BOLD << p->getName() << COLOR_RESET << "\n";
-            cout << "  描述: " << p->getDescription() << "\n";
-            cout << "  进度: " << COLOR_GREEN 
+            cout << "  Description: " << p->getDescription() << "\n";
+            cout << "  Progress: " << COLOR_GREEN 
                  << fixed << setprecision(1) << (p->getProgress() * 100) << "%" 
                  << COLOR_RESET << " ("
                  << p->getCompletedTasks() << "/" << p->getTotalTasks() << ")\n";
-            printSeparator('─', 55);
+            printSeparator("-", 55);
         }
     }
     
