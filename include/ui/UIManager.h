@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <utility>
 
 // 前向声明，避免循环依赖
 class StatisticsAnalyzer;
@@ -11,6 +12,12 @@ class XPSystem;
 class HeatmapVisualizer;
 class ProjectManager;
 class TaskManager; 
+
+// 颜色选项结构体
+struct ColorOption {
+    std::string name;    // 颜色名称（显示给用户）
+    std::string code;    // 颜色编号（存储到数据库）
+};
 
 class UIManager {
 private:
@@ -22,6 +29,9 @@ private:
     TaskManager* taskManager; // ⭐ 新增：任务管理器
 
     bool running;
+
+    // === 预定义颜色选项 ===
+    static const std::vector<ColorOption> AVAILABLE_COLORS;
 
     // === 颜色常量 (保留原定义) ===
     static const std::string COLOR_RESET;
@@ -45,6 +55,10 @@ private:
     int getIntInput(const std::string& prompt);
     void pause();
     bool confirmAction(const std::string& prompt);
+    
+    // === 选择辅助方法 ===
+    std::string selectColor();  // 颜色选择
+    int selectFromList(const std::vector<std::pair<int, std::string>>& items, const std::string& prompt);  // 通用选择
 
     // === ⭐ 游戏化视觉特效 (UI增强) ===
     void displayHUD(); // 替代原有的 displayUserStatusBar
