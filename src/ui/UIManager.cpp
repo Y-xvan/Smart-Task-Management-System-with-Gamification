@@ -28,6 +28,20 @@ const string UIManager::COLOR_WHITE = "\033[37m";
 const string UIManager::BOLD = "\033[1m";
 const string UIManager::UNDERLINE = "\033[4m";
 
+// 预定义颜色选项
+const vector<ColorOption> UIManager::AVAILABLE_COLORS = {
+    {"🔴 红色 (Red)", "#F44336"},
+    {"🟠 橙色 (Orange)", "#FF9800"},
+    {"🟡 黄色 (Yellow)", "#FFEB3B"},
+    {"🟢 绿色 (Green)", "#4CAF50"},
+    {"🔵 蓝色 (Blue)", "#2196F3"},
+    {"🟣 紫色 (Purple)", "#9C27B0"},
+    {"🩷 粉色 (Pink)", "#E91E63"},
+    {"🩵 青色 (Cyan)", "#00BCD4"},
+    {"⚫ 深灰色 (Dark Gray)", "#607D8B"},
+    {"🤎 棕色 (Brown)", "#795548"}
+};
+
 UIManager::UIManager() {
     running = true;
     
@@ -126,6 +140,50 @@ bool UIManager::confirmAction(const string& prompt) {
     string response;
     getline(cin, response);
     return (response == "y" || response == "Y" || response == "yes" || response == "YES");
+}
+
+// === 选择辅助方法 ===
+
+string UIManager::selectColor() {
+    cout << "\n" << BOLD << "请选择颜色标签:" << COLOR_RESET << "\n\n";
+    
+    for (size_t i = 0; i < AVAILABLE_COLORS.size(); i++) {
+        cout << "  " << COLOR_YELLOW << i + 1 << COLOR_RESET 
+             << ". " << AVAILABLE_COLORS[i].name 
+             << " [" << AVAILABLE_COLORS[i].code << "]\n";
+    }
+    cout << "\n";
+    
+    int choice = getUserChoice(static_cast<int>(AVAILABLE_COLORS.size()));
+    
+    if (choice == 0 || choice > static_cast<int>(AVAILABLE_COLORS.size())) {
+        return AVAILABLE_COLORS[0].code; // 默认返回第一个颜色
+    }
+    
+    return AVAILABLE_COLORS[choice - 1].code;
+}
+
+int UIManager::selectFromList(const vector<pair<int, string>>& items, const string& prompt) {
+    if (items.empty()) {
+        return -1;
+    }
+    
+    cout << "\n" << BOLD << prompt << COLOR_RESET << "\n\n";
+    
+    for (size_t i = 0; i < items.size(); i++) {
+        cout << "  " << COLOR_YELLOW << i + 1 << COLOR_RESET 
+             << ". " << items[i].second << "\n";
+    }
+    cout << "  " << COLOR_RED << "0" << COLOR_RESET << ". 取消\n";
+    cout << "\n";
+    
+    int choice = getUserChoice(static_cast<int>(items.size()));
+    
+    if (choice == 0 || choice > static_cast<int>(items.size())) {
+        return -1; // 用户取消或无效选择
+    }
+    
+    return items[choice - 1].first; // 返回选中项的ID
 }
 
 // ==========================================
@@ -341,7 +399,25 @@ void UIManager::updateTask() {
 void UIManager::deleteTask() {
     clearScreen();
     printHeader("🗑️  删除任务");
-    int id = getIntInput("请输入要删除的任务ID: ");
+    
+    // 获取所有任务并构建选择列表
+    auto tasks = taskManager->getAllTasks();
+    if (tasks.empty()) {
+        displayInfo("暂无任务可删除。");
+        pause();
+        return;
+    }
+    
+    vector<pair<int, string>> taskItems;
+    for (const auto& t : tasks) {
+        string status = t.isCompleted() ? " [✔]" : " [ ]";
+        taskItems.push_back({t.getId(), status + " " + t.getName()});
+    }
+    
+    int id = selectFromList(taskItems, "请选择要删除的任务:");
+    if (id == -1) {
+        return;
+    }
     
     // ⭐ 使用真实 Logic
     if (taskManager->deleteTask(id)) {
@@ -357,21 +433,25 @@ void UIManager::completeTask() {
     printHeader("✅ 完成任务");
     
     auto tasks = taskManager->getAllTasks();
-    bool hasPending = false;
-    for(const auto& t : tasks) {
+    
+    // 构建未完成任务的选择列表
+    vector<pair<int, string>> pendingTaskItems;
+    for (const auto& t : tasks) {
         if (!t.isCompleted()) {
-            cout << COLOR_CYAN << "ID: " << t.getId() << " | " << t.getName() << COLOR_RESET << "\n";
-            hasPending = true;
+            pendingTaskItems.push_back({t.getId(), t.getName()});
         }
     }
     
-    if (!hasPending) {
+    if (pendingTaskItems.empty()) {
         displayInfo("没有待完成的任务！");
         pause();
         return;
     }
 
-    int id = getIntInput("\n请输入完成的任务ID: ");
+    int id = selectFromList(pendingTaskItems, "请选择要完成的任务:");
+    if (id == -1) {
+        return;
+    }
     
     // ⭐ 调用 Logic 并展示动画
     if (taskManager->completeTask(id)) {
@@ -423,7 +503,7 @@ void UIManager::createProject() {
     }
     
     string desc = getInput("项目描述: ");
-    string color = getInput("颜色标签 (如 #4CAF50): ");
+    string color = selectColor();  // 使用颜色选择代替手动输入
     
     Project project(name, desc, color);
     int id = projectManager->createProject(project);
@@ -464,7 +544,24 @@ void UIManager::viewProjectDetails() {
     clearScreen();
     printHeader("📊 项目详情");
     
-    int id = getIntInput("请输入项目ID: ");
+    // 获取所有项目并构建选择列表
+    vector<Project*> projects = projectManager->getAllProjects();
+    if (projects.empty()) {
+        displayInfo("暂无项目。");
+        pause();
+        return;
+    }
+    
+    vector<pair<int, string>> projectItems;
+    for (Project* p : projects) {
+        projectItems.push_back({p->getId(), p->getName()});
+    }
+    
+    int id = selectFromList(projectItems, "请选择要查看的项目:");
+    if (id == -1) {
+        return;
+    }
+    
     Project* p = projectManager->getProject(id);
     
     if (p == nullptr) {
@@ -496,7 +593,23 @@ void UIManager::deleteProject() {
     clearScreen();
     printHeader("🗑️  删除项目");
     
-    int id = getIntInput("请输入要删除的项目ID: ");
+    // 获取所有项目并构建选择列表
+    vector<Project*> projects = projectManager->getAllProjects();
+    if (projects.empty()) {
+        displayInfo("暂无项目可删除。");
+        pause();
+        return;
+    }
+    
+    vector<pair<int, string>> projectItems;
+    for (Project* p : projects) {
+        projectItems.push_back({p->getId(), p->getName()});
+    }
+    
+    int id = selectFromList(projectItems, "请选择要删除的项目:");
+    if (id == -1) {
+        return;
+    }
     
     if (confirmAction("确定要删除这个项目吗？")) {
         if (projectManager->deleteProject(id)) {
