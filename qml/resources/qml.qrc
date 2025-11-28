@@ -1,0 +1,32 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <!-- Main QML -->
+        <file alias="qml/Main.qml">../Main.qml</file>
+        
+        <!-- Components -->
+        <file alias="qml/components/TaskCard.qml">../components/TaskCard.qml</file>
+        <file alias="qml/components/GamificationHUD.qml">../components/GamificationHUD.qml</file>
+        <file alias="qml/components/NavigationBar.qml">../components/NavigationBar.qml</file>
+        <file alias="qml/components/ProgressBar.qml">../components/ProgressBar.qml</file>
+        <file alias="qml/components/CelebrationEffect.qml">../components/CelebrationEffect.qml</file>
+        
+        <!-- Pages -->
+        <file alias="qml/pages/TaskListPage.qml">../pages/TaskListPage.qml</file>
+        <file alias="qml/pages/ProjectsPage.qml">../pages/ProjectsPage.qml</file>
+        <file alias="qml/pages/AchievementsPage.qml">../pages/AchievementsPage.qml</file>
+        <file alias="qml/pages/StatisticsPage.qml">../pages/StatisticsPage.qml</file>
+        <file alias="qml/pages/SettingsPage.qml">../pages/SettingsPage.qml</file>
+        
+        <!-- Images (placeholders - user should provide actual images) -->
+        <!-- [需素材] The following images need to be provided by the user:
+             
+             images/app_logo.png          - Application logo (256x256)
+             images/empty_quest.png       - Empty state illustration (200x200)
+             images/celebration.png       - Task completion celebration (300x300)
+             images/streak_fire.png       - Streak fire icon (48x48)
+             images/level_badge_1.png     - Level 1 badge (64x64)
+             ... through level_badge_10.png
+        -->
+    </qresource>
+</RCC>
