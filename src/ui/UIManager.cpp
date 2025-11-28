@@ -152,12 +152,13 @@ string UIManager::selectColor() {
              << ". " << AVAILABLE_COLORS[i].name 
              << " [" << AVAILABLE_COLORS[i].code << "]\n";
     }
+    cout << "  " << COLOR_RED << "0" << COLOR_RESET << ". 取消\n";
     cout << "\n";
     
     int choice = getUserChoice(static_cast<int>(AVAILABLE_COLORS.size()));
     
     if (choice == 0 || choice > static_cast<int>(AVAILABLE_COLORS.size())) {
-        return AVAILABLE_COLORS[0].code; // 默认返回第一个颜色
+        return ""; // 返回空字符串表示取消
     }
     
     return AVAILABLE_COLORS[choice - 1].code;
@@ -504,6 +505,12 @@ void UIManager::createProject() {
     
     string desc = getInput("项目描述: ");
     string color = selectColor();  // 使用颜色选择代替手动输入
+    
+    if (color.empty()) {
+        displayInfo("已取消创建项目。");
+        pause();
+        return;
+    }
     
     Project project(name, desc, color);
     int id = projectManager->createProject(project);
