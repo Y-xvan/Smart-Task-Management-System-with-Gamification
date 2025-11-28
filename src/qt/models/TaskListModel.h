@@ -117,6 +117,12 @@ signals:
 
 private:
     QList<TaskItem> m_tasks;
+    
+    // Controller relationship:
+    // - m_controller: External controller for UI-triggered actions (signals for model updates)
+    // - m_taskManager: Internal data source for loading tasks
+    // The controller connects to this model to receive notifications when data changes.
+    // The model uses its own TaskManager instance for data loading to avoid circular dependencies.
     TaskController* m_controller = nullptr;
     std::unique_ptr<TaskManager> m_taskManager;
     

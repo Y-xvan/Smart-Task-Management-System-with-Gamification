@@ -51,7 +51,7 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src/qt
 )
 
-# QML Resources
+# QML Resources - using qt_add_qml_module which handles resource bundling
 qt_add_qml_module(${PROJECT_NAME}
     URI SmartTaskManager
     VERSION 1.0
@@ -67,8 +67,6 @@ qt_add_qml_module(${PROJECT_NAME}
         qml/pages/AchievementsPage.qml
         qml/pages/StatisticsPage.qml
         qml/pages/SettingsPage.qml
-    RESOURCES
-        qml/resources/qml.qrc
     SOURCES
         ${CORE_SOURCES}
         ${QT_BRIDGE_SOURCES}

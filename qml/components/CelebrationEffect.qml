@@ -16,6 +16,8 @@ Item {
     function show(xp) {
         xpGained = xp
         visible = true
+        particleSpawnTimer.spawnedCount = 0
+        particleSpawnTimer.start()
         celebrationAnim.start()
     }
 
@@ -114,7 +116,28 @@ Item {
     }
 
     // Particle emitters for confetti effect
+    // Using staggered Timer instead of Qt.callLater for better performance
+    Timer {
+        id: particleSpawnTimer
+        interval: 50  // Spawn particles every 50ms
+        repeat: true
+        property int spawnedCount: 0
+        
+        onTriggered: {
+            if (spawnedCount < particleRepeater.count) {
+                var particle = particleRepeater.itemAt(spawnedCount)
+                if (particle && particle.particleAnim) {
+                    particle.particleAnim.start()
+                }
+                spawnedCount++
+            } else {
+                stop()
+            }
+        }
+    }
+
     Repeater {
+        id: particleRepeater
         model: 20
 
         Rectangle {
@@ -126,6 +149,9 @@ Item {
             y: -50
             opacity: 0
             rotation: Math.random() * 360
+            
+            // Expose animation for external control
+            property alias particleAnim: particleAnimInternal
 
             // Random colors
             color: {
@@ -135,7 +161,7 @@ Item {
 
             // Particle animation
             ParallelAnimation {
-                id: particleAnim
+                id: particleAnimInternal
                 running: false
 
                 NumberAnimation {
@@ -180,13 +206,6 @@ Item {
                         duration: 500
                     }
                 }
-            }
-
-            Component.onCompleted: {
-                // Start with random delay
-                Qt.callLater(function() {
-                    particleAnim.start()
-                })
             }
         }
     }

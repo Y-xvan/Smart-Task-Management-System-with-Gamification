@@ -26,7 +26,7 @@ int TaskListModel::rowCount(const QModelIndex &parent) const
 
 QVariant TaskListModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || index.row() >= m_tasks.size())
+    if (!index.isValid() || index.row() < 0 || index.row() >= static_cast<int>(m_tasks.size()))
         return QVariant();
 
     const TaskItem &task = m_tasks.at(index.row());
