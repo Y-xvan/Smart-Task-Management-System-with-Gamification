@@ -78,7 +78,6 @@ public:
     void showProjectMenu();
     void showStatisticsMenu();
     void showGamificationMenu();
-    void showSettingsMenu();
 
     // === 消息显示 ===
     void displayMessage(const std::string& msg, const std::string& type = "info");
@@ -112,17 +111,12 @@ public:
     // === 游戏化功能 ===
     void showXPAndLevel();
     void showAchievements();
-    void showChallenges();
 
     // === 番茄钟功能 ===
     void showPomodoroMenu();
     void startPomodoroSession();
     void startShortBreak();
     void startLongBreak();
-
-    // === 设置功能 ===
-    void viewSettings();
-    void updateSettings();
 };
 
 #endif // UI_MANAGER_H

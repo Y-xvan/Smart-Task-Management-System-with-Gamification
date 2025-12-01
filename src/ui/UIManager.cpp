@@ -168,6 +168,42 @@ bool UIManager::confirmAction(const string& prompt) {
     return (response == "y" || response == "Y" || response == "yes" || response == "YES");
 }
 
+/**
+ * @brief 验证日期格式是否为 YYYY-MM-DD
+ * @param date 日期字符串
+ * @return 是否有效
+ */
+bool isValidDateFormat(const string& date) {
+    if (date.empty()) return true; // 空字符串允许跳过
+    if (date.length() != 10) return false;
+    if (date[4] != '-' || date[7] != '-') return false;
+    
+    // 检查是否都是数字
+    for (int i = 0; i < 10; i++) {
+        if (i == 4 || i == 7) continue;
+        if (!isdigit(date[i])) return false;
+    }
+    
+    // 检查月份和日期的合理性
+    int year = stoi(date.substr(0, 4));
+    int month = stoi(date.substr(5, 2));
+    int day = stoi(date.substr(8, 2));
+    
+    if (year < 2020 || year > 2100) return false;
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+    
+    // 简单的月份天数检查
+    int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    // 闰年检查
+    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+        daysInMonth[1] = 29;
+    }
+    if (day > daysInMonth[month - 1]) return false;
+    
+    return true;
+}
+
 // === 选择式输入辅助方法 ===
 
 /**
@@ -216,7 +252,7 @@ int UIManager::selectProjectByName() {
     auto projects = projectManager->getAllProjects();
     
     if (projects.empty()) {
-        displayInfo("暂无项目可选择");
+        displayWarning("暂无项目可选择。请先创建项目后再进行分配。");
         return -1;
     }
     
@@ -381,8 +417,7 @@ void UIManager::showMainMenu() {
         "📁 项目管理 (Project Management)",
         "🍅 番茄钟 (Pomodoro Timer)",
         "📊 统计分析 (Statistics)",
-        "🎮 游戏化功能 (Gamification)",
-        "⚙️  设置 (Settings)"
+        "🎮 游戏化功能 (Gamification)"
     };
     
     printMenu(options);
@@ -394,7 +429,7 @@ void UIManager::run() {
     
     while (running) {
         showMainMenu();
-        int choice = getUserChoice(6);
+        int choice = getUserChoice(5);
         
         switch (choice) {
             case 1: showTaskMenu(); break;
@@ -402,7 +437,6 @@ void UIManager::run() {
             case 3: showPomodoroMenu(); break;
             case 4: showStatisticsMenu(); break;
             case 5: showGamificationMenu(); break;
-            case 6: showSettingsMenu(); break;
             case 0: exitProgram(); break;
         }
     }
@@ -462,8 +496,13 @@ void UIManager::createTask() {
     // 选择优先级
     int priority = selectPriority();
     
-    // 截止日期
-    string due = getInput("📅 截止日期 (Due Date YYYY-MM-DD，直接回车跳过): ");
+    // 截止日期 (带验证)
+    string due;
+    while (true) {
+        due = getInput("📅 截止日期 (Due Date YYYY-MM-DD，直接回车跳过): ");
+        if (due.empty() || isValidDateFormat(due)) break;
+        displayError("日期格式错误！请使用 YYYY-MM-DD 格式（如 2025-12-31）");
+    }
     
     // 标签
     string tags = getInput("🏷️  标签 (Tags，用逗号分隔，直接回车跳过): ");
@@ -639,8 +678,13 @@ void UIManager::updateTask() {
             break;
         }
         case 4: {
-            string newDue = getInput("📅 新截止日期 (YYYY-MM-DD): ");
-            task.setDueDate(newDue);
+            string newDue;
+            while (true) {
+                newDue = getInput("📅 新截止日期 (YYYY-MM-DD): ");
+                if (newDue.empty() || isValidDateFormat(newDue)) break;
+                displayError("日期格式错误！请使用 YYYY-MM-DD 格式（如 2025-12-31）");
+            }
+            if (!newDue.empty()) task.setDueDate(newDue);
             break;
         }
         case 5: {
@@ -965,8 +1009,13 @@ void UIManager::updateProject() {
             break;
         }
         case 4: {
-            string newDate = getInput("📅 目标日期 (YYYY-MM-DD): ");
-            p->setTargetDate(newDate);
+            string newDate;
+            while (true) {
+                newDate = getInput("📅 目标日期 (YYYY-MM-DD): ");
+                if (newDate.empty() || isValidDateFormat(newDate)) break;
+                displayError("日期格式错误！请使用 YYYY-MM-DD 格式（如 2025-12-31）");
+            }
+            if (!newDate.empty()) p->setTargetDate(newDate);
             break;
         }
         case 5: {
@@ -1289,17 +1338,15 @@ void UIManager::showGamificationMenu() {
     
     vector<string> options = {
         "⭐ 经验值和等级 (XP & Level)",
-        "🏆 成就系统 (Achievements)",
-        "🎯 挑战系统 (Challenges)"
+        "🏆 成就系统 (Achievements)"
     };
     
     printMenu(options);
-    int choice = getUserChoice(3);
+    int choice = getUserChoice(2);
     
     switch (choice) {
         case 1: showXPAndLevel(); break;
         case 2: showAchievements(); break;
-        case 3: showChallenges(); break;
         case 0: return;
     }
 }
@@ -1374,163 +1421,6 @@ void UIManager::showAchievements() {
     cout << "  已解锁: " << COLOR_GREEN << unlocked << COLOR_RESET << " 个\n";
     cout << "  未解锁: " << COLOR_YELLOW << (TOTAL_ACHIEVEMENTS - unlocked) << COLOR_RESET << " 个\n";
     cout << "  完成率: " << (unlocked * 100 / TOTAL_ACHIEVEMENTS) << "%\n";
-    
-    pause();
-}
-
-void UIManager::showChallenges() {
-    clearScreen();
-    printHeader("🎯 挑战系统");
-    
-    int completed = statsAnalyzer->getChallengesCompleted();
-    int todayTasks = statsAnalyzer->getTasksCompletedToday();
-    int todayPomodoros = statsAnalyzer->getPomodorosToday();
-    int weeklyTasks = statsAnalyzer->getTotalTasksCompleted(); // 简化处理
-    int streak = statsAnalyzer->getCurrentStreak();
-    
-    cout << "\n" << BOLD << "🏅 已完成挑战: " << COLOR_RESET 
-         << COLOR_GREEN << completed << COLOR_RESET << " 个\n\n";
-    
-    cout << BOLD << "📅 每日挑战：" << COLOR_RESET << "\n";
-    printSeparator("-", 60);
-    
-    // 每日挑战1: 完成3个任务
-    bool daily1 = todayTasks >= 3;
-    cout << (daily1 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳") << COLOR_RESET
-         << " 今日目标 - 完成3个任务";
-    cout << " [" << todayTasks << "/3]";
-    cout << " 奖励: +" << COLOR_GREEN << "30XP" << COLOR_RESET << "\n";
-    
-    // 每日挑战2: 完成4个番茄钟
-    bool daily2 = todayPomodoros >= 4;
-    cout << (daily2 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳") << COLOR_RESET
-         << " 番茄达人 - 完成4个番茄钟";
-    cout << " [" << todayPomodoros << "/4]";
-    cout << " 奖励: +" << COLOR_GREEN << "20XP" << COLOR_RESET << "\n";
-    
-    cout << "\n" << BOLD << "📆 每周挑战：" << COLOR_RESET << "\n";
-    printSeparator("-", 60);
-    
-    // 每周挑战1: 完成15个任务
-    bool weekly1 = weeklyTasks >= 15;
-    cout << (weekly1 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳") << COLOR_RESET
-         << " 周计划王 - 完成15个任务";
-    cout << " [" << min(weeklyTasks, 15) << "/15]";
-    cout << " 奖励: +" << COLOR_GREEN << "100XP" << COLOR_RESET << "\n";
-    
-    // 每周挑战2: 连续7天完成任务
-    bool weekly2 = streak >= 7;
-    cout << (weekly2 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳") << COLOR_RESET
-         << " 连续作战 - 连续7天有任务完成";
-    cout << " [" << streak << "/7天]";
-    cout << " 奖励: +" << COLOR_GREEN << "70XP" << COLOR_RESET << "\n";
-    
-    printSeparator("-", 60);
-    
-    // 显示统计
-    int dailyDone = (daily1 ? 1 : 0) + (daily2 ? 1 : 0);
-    int weeklyDone = (weekly1 ? 1 : 0) + (weekly2 ? 1 : 0);
-    cout << "\n" << BOLD << "📊 挑战统计：" << COLOR_RESET << "\n";
-    cout << "  每日挑战: " << dailyDone << "/2 完成\n";
-    cout << "  每周挑战: " << weeklyDone << "/2 完成\n";
-    
-    pause();
-}
-
-// === 设置界面 ===
-
-void UIManager::showSettingsMenu() {
-    clearScreen();
-    printHeader("⚙️  系统设置 (Settings)");
-    
-    vector<string> options = {
-        "📋 查看当前设置",
-        "🍅 修改番茄钟时长"
-    };
-    
-    printMenu(options);
-    int choice = getUserChoice(2);
-    
-    switch (choice) {
-        case 1: viewSettings(); break;
-        case 2: updateSettings(); break;
-        case 0: return;
-    }
-}
-
-void UIManager::viewSettings() {
-    clearScreen();
-    printHeader("📋 当前设置");
-    
-    cout << "\n" << BOLD << "🍅 番茄钟设置：" << COLOR_RESET << "\n";
-    cout << "  工作时长: " << COLOR_CYAN << pomodoro->getWorkDuration() << " 分钟" << COLOR_RESET << "\n";
-    cout << "  短休息: " << COLOR_CYAN << pomodoro->getBreakDuration() << " 分钟" << COLOR_RESET << "\n";
-    cout << "  长休息: " << COLOR_CYAN << pomodoro->getLongBreakDuration() << " 分钟" << COLOR_RESET << "\n";
-    cout << "  已完成番茄钟: " << COLOR_GREEN << pomodoro->getCycleCount() << " 个" << COLOR_RESET << "\n";
-    
-    cout << "\n" << BOLD << "🎨 界面设置：" << COLOR_RESET << "\n";
-    cout << "  主题: 默认\n";
-    cout << "  语言: 中文\n";
-    
-    pause();
-}
-
-void UIManager::updateSettings() {
-    clearScreen();
-    printHeader("✏️  修改番茄钟设置");
-    
-    cout << "\n" << BOLD << "当前设置：" << COLOR_RESET << "\n";
-    cout << "  [1] 🍅 工作时长: " << pomodoro->getWorkDuration() << " 分钟\n";
-    cout << "  [2] ☕ 短休息: " << pomodoro->getBreakDuration() << " 分钟\n";
-    cout << "  [3] 🛋️  长休息: " << pomodoro->getLongBreakDuration() << " 分钟\n";
-    
-    cout << "\n" << BOLD << "选择要修改的设置：" << COLOR_RESET << "\n";
-    printSeparator("-", 40);
-    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " 🍅 番茄钟工作时长 (1-120分钟)\n";
-    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " ☕ 短休息时长 (1-60分钟)\n";
-    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " 🛋️  长休息时长 (1-60分钟)\n";
-    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " ❌ 返回\n";
-    printSeparator("-", 40);
-    
-    int choice = getUserChoice(3);
-    
-    switch (choice) {
-        case 1: {
-            cout << "\n当前工作时长: " << pomodoro->getWorkDuration() << " 分钟\n";
-            int newDuration = getIntInput("请输入新的工作时长 (1-120分钟): ");
-            if (newDuration >= 1 && newDuration <= 120) {
-                pomodoro->setWorkDuration(newDuration);
-                displaySuccess("工作时长已更新为 " + to_string(newDuration) + " 分钟");
-            } else {
-                displayError("无效的时长，请输入1-120之间的数字");
-            }
-            break;
-        }
-        case 2: {
-            cout << "\n当前短休息时长: " << pomodoro->getBreakDuration() << " 分钟\n";
-            int newDuration = getIntInput("请输入新的短休息时长 (1-60分钟): ");
-            if (newDuration >= 1 && newDuration <= 60) {
-                pomodoro->setBreakDuration(newDuration);
-                displaySuccess("短休息时长已更新为 " + to_string(newDuration) + " 分钟");
-            } else {
-                displayError("无效的时长，请输入1-60之间的数字");
-            }
-            break;
-        }
-        case 3: {
-            cout << "\n当前长休息时长: " << pomodoro->getLongBreakDuration() << " 分钟\n";
-            int newDuration = getIntInput("请输入新的长休息时长 (1-60分钟): ");
-            if (newDuration >= 1 && newDuration <= 60) {
-                pomodoro->setLongBreakDuration(newDuration);
-                displaySuccess("长休息时长已更新为 " + to_string(newDuration) + " 分钟");
-            } else {
-                displayError("无效的时长，请输入1-60之间的数字");
-            }
-            break;
-        }
-        case 0:
-            return;
-    }
     
     pause();
 }
