@@ -26,6 +26,7 @@
 #include <vector>
 #include <random>
 #include <algorithm>
+#include <regex>
 
 using namespace std;
 
@@ -200,6 +201,74 @@ bool isValidDateFormat(const string& date) {
         daysInMonth[1] = 29;
     }
     if (day > daysInMonth[month - 1]) return false;
+    
+    return true;
+}
+
+/**
+ * @brief 验证日期时间格式是否为 YYYY-MM-DD HH:MM:SS
+ * @param datetime 日期时间字符串
+ * @return 是否有效
+ */
+bool isValidDateTimeFormat(const string& datetime) {
+    if (datetime.empty()) return true; // 空字符串允许跳过
+    
+    // 检查长度和格式 (YYYY-MM-DD HH:MM:SS)
+    if (datetime.length() != 19) return false;
+    if (datetime[4] != '-' || datetime[7] != '-') return false;
+    if (datetime[10] != ' ') return false;
+    if (datetime[13] != ':' || datetime[16] != ':') return false;
+    
+    // 检查日期部分
+    string datePart = datetime.substr(0, 10);
+    if (!isValidDateFormat(datePart)) return false;
+    
+    // 检查时间部分
+    for (int i = 11; i < 19; i++) {
+        if (i == 13 || i == 16) continue; // 跳过冒号位置
+        if (!isdigit(datetime[i])) return false;
+    }
+    
+    int hour = stoi(datetime.substr(11, 2));
+    int minute = stoi(datetime.substr(14, 2));
+    int second = stoi(datetime.substr(17, 2));
+    
+    if (hour < 0 || hour > 23) return false;
+    if (minute < 0 || minute > 59) return false;
+    if (second < 0 || second > 59) return false;
+    
+    return true;
+}
+
+/**
+ * @brief 验证日期时间格式是否为 YYYY-MM-DD HH:MM
+ * @param datetime 日期时间字符串 (简化格式，无秒)
+ * @return 是否有效
+ */
+bool isValidDateTimeFormatShort(const string& datetime) {
+    if (datetime.empty()) return true; // 空字符串允许跳过
+    
+    // 检查长度和格式 (YYYY-MM-DD HH:MM)
+    if (datetime.length() != 16) return false;
+    if (datetime[4] != '-' || datetime[7] != '-') return false;
+    if (datetime[10] != ' ') return false;
+    if (datetime[13] != ':') return false;
+    
+    // 检查日期部分
+    string datePart = datetime.substr(0, 10);
+    if (!isValidDateFormat(datePart)) return false;
+    
+    // 检查时间部分 (HH:MM)
+    for (int i = 11; i < 16; i++) {
+        if (i == 13) continue; // 跳过冒号位置
+        if (!isdigit(datetime[i])) return false;
+    }
+    
+    int hour = stoi(datetime.substr(11, 2));
+    int minute = stoi(datetime.substr(14, 2));
+    
+    if (hour < 0 || hour > 23) return false;
+    if (minute < 0 || minute > 59) return false;
     
     return true;
 }
@@ -511,8 +580,13 @@ void UIManager::createTask() {
     cout << "\n🍅 预计番茄数 (Estimated Pomodoros，每个25分钟，输入0跳过)\n";
     int estimated = getIntInput("   Pomodoros: ");
     
-    // 提醒时间
-    string reminder = getInput("⏰ 提醒时间 (Reminder Time YYYY-MM-DD HH:MM，直接回车跳过): ");
+    // 提醒时间 (带验证)
+    string reminder;
+    while (true) {
+        reminder = getInput("⏰ 提醒时间 (Reminder Time YYYY-MM-DD HH:MM，直接回车跳过): ");
+        if (reminder.empty() || isValidDateTimeFormatShort(reminder)) break;
+        displayError("时间格式错误！请使用 YYYY-MM-DD HH:MM 格式（如 2025-12-31 09:00）");
+    }
     
     // 是否分配到项目
     int projectId = -1;
