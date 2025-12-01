@@ -294,20 +294,20 @@ void UIManager::printProgressBar(int current, int total, int width, string color
     cout << color;
     for (int i = 0; i < width; ++i) {
         // 使用Unicode进度条字符
-        if (i < filled) cout << "\xe2\x96\x88";  // █ filled block
-        else cout << "\xe2\x96\x91";              // ░ light shade
+        if (i < filled) cout << "█";  // filled block
+        else cout << "░";              // light shade
     }
     cout << COLOR_RESET << "] " << int(percentage * 100) << "%";
 }
 
 void UIManager::printEncouragement() {
     static const vector<string> quotes = {
-        "Keep the streak alive!", 
-        "Small steps, big progress.", 
-        "You are unstoppable today!", 
-        "Focus is the key to victory.",
-        "Every task completed is a win!",
-        "Building great habits!"
+        "Keep the streak alive! 🔥", 
+        "Small steps, big progress. 💪", 
+        "You are unstoppable today! 🚀", 
+        "Focus is the key to victory. 🎯",
+        "Every task completed is a win! 🏆",
+        "Building great habits! ⭐"
     };
     static random_device rd;
     static mt19937 gen(rd());
@@ -325,13 +325,13 @@ void UIManager::displayHUD() {
     int streak = statsAnalyzer->getCurrentStreak();
     
     cout << BOLD << COLOR_CYAN;
-    printSeparator("-", 60);
+    printSeparator("─", 60);
     cout << COLOR_RESET;
     
     // 第一行：等级、称号和成就
     cout << " Lv." << level << " [" << COLOR_MAGENTA << title << COLOR_RESET << "]"
-         << "    Achievements: " << achievements 
-         << "    Streak: " << streak << " days\n";
+         << "    🏆 " << achievements << " 成就"
+         << "    🔥 " << streak << " 天连续\n";
     
     // 第二行：经验值进度条
     cout << " XP: ";
@@ -339,7 +339,7 @@ void UIManager::displayHUD() {
     cout << " (" << currentXP << "/" << nextLevelXP << ")\n";
     
     cout << BOLD << COLOR_CYAN;
-    printSeparator("-", 60);
+    printSeparator("─", 60);
     cout << COLOR_RESET;
     
     printEncouragement();
@@ -348,14 +348,14 @@ void UIManager::displayHUD() {
 void UIManager::showTaskCompleteCelebration(int xpGained) {
     cout << "\n";
     for(int i = 0; i < 3; ++i) {
-        cout << COLOR_YELLOW << "  *  Reward Unlocking...  *  " << COLOR_RESET << "\r";
+        cout << COLOR_YELLOW << "  ★  Reward Unlocking...  ★  " << COLOR_RESET << "\r";
         cout.flush();
         this_thread::sleep_for(chrono::milliseconds(150));
         cout << "                              \r"; 
         this_thread::sleep_for(chrono::milliseconds(100));
     }
     
-    cout << "\n  " << COLOR_GREEN << BOLD << "TASK COMPLETED! Awesome!" << COLOR_RESET << "\n";
+    cout << "\n  " << COLOR_GREEN << BOLD << "✅ TASK COMPLETED! Awesome!" << COLOR_RESET << "\n";
     cout << "  " << COLOR_YELLOW << "+" << xpGained << " XP" << COLOR_RESET << "\n\n";
     
     this_thread::sleep_for(chrono::milliseconds(800)); 
@@ -368,28 +368,28 @@ void UIManager::showMainMenu() {
     
     cout << BOLD << COLOR_BLUE;
     cout << R"(
-   ======================================================
-   |    Smart Task Management System v2.0              |
-   |         智能任务管理系统 - 游戏化版本             |
-   ======================================================
+   ╔═══════════════════════════════════════════════════╗
+   ║    🎮 Smart Task Management System v2.0 🎮        ║
+   ║         智能任务管理系统 - 游戏化版本             ║
+   ╚═══════════════════════════════════════════════════╝
 )" << COLOR_RESET;
     
     displayHUD();
     
     vector<string> options = {
-        "Task Management (任务管理)",
-        "Project Management (项目管理)",
-        "Pomodoro Timer (番茄钟)",
-        "Statistics (统计分析)",
-        "Gamification (游戏化功能)",
-        "Settings (设置)"
+        "📋 任务管理 (Task Management)",
+        "📁 项目管理 (Project Management)",
+        "🍅 番茄钟 (Pomodoro Timer)",
+        "📊 统计分析 (Statistics)",
+        "🎮 游戏化功能 (Gamification)",
+        "⚙️  设置 (Settings)"
     };
     
     printMenu(options);
 }
 
 void UIManager::run() {
-    cout << COLOR_GREEN << "\n欢迎使用智能任务管理系统！\n" << COLOR_RESET;
+    cout << COLOR_GREEN << "\n🎉 欢迎使用智能任务管理系统！\n" << COLOR_RESET;
     pause();
     
     while (running) {
@@ -411,7 +411,7 @@ void UIManager::run() {
 void UIManager::exitProgram() {
     if (confirmAction("确定要退出吗？")) {
         clearScreen();
-        cout << COLOR_GREEN << "\n感谢使用！再见！\n\n" << COLOR_RESET;
+        cout << COLOR_GREEN << "\n👋 感谢使用！再见！\n\n" << COLOR_RESET;
         running = false;
     }
 }
@@ -420,15 +420,15 @@ void UIManager::exitProgram() {
 
 void UIManager::showTaskMenu() {
     clearScreen();
-    printHeader("Task Management (任务管理)");
+    printHeader("📋 任务管理 (Task Management)");
     
     vector<string> options = {
-        "Create Task (创建新任务)",
-        "View All Tasks (查看所有任务)",
-        "Update Task (更新任务)",
-        "Delete Task (删除任务)",
-        "Complete Task (完成任务)",
-        "Assign to Project (分配任务到项目)"
+        "✨ 创建新任务 (Create Task)",
+        "📋 查看所有任务 (View All Tasks)",
+        "✏️  更新任务 (Update Task)",
+        "🗑️  删除任务 (Delete Task)",
+        "✅ 完成任务 (Complete Task) 🎯",
+        "📎 分配任务到项目 (Assign to Project)"
     };
     
     printMenu(options);
@@ -447,33 +447,33 @@ void UIManager::showTaskMenu() {
 
 void UIManager::createTask() {
     clearScreen();
-    printHeader("Create New Task (创建新任务)");
+    printHeader("✨ 创建新任务 (Create New Task)");
 
     // 基本信息
-    string name = getInput("Task Name (任务名称): ");
+    string name = getInput("📝 任务名称 (Task Name): ");
     if (name.empty()) {
         displayError("任务名称不能为空！");
         pause();
         return;
     }
     
-    string desc = getInput("Description (任务描述，可选): ");
+    string desc = getInput("📄 任务描述 (Description，可选): ");
     
     // 选择优先级
     int priority = selectPriority();
     
     // 截止日期
-    string due = getInput("Due Date (截止日期 YYYY-MM-DD，直接回车跳过): ");
+    string due = getInput("📅 截止日期 (Due Date YYYY-MM-DD，直接回车跳过): ");
     
     // 标签
-    string tags = getInput("Tags (标签，用逗号分隔，直接回车跳过): ");
+    string tags = getInput("🏷️  标签 (Tags，用逗号分隔，直接回车跳过): ");
     
     // 预计番茄数
-    cout << "\nEstimated Pomodoros (预计番茄数，每个25分钟，输入0跳过)\n";
+    cout << "\n🍅 预计番茄数 (Estimated Pomodoros，每个25分钟，输入0跳过)\n";
     int estimated = getIntInput("   Pomodoros: ");
     
     // 提醒时间
-    string reminder = getInput("Reminder Time (提醒时间 YYYY-MM-DD HH:MM，直接回车跳过): ");
+    string reminder = getInput("⏰ 提醒时间 (Reminder Time YYYY-MM-DD HH:MM，直接回车跳过): ");
     
     // 是否分配到项目
     int projectId = -1;
@@ -496,7 +496,7 @@ void UIManager::createTask() {
         displaySuccess("任务创建成功！ID = " + to_string(id));
         
         // 显示任务摘要
-        cout << "\n" << BOLD << "Task Summary (任务摘要)：" << COLOR_RESET << "\n";
+        cout << "\n" << BOLD << "📋 任务摘要 (Task Summary)：" << COLOR_RESET << "\n";
         cout << "  Name: " << name << "\n";
         cout << "  Priority: ";
         if (priority == 2) cout << COLOR_RED << "High ***" << COLOR_RESET;
@@ -513,7 +513,7 @@ void UIManager::createTask() {
 
 void UIManager::listTasks() {
     clearScreen();
-    printHeader("Task List (任务列表)");
+    printHeader("📋 任务列表 (Task List)");
     
     auto tasks = taskManager->getAllTasks();
     if (tasks.empty()) {
@@ -529,14 +529,14 @@ void UIManager::listTasks() {
         if (t.isCompleted()) completed++;
     }
     
-    cout << "\n" << COLOR_CYAN << "Statistics: " << COLOR_RESET 
-         << completed << "/" << total << " completed ("
+    cout << "\n" << COLOR_CYAN << "📊 统计: " << COLOR_RESET 
+         << completed << "/" << total << " 已完成 ("
          << fixed << setprecision(0) << (total > 0 ? (completed * 100.0 / total) : 0) << "%)\n";
     
     printSeparator("-", 60);
     
     // 分类显示：未完成 -> 已完成
-    cout << "\n" << BOLD << "Pending Tasks (进行中)：" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "⏳ 进行中的任务：" << COLOR_RESET << "\n";
     bool hasPending = false;
     for (const auto& t : tasks) {
         if (!t.isCompleted()) {
@@ -545,36 +545,36 @@ void UIManager::listTasks() {
             
             // 优先级图标
             int prio = t.getPriority();
-            if (prio == 2) cout << COLOR_RED << "[H]";
-            else if (prio == 1) cout << COLOR_YELLOW << "[M]";
-            else cout << COLOR_GREEN << "[L]";
+            if (prio == 2) cout << COLOR_RED << "🔴";
+            else if (prio == 1) cout << COLOR_YELLOW << "🟡";
+            else cout << COLOR_GREEN << "🟢";
             cout << COLOR_RESET;
             
             cout << " " << t.getName();
             
             // 显示截止日期
             if (!t.getDueDate().empty()) {
-                cout << COLOR_CYAN << " (Due: " << t.getDueDate() << ")" << COLOR_RESET;
+                cout << COLOR_CYAN << " (📅 " << t.getDueDate() << ")" << COLOR_RESET;
             }
             
             // 显示番茄钟进度
             if (t.getEstimatedPomodoros() > 0) {
-                cout << " P:" << t.getPomodoroCount() << "/" << t.getEstimatedPomodoros();
+                cout << " 🍅" << t.getPomodoroCount() << "/" << t.getEstimatedPomodoros();
             }
             
             cout << "\n";
         }
     }
     if (!hasPending) {
-        cout << "  " << COLOR_GREEN << "太棒了！没有待完成的任务！" << COLOR_RESET << "\n";
+        cout << "  " << COLOR_GREEN << "🎉 太棒了！没有待完成的任务！" << COLOR_RESET << "\n";
     }
     
-    cout << "\n" << BOLD << "Completed Tasks (已完成)：" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "✅ 已完成的任务：" << COLOR_RESET << "\n";
     bool hasCompleted = false;
     for (const auto& t : tasks) {
         if (t.isCompleted()) {
             hasCompleted = true;
-            cout << "  " << COLOR_GREEN << "[Done] " << t.getName() << COLOR_RESET << "\n";
+            cout << "  " << COLOR_GREEN << "✔ " << t.getName() << COLOR_RESET << "\n";
         }
     }
     if (!hasCompleted) {
@@ -587,7 +587,7 @@ void UIManager::listTasks() {
 
 void UIManager::updateTask() {
     clearScreen();
-    printHeader("Update Task (更新任务)");
+    printHeader("✏️  更新任务 (Update Task)");
     
     // 使用选择式输入
     int taskId = selectTaskByName();
@@ -605,32 +605,32 @@ void UIManager::updateTask() {
 
     Task task = opt.value();
     
-    cout << "\n" << BOLD << "Current Task Info (当前任务信息)：" << COLOR_RESET << "\n";
-    cout << "  Name: " << task.getName() << "\n";
-    cout << "  Description: " << (task.getDescription().empty() ? "(none)" : task.getDescription()) << "\n";
-    cout << "  Priority: " << task.getPriority() << "\n";
-    cout << "  Status: " << (task.isCompleted() ? "Completed" : "Pending") << "\n";
+    cout << "\n" << BOLD << "📋 当前任务信息：" << COLOR_RESET << "\n";
+    cout << "  名称: " << task.getName() << "\n";
+    cout << "  描述: " << (task.getDescription().empty() ? "(无)" : task.getDescription()) << "\n";
+    cout << "  优先级: " << task.getPriority() << "\n";
+    cout << "  状态: " << (task.isCompleted() ? "已完成" : "未完成") << "\n";
     
-    cout << "\n" << BOLD << "Select what to modify (选择要修改的内容)：" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "选择要修改的内容：" << COLOR_RESET << "\n";
     printSeparator("-", 40);
-    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " Name (名称)\n";
-    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " Description (描述)\n";
-    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " Priority (优先级)\n";
-    cout << "  " << COLOR_YELLOW << "[4]" << COLOR_RESET << " Due Date (截止日期)\n";
-    cout << "  " << COLOR_YELLOW << "[5]" << COLOR_RESET << " Toggle Status (切换完成状态)\n";
-    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " Cancel (取消)\n";
+    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " 📝 修改名称\n";
+    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " 📄 修改描述\n";
+    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " ⭐ 修改优先级\n";
+    cout << "  " << COLOR_YELLOW << "[4]" << COLOR_RESET << " 📅 修改截止日期\n";
+    cout << "  " << COLOR_YELLOW << "[5]" << COLOR_RESET << " 🔄 切换完成状态\n";
+    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " ❌ 取消\n";
     printSeparator("-", 40);
     
     int choice = getUserChoice(5);
     
     switch (choice) {
         case 1: {
-            string newName = getInput("New Name (新名称): ");
+            string newName = getInput("📝 新名称: ");
             if (!newName.empty()) task.setName(newName);
             break;
         }
         case 2: {
-            string newDesc = getInput("New Description (新描述): ");
+            string newDesc = getInput("📄 新描述: ");
             task.setDescription(newDesc);
             break;
         }
@@ -639,7 +639,7 @@ void UIManager::updateTask() {
             break;
         }
         case 4: {
-            string newDue = getInput("New Due Date (新截止日期 YYYY-MM-DD): ");
+            string newDue = getInput("📅 新截止日期 (YYYY-MM-DD): ");
             task.setDueDate(newDue);
             break;
         }
@@ -662,7 +662,7 @@ void UIManager::updateTask() {
 
 void UIManager::deleteTask() {
     clearScreen();
-    printHeader("Delete Task (删除任务)");
+    printHeader("🗑️  删除任务 (Delete Task)");
     
     // 使用选择式输入
     int taskId = selectTaskByName();
@@ -673,7 +673,7 @@ void UIManager::deleteTask() {
     
     auto opt = taskManager->getTask(taskId);
     if (opt.has_value()) {
-        cout << "\n" << COLOR_YELLOW << "即将删除任务: " << opt.value().getName() << COLOR_RESET << "\n";
+        cout << "\n" << COLOR_YELLOW << "⚠️  即将删除任务: " << opt.value().getName() << COLOR_RESET << "\n";
     }
     
     if (confirmAction("确定要删除这个任务吗？")) {
@@ -690,7 +690,7 @@ void UIManager::deleteTask() {
 
 void UIManager::completeTask() {
     clearScreen();
-    printHeader("Complete Task (完成任务)");
+    printHeader("✅ 完成任务 (Complete Task)");
     
     auto tasks = taskManager->getAllTasks();
     
@@ -703,12 +703,12 @@ void UIManager::completeTask() {
     }
     
     if (pendingTasks.empty()) {
-        displayInfo("太棒了！没有待完成的任务！");
+        displayInfo("🎉 太棒了！没有待完成的任务！");
         pause();
         return;
     }
     
-    cout << "\n" << BOLD << "Select task to complete (选择要完成的任务)：" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "选择要完成的任务：" << COLOR_RESET << "\n";
     printSeparator("-", 50);
     
     for (size_t i = 0; i < pendingTasks.size(); i++) {
@@ -716,14 +716,14 @@ void UIManager::completeTask() {
              << pendingTasks[i].getName();
         
         int prio = pendingTasks[i].getPriority();
-        if (prio == 2) cout << COLOR_RED << " ***" << COLOR_RESET;
-        else if (prio == 1) cout << COLOR_YELLOW << " **" << COLOR_RESET;
-        else cout << COLOR_GREEN << " *" << COLOR_RESET;
+        if (prio == 2) cout << COLOR_RED << " ★★★" << COLOR_RESET;
+        else if (prio == 1) cout << COLOR_YELLOW << " ★★" << COLOR_RESET;
+        else cout << COLOR_GREEN << " ★" << COLOR_RESET;
         
         cout << "\n";
     }
     
-    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " Cancel (取消)\n";
+    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " ❌ 取消\n";
     printSeparator("-", 50);
     
     int choice = getUserChoice(static_cast<int>(pendingTasks.size()));
@@ -735,7 +735,7 @@ void UIManager::completeTask() {
     
     if (taskManager->completeTask(taskId)) {
         int xpReward = xpSystem->getXPForTaskCompletion(priority);
-        xpSystem->awardXP(xpReward, "Task completed: " + pendingTasks[choice - 1].getName());
+        xpSystem->awardXP(xpReward, "完成任务: " + pendingTasks[choice - 1].getName());
         showTaskCompleteCelebration(xpReward);
     } else {
         displayError("操作失败！");
@@ -745,16 +745,16 @@ void UIManager::completeTask() {
 
 void UIManager::assignTaskToProject() {
     clearScreen();
-    printHeader("Assign Task to Project (分配任务到项目)");
+    printHeader("📎 分配任务到项目 (Assign Task to Project)");
     
-    cout << "\n" << BOLD << "Step 1: Select Task (选择任务)" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "📌 步骤1: 选择任务" << COLOR_RESET << "\n";
     int taskId = selectTaskByName();
     if (taskId < 0) {
         pause();
         return;
     }
     
-    cout << "\n" << BOLD << "Step 2: Select Project (选择项目)" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "📌 步骤2: 选择项目" << COLOR_RESET << "\n";
     int projectId = selectProjectByName();
     
     if (projectId < 0) {
@@ -764,7 +764,7 @@ void UIManager::assignTaskToProject() {
     }
     
     if (taskManager->assignTaskToProject(taskId, projectId)) {
-        displaySuccess("任务已成功分配到项目！");
+        displaySuccess("🎉 任务已成功分配到项目！");
     } else {
         displayError("分配失败！");
     }
@@ -776,14 +776,14 @@ void UIManager::assignTaskToProject() {
 
 void UIManager::showProjectMenu() {
     clearScreen();
-    printHeader("Project Management (项目管理)");
+    printHeader("📁 项目管理 (Project Management)");
     
     vector<string> options = {
-        "Create Project (创建新项目)",
-        "View All Projects (查看所有项目)",
-        "Project Details (查看项目详情)",
-        "Update Project (更新项目)",
-        "Delete Project (删除项目)"
+        "✨ 创建新项目 (Create Project)",
+        "📁 查看所有项目 (View All Projects)",
+        "📊 查看项目详情 (Project Details)",
+        "✏️  更新项目 (Update Project)",
+        "🗑️  删除项目 (Delete Project)"
     };
     
     printMenu(options);
@@ -801,16 +801,16 @@ void UIManager::showProjectMenu() {
 
 void UIManager::createProject() {
     clearScreen();
-    printHeader("Create New Project (创建新项目)");
+    printHeader("✨ 创建新项目 (Create New Project)");
     
-    string name = getInput("Project Name (项目名称): ");
+    string name = getInput("📝 项目名称: ");
     if (name.empty()) {
         displayError("项目名称不能为空！");
         pause();
         return;
     }
     
-    string desc = getInput("Description (项目描述): ");
+    string desc = getInput("📄 项目描述: ");
     
     // 使用颜色选择替代手动输入
     string color = selectColor();
@@ -819,12 +819,12 @@ void UIManager::createProject() {
     int id = projectManager->createProject(project);
     
     if (id > 0) {
-        displaySuccess("项目创建成功！ID: " + to_string(id));
+        displaySuccess("🎉 项目创建成功！ID: " + to_string(id));
         
-        cout << "\n" << BOLD << "Project Summary (项目摘要)：" << COLOR_RESET << "\n";
-        cout << "  Name: " << name << "\n";
-        cout << "  Description: " << (desc.empty() ? "(none)" : desc) << "\n";
-        cout << "  Color: " << color << "\n";
+        cout << "\n" << BOLD << "📋 项目摘要：" << COLOR_RESET << "\n";
+        cout << "  名称: " << name << "\n";
+        cout << "  描述: " << (desc.empty() ? "(无)" : desc) << "\n";
+        cout << "  颜色: " << color << "\n";
     } else {
         displayError("创建失败！");
     }
@@ -834,7 +834,7 @@ void UIManager::createProject() {
 
 void UIManager::listProjects() {
     clearScreen();
-    printHeader("Project List (项目列表)");
+    printHeader("📁 项目列表 (Project List)");
     
     vector<Project*> projects = projectManager->getAllProjects();
     
@@ -848,14 +848,14 @@ void UIManager::listProjects() {
     printSeparator("-", 55);
     
     for (Project* p : projects) {
-        cout << "\n  " << COLOR_BLUE << BOLD << p->getName() << COLOR_RESET << "\n";
-        cout << "  " << "Description: " << (p->getDescription().empty() ? "(none)" : p->getDescription()) << "\n";
+        cout << "\n  " << COLOR_BLUE << BOLD << "📁 " << p->getName() << COLOR_RESET << "\n";
+        cout << "  " << "📄 描述: " << (p->getDescription().empty() ? "(无)" : p->getDescription()) << "\n";
         
         // 进度条
         double prog = p->getProgress();
-        cout << "  Progress: ";
+        cout << "  📊 进度: ";
         printProgressBar(static_cast<int>(prog * 100), 100, 20, COLOR_GREEN);
-        cout << " (" << p->getCompletedTasks() << "/" << p->getTotalTasks() << " tasks)\n";
+        cout << " (" << p->getCompletedTasks() << "/" << p->getTotalTasks() << " 任务)\n";
         
         printSeparator("-", 55);
     }
@@ -865,7 +865,7 @@ void UIManager::listProjects() {
 
 void UIManager::viewProjectDetails() {
     clearScreen();
-    printHeader("Project Details (项目详情)");
+    printHeader("📊 项目详情 (Project Details)");
     
     // 使用选择式输入
     int projectId = selectProjectByName();
@@ -883,29 +883,29 @@ void UIManager::viewProjectDetails() {
     }
     
     cout << "\n";
-    cout << BOLD << "========================================\n";
-    cout << "  Project: " << p->getName() << "\n";
-    cout << "========================================" << COLOR_RESET << "\n\n";
+    cout << BOLD << "╔═══════════════════════════════════════╗\n";
+    cout << "║  📁 项目: " << p->getName() << "\n";
+    cout << "╚═══════════════════════════════════════╝" << COLOR_RESET << "\n\n";
     
-    cout << "Description: " << (p->getDescription().empty() ? "(none)" : p->getDescription()) << "\n";
-    cout << "Color: " << p->getColorLabel() << "\n";
-    cout << "Target Date: " << (p->getTargetDate().empty() ? "(not set)" : p->getTargetDate()) << "\n";
-    cout << "Created: " << p->getCreatedDate() << "\n";
-    cout << "Status: " << (p->isArchived() ? "Archived" : "Active") << "\n";
+    cout << "📄 描述: " << (p->getDescription().empty() ? "(无)" : p->getDescription()) << "\n";
+    cout << "🎨 颜色: " << p->getColorLabel() << "\n";
+    cout << "📅 目标日期: " << (p->getTargetDate().empty() ? "(未设置)" : p->getTargetDate()) << "\n";
+    cout << "📆 创建日期: " << p->getCreatedDate() << "\n";
+    cout << "📊 状态: " << (p->isArchived() ? "已归档 📦" : "活跃中 ✅") << "\n";
     
-    cout << "\n" << BOLD << "Task Statistics:" << COLOR_RESET << "\n";
-    cout << "  Total Tasks: " << p->getTotalTasks() << "\n";
-    cout << "  Completed: " << p->getCompletedTasks() << "\n";
-    cout << "  Progress: ";
+    cout << "\n" << BOLD << "📈 任务统计:" << COLOR_RESET << "\n";
+    cout << "  总任务: " << p->getTotalTasks() << "\n";
+    cout << "  已完成: " << p->getCompletedTasks() << "\n";
+    cout << "  进度: ";
     printProgressBar(static_cast<int>(p->getProgress() * 100), 100, 25, COLOR_GREEN);
     cout << "\n";
     
     // 显示项目下的任务
     auto tasks = taskManager->getTasksByProject(projectId);
     if (!tasks.empty()) {
-        cout << "\n" << BOLD << "Project Tasks:" << COLOR_RESET << "\n";
+        cout << "\n" << BOLD << "📋 项目任务列表:" << COLOR_RESET << "\n";
         for (const auto& t : tasks) {
-            string status = t.isCompleted() ? COLOR_GREEN + "[Done]" : COLOR_YELLOW + "[Todo]";
+            string status = t.isCompleted() ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳";
             cout << "  " << status << COLOR_RESET << " " << t.getName() << "\n";
         }
     }
@@ -915,7 +915,7 @@ void UIManager::viewProjectDetails() {
 
 void UIManager::updateProject() {
     clearScreen();
-    printHeader("Update Project (更新项目)");
+    printHeader("✏️  更新项目 (Update Project)");
     
     // 使用选择式输入
     int projectId = selectProjectByName();
@@ -931,31 +931,31 @@ void UIManager::updateProject() {
         return;
     }
     
-    cout << "\n" << BOLD << "Current Project Info (当前项目信息)：" << COLOR_RESET << "\n";
-    cout << "  Name: " << p->getName() << "\n";
-    cout << "  Description: " << p->getDescription() << "\n";
-    cout << "  Color: " << p->getColorLabel() << "\n";
+    cout << "\n" << BOLD << "📋 当前项目信息：" << COLOR_RESET << "\n";
+    cout << "  名称: " << p->getName() << "\n";
+    cout << "  描述: " << p->getDescription() << "\n";
+    cout << "  颜色: " << p->getColorLabel() << "\n";
     
-    cout << "\n" << BOLD << "Select what to modify (选择要修改的内容)：" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "选择要修改的内容：" << COLOR_RESET << "\n";
     printSeparator("-", 40);
-    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " Name (名称)\n";
-    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " Description (描述)\n";
-    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " Color (颜色)\n";
-    cout << "  " << COLOR_YELLOW << "[4]" << COLOR_RESET << " Target Date (目标日期)\n";
-    cout << "  " << COLOR_YELLOW << "[5]" << COLOR_RESET << " Toggle Archive (归档/取消归档)\n";
-    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " Cancel (取消)\n";
+    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " 📝 修改名称\n";
+    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " 📄 修改描述\n";
+    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " 🎨 修改颜色\n";
+    cout << "  " << COLOR_YELLOW << "[4]" << COLOR_RESET << " 📅 设置目标日期\n";
+    cout << "  " << COLOR_YELLOW << "[5]" << COLOR_RESET << " 📦 归档/取消归档\n";
+    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " ❌ 取消\n";
     printSeparator("-", 40);
     
     int choice = getUserChoice(5);
     
     switch (choice) {
         case 1: {
-            string newName = getInput("New Name (新名称): ");
+            string newName = getInput("📝 新名称: ");
             if (!newName.empty()) p->setName(newName);
             break;
         }
         case 2: {
-            string newDesc = getInput("New Description (新描述): ");
+            string newDesc = getInput("📄 新描述: ");
             p->setDescription(newDesc);
             break;
         }
@@ -965,13 +965,13 @@ void UIManager::updateProject() {
             break;
         }
         case 4: {
-            string newDate = getInput("Target Date (目标日期 YYYY-MM-DD): ");
+            string newDate = getInput("📅 目标日期 (YYYY-MM-DD): ");
             p->setTargetDate(newDate);
             break;
         }
         case 5: {
             p->setArchived(!p->isArchived());
-            displayInfo(p->isArchived() ? "项目已归档" : "项目已取消归档");
+            displayInfo(p->isArchived() ? "📦 项目已归档" : "✅ 项目已取消归档");
             break;
         }
         case 0:
@@ -979,7 +979,7 @@ void UIManager::updateProject() {
     }
     
     if (projectManager->updateProject(*p)) {
-        displaySuccess("项目更新成功！");
+        displaySuccess("🎉 项目更新成功！");
     } else {
         displayError("更新失败！");
     }
@@ -989,7 +989,7 @@ void UIManager::updateProject() {
 
 void UIManager::deleteProject() {
     clearScreen();
-    printHeader("Delete Project (删除项目)");
+    printHeader("🗑️  删除项目 (Delete Project)");
     
     // 使用选择式输入
     int projectId = selectProjectByName();
@@ -1000,12 +1000,12 @@ void UIManager::deleteProject() {
     
     Project* p = projectManager->getProject(projectId);
     if (p != nullptr) {
-        cout << "\n" << COLOR_YELLOW << "即将删除项目: " << p->getName() << COLOR_RESET << "\n";
+        cout << "\n" << COLOR_YELLOW << "⚠️  即将删除项目: " << p->getName() << COLOR_RESET << "\n";
     }
     
     if (confirmAction("确定要删除这个项目吗？（项目下的任务不会被删除）")) {
         if (projectManager->deleteProject(projectId)) {
-            displaySuccess("项目删除成功！");
+            displaySuccess("🎉 项目删除成功！");
         } else {
             displayError("删除失败！");
         }
@@ -1020,21 +1020,21 @@ void UIManager::deleteProject() {
 
 void UIManager::showPomodoroMenu() {
     clearScreen();
-    printHeader("Pomodoro Timer (番茄钟)");
+    printHeader("🍅 番茄钟 (Pomodoro Timer)");
     
-    cout << "\n" << BOLD << "What is Pomodoro? (什么是番茄工作法？)" << COLOR_RESET << "\n";
-    cout << "  Focus for 25 minutes, then take a 5-minute break.\n";
-    cout << "  After 4 pomodoros, take a 15-30 minute break.\n";
+    cout << "\n" << BOLD << "🍅 什么是番茄工作法？" << COLOR_RESET << "\n";
+    cout << "  专注工作25分钟，然后休息5分钟。\n";
+    cout << "  每完成4个番茄钟，可以休息15-30分钟。\n";
     
-    cout << "\n" << COLOR_CYAN << "Today's Pomodoros: " << COLOR_RESET 
-         << statsAnalyzer->getPomodorosToday() << "\n";
-    cout << COLOR_CYAN << "Total Pomodoros: " << COLOR_RESET 
-         << statsAnalyzer->getTotalPomodoros() << "\n";
+    cout << "\n" << COLOR_CYAN << "📊 今日番茄钟: " << COLOR_RESET 
+         << statsAnalyzer->getPomodorosToday() << " 个\n";
+    cout << COLOR_CYAN << "📈 总番茄钟数: " << COLOR_RESET 
+         << statsAnalyzer->getTotalPomodoros() << " 个\n";
     
     vector<string> options = {
-        "Start Work Session (开始工作 25分钟)",
-        "Short Break (短休息 5分钟)",
-        "Long Break (长休息 15分钟)"
+        "🍅 开始工作 (25分钟)",
+        "☕ 短休息 (5分钟)",
+        "🛋️  长休息 (15分钟)"
     };
     
     printMenu(options);
@@ -1043,14 +1043,14 @@ void UIManager::showPomodoroMenu() {
     switch (choice) {
         case 1: startPomodoroSession(); break;
         case 2: {
-            displayInfo("开始短休息 (5分钟)...");
-            cout << "  Tip: Stand up, stretch, drink some water!\n";
+            displayInfo("☕ 开始短休息 (5分钟)...");
+            cout << "  💡 提示: 站起来活动一下，喝杯水！\n";
             pause();
             break;
         }
         case 3: {
-            displayInfo("开始长休息 (15分钟)...");
-            cout << "  Tip: Take a walk, rest your eyes!\n";
+            displayInfo("🛋️  开始长休息 (15分钟)...");
+            cout << "  💡 提示: 可以出去走走，放松一下眼睛！\n";
             pause();
             break;
         }
@@ -1060,40 +1060,39 @@ void UIManager::showPomodoroMenu() {
 
 void UIManager::startPomodoroSession() {
     clearScreen();
-    printHeader("Pomodoro Work Session (番茄钟工作时间)");
+    printHeader("🍅 番茄钟工作时间");
     
     // 选择关联的任务（可选）
-    cout << "\nWould you like to associate a task? (是否关联任务？)\n";
-    cout << "  (Task's pomodoro count will +1 when completed)\n";
+    cout << "\n是否要关联一个任务？（完成后任务的番茄数会+1）\n";
     int taskId = -1;
-    if (confirmAction("Associate task? (关联任务？)")) {
+    if (confirmAction("关联任务？")) {
         taskId = selectTaskByName();
     }
     
-    cout << "\n" << COLOR_GREEN << BOLD << "Pomodoro Started! (番茄钟开始！)" << COLOR_RESET << "\n";
-    cout << "  Focus Time: 25 minutes\n";
-    cout << "  Stay focused, minimize distractions!\n\n";
+    cout << "\n" << COLOR_GREEN << BOLD << "🍅 番茄钟开始！" << COLOR_RESET << "\n";
+    cout << "  ⏱️  专注时间: 25分钟\n";
+    cout << "  🎯 保持专注，减少干扰！\n\n";
     
     // TODO: 生产环境中应使用实际计时器，这里为演示目的简化
     // In production, implement actual timer with countdown display
     // For now, simulate completion for demonstration purposes
-    cout << COLOR_YELLOW << "  (Demo mode: Press Enter to simulate completion)" << COLOR_RESET << "\n";
+    cout << COLOR_YELLOW << "  (演示模式：按Enter模拟完成番茄钟)" << COLOR_RESET << "\n";
     pause();
     
     // 番茄钟完成
-    cout << "\n" << COLOR_GREEN << BOLD << "Pomodoro Completed! (番茄钟完成！)" << COLOR_RESET << "\n";
+    cout << "\n" << COLOR_GREEN << BOLD << "🎉 番茄钟完成！" << COLOR_RESET << "\n";
     
     // 奖励XP
     int xpReward = xpSystem->getXPForPomodoro();
-    xpSystem->awardXP(xpReward, "Pomodoro completed");
+    xpSystem->awardXP(xpReward, "完成番茄钟");
     
     // 如果关联了任务，增加任务的番茄数
     if (taskId > 0) {
         taskManager->addPomodoro(taskId);
-        displaySuccess("Task pomodoro count +1");
+        displaySuccess("🍅 任务番茄数 +1");
     }
     
-    cout << "\n  " << COLOR_CYAN << "Time for a break! (休息一下吧！)" << COLOR_RESET << "\n";
+    cout << "\n  " << COLOR_CYAN << "☕ 休息一下吧！" << COLOR_RESET << "\n";
     pause();
 }
 
@@ -1101,14 +1100,14 @@ void UIManager::startPomodoroSession() {
 
 void UIManager::showStatisticsMenu() {
     clearScreen();
-    printHeader("Statistics (统计分析)");
+    printHeader("📊 统计分析 (Statistics)");
     
     vector<string> options = {
-        "Summary (统计数据总览)",
-        "Daily Report (每日报告)",
-        "Weekly Report (每周报告)",
-        "Monthly Report (每月报告)",
-        "Task Heatmap (任务完成热力图)"
+        "📈 统计数据总览 (Summary)",
+        "📅 每日报告 (Daily Report)",
+        "📆 每周报告 (Weekly Report)",
+        "📊 每月报告 (Monthly Report)",
+        "🔥 任务完成热力图 (Task Heatmap)"
     };
     
     printMenu(options);
@@ -1126,35 +1125,35 @@ void UIManager::showStatisticsMenu() {
 
 void UIManager::showStatisticsSummary() {
     clearScreen();
-    printHeader("Statistics Summary (统计数据总览)");
+    printHeader("📈 统计数据总览");
     cout << statsAnalyzer->generateSummary();
     pause();
 }
 
 void UIManager::showDailyReport() {
     clearScreen();
-    printHeader("Daily Report (每日报告)");
+    printHeader("📅 每日报告");
     cout << statsAnalyzer->generateDailyReport();
     pause();
 }
 
 void UIManager::showWeeklyReport() {
     clearScreen();
-    printHeader("Weekly Report (每周报告)");
+    printHeader("📆 每周报告");
     cout << statsAnalyzer->generateWeeklyReport();
     pause();
 }
 
 void UIManager::showMonthlyReport() {
     clearScreen();
-    printHeader("Monthly Report (每月报告)");
+    printHeader("📊 每月报告");
     cout << statsAnalyzer->generateMonthlyReport();
     pause();
 }
 
 void UIManager::showHeatmap() {
     clearScreen();
-    printHeader("Task Heatmap (任务完成热力图)");
+    printHeader("🔥 任务完成热力图");
     cout << heatmap->generateHeatmap(90);
     pause();
 }
@@ -1163,12 +1162,12 @@ void UIManager::showHeatmap() {
 
 void UIManager::showGamificationMenu() {
     clearScreen();
-    printHeader("Gamification (游戏化功能)");
+    printHeader("🎮 游戏化功能 (Gamification)");
     
     vector<string> options = {
-        "XP & Level (经验值和等级)",
-        "Achievements (成就系统)",
-        "Challenges (挑战系统)"
+        "⭐ 经验值和等级 (XP & Level)",
+        "🏆 成就系统 (Achievements)",
+        "🎯 挑战系统 (Challenges)"
     };
     
     printMenu(options);
@@ -1184,70 +1183,70 @@ void UIManager::showGamificationMenu() {
 
 void UIManager::showXPAndLevel() {
     clearScreen();
-    printHeader("XP & Level (经验值和等级)");
+    printHeader("⭐ 经验值和等级");
     cout << xpSystem->displayLevelInfo();
     
-    cout << "\n" << BOLD << "How to earn XP (经验值获取方式)：" << COLOR_RESET << "\n";
-    cout << "  - Complete task: " << COLOR_GREEN << "10-50 XP" << COLOR_RESET << " (by priority)\n";
-    cout << "  - Complete pomodoro: " << COLOR_GREEN << "5 XP" << COLOR_RESET << "\n";
-    cout << "  - Daily streak: " << COLOR_GREEN << "days x 10 XP" << COLOR_RESET << "\n";
-    cout << "  - Unlock achievement: " << COLOR_GREEN << "varies" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "💡 经验值获取方式：" << COLOR_RESET << "\n";
+    cout << "  • 完成任务: " << COLOR_GREEN << "10-50 XP" << COLOR_RESET << " (根据优先级)\n";
+    cout << "  • 完成番茄钟: " << COLOR_GREEN << "5 XP" << COLOR_RESET << "\n";
+    cout << "  • 连续打卡: " << COLOR_GREEN << "天数×10 XP" << COLOR_RESET << "\n";
+    cout << "  • 解锁成就: " << COLOR_GREEN << "不等" << COLOR_RESET << "\n";
     
     pause();
 }
 
 void UIManager::showAchievements() {
     clearScreen();
-    printHeader("Achievements (成就系统)");
+    printHeader("🏆 成就系统");
     
     int unlocked = statsAnalyzer->getAchievementsUnlocked();
     // 成就总数常量 - 实际应从AchievementManager获取
     const int TOTAL_ACHIEVEMENTS = 10;
     
-    cout << "\n" << BOLD << "Achievement Progress: " << COLOR_RESET;
+    cout << "\n" << BOLD << "🏆 成就进度: " << COLOR_RESET;
     printProgressBar(unlocked, TOTAL_ACHIEVEMENTS, 20, COLOR_YELLOW);
     cout << " (" << unlocked << "/" << TOTAL_ACHIEVEMENTS << ")\n\n";
     
     // 显示一些基本成就
-    cout << BOLD << "Available Achievements (可用成就)：" << COLOR_RESET << "\n";
+    cout << BOLD << "可用成就：" << COLOR_RESET << "\n";
     printSeparator("-", 50);
     
-    cout << (unlocked >= 1 ? COLOR_GREEN + "[Done]" : COLOR_YELLOW + "[Lock]") << COLOR_RESET
-         << " First Step - Complete your first task\n";
-    cout << (unlocked >= 2 ? COLOR_GREEN + "[Done]" : COLOR_YELLOW + "[Lock]") << COLOR_RESET
-         << " Seven Day Streak - Complete tasks for 7 days\n";
-    cout << (unlocked >= 3 ? COLOR_GREEN + "[Done]" : COLOR_YELLOW + "[Lock]") << COLOR_RESET
-         << " Pomodoro Master - Complete 100 pomodoros\n";
-    cout << (unlocked >= 4 ? COLOR_GREEN + "[Done]" : COLOR_YELLOW + "[Lock]") << COLOR_RESET
-         << " Time Manager - Complete 5 tasks in one day\n";
+    cout << (unlocked >= 1 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
+         << " 初次起步 - 完成第一个任务\n";
+    cout << (unlocked >= 2 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
+         << " 七日坚持 - 连续7天完成任务\n";
+    cout << (unlocked >= 3 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
+         << " 番茄大师 - 完成100个番茄钟\n";
+    cout << (unlocked >= 4 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
+         << " 时间管理大师 - 单日完成5个任务\n";
     
     printSeparator("-", 50);
-    displayInfo("Full achievement system coming soon...");
+    displayInfo("完整成就系统开发中...");
     
     pause();
 }
 
 void UIManager::showChallenges() {
     clearScreen();
-    printHeader("Challenges (挑战系统)");
+    printHeader("🎯 挑战系统");
     
     int completed = statsAnalyzer->getChallengesCompleted();
     
-    cout << "\n" << BOLD << "Completed Challenges: " << COLOR_RESET 
-         << COLOR_GREEN << completed << COLOR_RESET << "\n\n";
+    cout << "\n" << BOLD << "🏅 已完成挑战: " << COLOR_RESET 
+         << COLOR_GREEN << completed << COLOR_RESET << " 个\n\n";
     
-    cout << BOLD << "Daily Challenges (每日挑战)：" << COLOR_RESET << "\n";
+    cout << BOLD << "📅 每日挑战：" << COLOR_RESET << "\n";
     printSeparator("-", 50);
-    cout << "  [*] Daily Goal - Complete 3 tasks (Reward: 30XP)\n";
-    cout << "  [*] Pomodoro Pro - Complete 4 pomodoros (Reward: 20XP)\n";
+    cout << "  🎯 今日目标 - 完成3个任务 (奖励: 30XP)\n";
+    cout << "  🍅 番茄达人 - 完成4个番茄钟 (奖励: 20XP)\n";
     
-    cout << "\n" << BOLD << "Weekly Challenges (每周挑战)：" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "📆 每周挑战：" << COLOR_RESET << "\n";
     printSeparator("-", 50);
-    cout << "  [*] Weekly Planner - Complete 15 tasks (Reward: 100XP)\n";
-    cout << "  [*] Consistent Worker - 7-day streak (Reward: 70XP)\n";
+    cout << "  📋 周计划王 - 完成15个任务 (奖励: 100XP)\n";
+    cout << "  🔥 连续作战 - 连续7天有任务完成 (奖励: 70XP)\n";
     
     printSeparator("-", 50);
-    displayInfo("Full challenge system coming soon...");
+    displayInfo("完整挑战系统开发中...");
     
     pause();
 }
@@ -1256,12 +1255,12 @@ void UIManager::showChallenges() {
 
 void UIManager::showSettingsMenu() {
     clearScreen();
-    printHeader("Settings (系统设置)");
+    printHeader("⚙️  系统设置 (Settings)");
     
     vector<string> options = {
-        "View Settings (查看当前设置)",
-        "Pomodoro Duration (修改番茄钟时长)",
-        "Notification Settings (修改通知设置)"
+        "📋 查看当前设置",
+        "🍅 修改番茄钟时长",
+        "🔔 修改通知设置"
     };
     
     printMenu(options);
@@ -1271,7 +1270,7 @@ void UIManager::showSettingsMenu() {
         case 1: viewSettings(); break;
         case 2: updateSettings(); break;
         case 3: {
-            displayInfo("Notification settings coming soon...");
+            displayInfo("🔔 通知设置功能开发中...");
             pause();
             break;
         }
@@ -1281,35 +1280,35 @@ void UIManager::showSettingsMenu() {
 
 void UIManager::viewSettings() {
     clearScreen();
-    printHeader("Current Settings (当前设置)");
+    printHeader("📋 当前设置");
     
-    cout << "\n" << BOLD << "Pomodoro Settings (番茄钟设置)：" << COLOR_RESET << "\n";
-    cout << "  Work Duration: 25 minutes\n";
-    cout << "  Short Break: 5 minutes\n";
-    cout << "  Long Break: 15 minutes\n";
-    cout << "  Long Break Interval: 4 pomodoros\n";
+    cout << "\n" << BOLD << "🍅 番茄钟设置：" << COLOR_RESET << "\n";
+    cout << "  工作时长: 25 分钟\n";
+    cout << "  短休息: 5 分钟\n";
+    cout << "  长休息: 15 分钟\n";
+    cout << "  长休息间隔: 4 个番茄钟\n";
     
-    cout << "\n" << BOLD << "Notification Settings (通知设置)：" << COLOR_RESET << "\n";
-    cout << "  Sound: Enabled\n";
-    cout << "  Desktop Notifications: Enabled\n";
+    cout << "\n" << BOLD << "🔔 通知设置：" << COLOR_RESET << "\n";
+    cout << "  声音: 开启\n";
+    cout << "  桌面通知: 开启\n";
     
-    cout << "\n" << BOLD << "UI Settings (界面设置)：" << COLOR_RESET << "\n";
-    cout << "  Theme: Default\n";
-    cout << "  Language: Chinese\n";
+    cout << "\n" << BOLD << "🎨 界面设置：" << COLOR_RESET << "\n";
+    cout << "  主题: 默认\n";
+    cout << "  语言: 中文\n";
     
     pause();
 }
 
 void UIManager::updateSettings() {
     clearScreen();
-    printHeader("Modify Settings (修改设置)");
+    printHeader("✏️  修改设置");
     
-    cout << "\n" << BOLD << "Select setting to modify (选择要修改的设置)：" << COLOR_RESET << "\n";
+    cout << "\n" << BOLD << "选择要修改的设置：" << COLOR_RESET << "\n";
     printSeparator("-", 40);
-    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " Work Duration (番茄钟工作时长)\n";
-    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " Short Break (短休息时长)\n";
-    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " Long Break (长休息时长)\n";
-    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " Back (返回)\n";
+    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " 🍅 番茄钟工作时长\n";
+    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " ☕ 短休息时长\n";
+    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " 🛋️  长休息时长\n";
+    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " ❌ 返回\n";
     printSeparator("-", 40);
     
     int choice = getUserChoice(3);
@@ -1318,7 +1317,7 @@ void UIManager::updateSettings() {
         case 1:
         case 2:
         case 3:
-            displayInfo("Settings modification coming soon...");
+            displayInfo("⚙️  设置修改功能开发中...");
             break;
         case 0:
             return;
@@ -1342,21 +1341,17 @@ void UIManager::displayMessage(const string& msg, const string& type) {
 }
 
 void UIManager::displayError(const string& error) {
-    // UTF-8 encoding for ❌
-    cout << COLOR_RED << "\xe2\x9d\x8c " << error << COLOR_RESET << "\n";
+    cout << COLOR_RED << "❌ " << error << COLOR_RESET << "\n";
 }
 
 void UIManager::displaySuccess(const string& msg) {
-    // UTF-8 encoding for ✅
-    cout << COLOR_GREEN << "\xe2\x9c\x85 " << msg << COLOR_RESET << "\n";
+    cout << COLOR_GREEN << "✅ " << msg << COLOR_RESET << "\n";
 }
 
 void UIManager::displayWarning(const string& warning) {
-    // UTF-8 encoding for ⚠️
-    cout << COLOR_YELLOW << "\xe2\x9a\xa0\xef\xb8\x8f  " << warning << COLOR_RESET << "\n";
+    cout << COLOR_YELLOW << "⚠️  " << warning << COLOR_RESET << "\n";
 }
 
 void UIManager::displayInfo(const string& info) {
-    // UTF-8 encoding for ℹ️
-    cout << COLOR_CYAN << "\xe2\x84\xb9\xef\xb8\x8f  " << info << COLOR_RESET << "\n";
+    cout << COLOR_CYAN << "ℹ️  " << info << COLOR_RESET << "\n";
 }
