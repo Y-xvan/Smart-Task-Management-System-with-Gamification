@@ -117,6 +117,8 @@ public:
     // === 番茄钟功能 ===
     void showPomodoroMenu();
     void startPomodoroSession();
+    void startShortBreak();
+    void startLongBreak();
 
     // === 设置功能 ===
     void viewSettings();

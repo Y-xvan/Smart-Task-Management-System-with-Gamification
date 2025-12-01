@@ -1023,18 +1023,23 @@ void UIManager::showPomodoroMenu() {
     printHeader("🍅 番茄钟 (Pomodoro Timer)");
     
     cout << "\n" << BOLD << "🍅 什么是番茄工作法？" << COLOR_RESET << "\n";
-    cout << "  专注工作25分钟，然后休息5分钟。\n";
-    cout << "  每完成4个番茄钟，可以休息15-30分钟。\n";
+    cout << "  专注工作一段时间，然后休息一下。\n";
+    cout << "  每完成4个番茄钟，可以休息更长时间。\n";
     
     cout << "\n" << COLOR_CYAN << "📊 今日番茄钟: " << COLOR_RESET 
          << statsAnalyzer->getPomodorosToday() << " 个\n";
-    cout << COLOR_CYAN << "📈 总番茄钟数: " << COLOR_RESET 
-         << statsAnalyzer->getTotalPomodoros() << " 个\n";
+    cout << COLOR_CYAN << "📈 累计番茄钟: " << COLOR_RESET 
+         << pomodoro->getCycleCount() << " 个\n";
+    
+    cout << "\n" << BOLD << "⚙️  当前设置:" << COLOR_RESET << "\n";
+    cout << "  工作: " << pomodoro->getWorkDuration() << "分钟 | ";
+    cout << "短休息: " << pomodoro->getBreakDuration() << "分钟 | ";
+    cout << "长休息: " << pomodoro->getLongBreakDuration() << "分钟\n";
     
     vector<string> options = {
-        "🍅 开始工作 (25分钟)",
-        "☕ 短休息 (5分钟)",
-        "🛋️  长休息 (15分钟)"
+        "🍅 开始工作 (" + to_string(pomodoro->getWorkDuration()) + "分钟)",
+        "☕ 短休息 (" + to_string(pomodoro->getBreakDuration()) + "分钟)",
+        "🛋️  长休息 (" + to_string(pomodoro->getLongBreakDuration()) + "分钟)"
     };
     
     printMenu(options);
@@ -1042,18 +1047,8 @@ void UIManager::showPomodoroMenu() {
     
     switch (choice) {
         case 1: startPomodoroSession(); break;
-        case 2: {
-            displayInfo("☕ 开始短休息 (5分钟)...");
-            cout << "  💡 提示: 站起来活动一下，喝杯水！\n";
-            pause();
-            break;
-        }
-        case 3: {
-            displayInfo("🛋️  开始长休息 (15分钟)...");
-            cout << "  💡 提示: 可以出去走走，放松一下眼睛！\n";
-            pause();
-            break;
-        }
+        case 2: startShortBreak(); break;
+        case 3: startLongBreak(); break;
         case 0: return;
     }
 }
@@ -1069,30 +1064,158 @@ void UIManager::startPomodoroSession() {
         taskId = selectTaskByName();
     }
     
+    int duration = pomodoro->getWorkDuration();
     cout << "\n" << COLOR_GREEN << BOLD << "🍅 番茄钟开始！" << COLOR_RESET << "\n";
-    cout << "  ⏱️  专注时间: 25分钟\n";
-    cout << "  🎯 保持专注，减少干扰！\n\n";
+    cout << "  ⏱️  专注时间: " << duration << "分钟\n";
+    cout << "  🎯 保持专注，减少干扰！\n";
+    cout << "  💡 按 Ctrl+C 可中断计时\n\n";
     
-    // TODO: 生产环境中应使用实际计时器，这里为演示目的简化
-    // In production, implement actual timer with countdown display
-    // For now, simulate completion for demonstration purposes
-    cout << COLOR_YELLOW << "  (演示模式：按Enter模拟完成番茄钟)" << COLOR_RESET << "\n";
-    pause();
+    // 使用真实倒计时
+    cout << BOLD << "⏱️  倒计时: " << COLOR_RESET;
+    cout.flush();
     
-    // 番茄钟完成
-    cout << "\n" << COLOR_GREEN << BOLD << "🎉 番茄钟完成！" << COLOR_RESET << "\n";
+    bool completed = pomodoro->startWorkWithCountdown([this, duration](int remaining) {
+        int mins = remaining / 60;
+        int secs = remaining % 60;
+        
+        // 计算进度百分比
+        int total = duration * 60;
+        int elapsed = total - remaining;
+        int percent = (elapsed * 100) / total;
+        
+        // 清除当前行并重新显示
+        cout << "\r" << BOLD << "⏱️  倒计时: " << COLOR_RESET;
+        cout << COLOR_CYAN << setfill('0') << setw(2) << mins << ":" 
+             << setfill('0') << setw(2) << secs << COLOR_RESET;
+        cout << "  [";
+        
+        // 进度条 (20字符宽)
+        int filled = (percent * 20) / 100;
+        cout << COLOR_GREEN;
+        for (int i = 0; i < 20; i++) {
+            if (i < filled) cout << "█";
+            else cout << "░";
+        }
+        cout << COLOR_RESET << "] " << percent << "%  ";
+        cout.flush();
+    });
     
-    // 奖励XP
-    int xpReward = xpSystem->getXPForPomodoro();
-    xpSystem->awardXP(xpReward, "完成番茄钟");
+    cout << "\n\n";
     
-    // 如果关联了任务，增加任务的番茄数
-    if (taskId > 0) {
-        taskManager->addPomodoro(taskId);
-        displaySuccess("🍅 任务番茄数 +1");
+    if (completed) {
+        // 番茄钟完成
+        cout << COLOR_GREEN << BOLD << "🎉 番茄钟完成！" << COLOR_RESET << "\n";
+        
+        // 奖励XP
+        int xpReward = xpSystem->getXPForPomodoro();
+        xpSystem->awardXP(xpReward, "完成番茄钟");
+        cout << "  +" << COLOR_YELLOW << xpReward << " XP" << COLOR_RESET << "\n";
+        
+        // 如果关联了任务，增加任务的番茄数
+        if (taskId > 0) {
+            taskManager->addPomodoro(taskId);
+            displaySuccess("🍅 任务番茄数 +1");
+        }
+        
+        cout << "\n  " << COLOR_CYAN << "☕ 休息一下吧！" << COLOR_RESET << "\n";
+        
+        // 显示今日番茄钟统计
+        cout << "\n  📊 今日完成番茄钟: " << statsAnalyzer->getPomodorosToday() << " 个\n";
+        cout << "  🍅 累计完成番茄钟: " << pomodoro->getCycleCount() << " 个\n";
+    } else {
+        displayWarning("番茄钟被中断");
     }
     
-    cout << "\n  " << COLOR_CYAN << "☕ 休息一下吧！" << COLOR_RESET << "\n";
+    pause();
+}
+
+void UIManager::startShortBreak() {
+    clearScreen();
+    printHeader("☕ 短休息时间");
+    
+    int duration = pomodoro->getBreakDuration();
+    cout << "\n" << COLOR_CYAN << BOLD << "☕ 短休息开始！" << COLOR_RESET << "\n";
+    cout << "  ⏱️  休息时间: " << duration << "分钟\n";
+    cout << "  💡 站起来活动一下，喝杯水！\n\n";
+    
+    // 使用真实倒计时
+    cout << BOLD << "⏱️  倒计时: " << COLOR_RESET;
+    cout.flush();
+    
+    bool completed = pomodoro->startBreakWithCountdown([this, duration](int remaining) {
+        int mins = remaining / 60;
+        int secs = remaining % 60;
+        int total = duration * 60;
+        int elapsed = total - remaining;
+        int percent = (elapsed * 100) / total;
+        
+        cout << "\r" << BOLD << "⏱️  倒计时: " << COLOR_RESET;
+        cout << COLOR_CYAN << setfill('0') << setw(2) << mins << ":" 
+             << setfill('0') << setw(2) << secs << COLOR_RESET;
+        cout << "  [";
+        cout << COLOR_BLUE;
+        int filled = (percent * 20) / 100;
+        for (int i = 0; i < 20; i++) {
+            if (i < filled) cout << "█";
+            else cout << "░";
+        }
+        cout << COLOR_RESET << "] " << percent << "%  ";
+        cout.flush();
+    });
+    
+    cout << "\n\n";
+    
+    if (completed) {
+        displaySuccess("☕ 休息结束！准备好继续工作了吗？");
+    } else {
+        displayWarning("休息被中断");
+    }
+    
+    pause();
+}
+
+void UIManager::startLongBreak() {
+    clearScreen();
+    printHeader("🛋️  长休息时间");
+    
+    int duration = pomodoro->getLongBreakDuration();
+    cout << "\n" << COLOR_MAGENTA << BOLD << "🛋️  长休息开始！" << COLOR_RESET << "\n";
+    cout << "  ⏱️  休息时间: " << duration << "分钟\n";
+    cout << "  💡 可以出去走走，放松一下眼睛！\n\n";
+    
+    // 使用真实倒计时
+    cout << BOLD << "⏱️  倒计时: " << COLOR_RESET;
+    cout.flush();
+    
+    bool completed = pomodoro->startLongBreakWithCountdown([this, duration](int remaining) {
+        int mins = remaining / 60;
+        int secs = remaining % 60;
+        int total = duration * 60;
+        int elapsed = total - remaining;
+        int percent = (elapsed * 100) / total;
+        
+        cout << "\r" << BOLD << "⏱️  倒计时: " << COLOR_RESET;
+        cout << COLOR_MAGENTA << setfill('0') << setw(2) << mins << ":" 
+             << setfill('0') << setw(2) << secs << COLOR_RESET;
+        cout << "  [";
+        cout << COLOR_MAGENTA;
+        int filled = (percent * 20) / 100;
+        for (int i = 0; i < 20; i++) {
+            if (i < filled) cout << "█";
+            else cout << "░";
+        }
+        cout << COLOR_RESET << "] " << percent << "%  ";
+        cout.flush();
+    });
+    
+    cout << "\n\n";
+    
+    if (completed) {
+        displaySuccess("🛋️  休息结束！充好电了，继续加油！");
+    } else {
+        displayWarning("休息被中断");
+    }
+    
     pause();
 }
 
@@ -1200,28 +1323,57 @@ void UIManager::showAchievements() {
     printHeader("🏆 成就系统");
     
     int unlocked = statsAnalyzer->getAchievementsUnlocked();
-    // 成就总数常量 - 实际应从AchievementManager获取
-    const int TOTAL_ACHIEVEMENTS = 10;
+    int totalTasks = statsAnalyzer->getTotalTasksCompleted();
+    int streak = statsAnalyzer->getCurrentStreak();
+    int totalPomodoros = statsAnalyzer->getTotalPomodoros();
+    int todayTasks = statsAnalyzer->getTasksCompletedToday();
+    
+    // 成就定义（与后台AchievementManager一致）
+    const int TOTAL_ACHIEVEMENTS = 4;
     
     cout << "\n" << BOLD << "🏆 成就进度: " << COLOR_RESET;
     printProgressBar(unlocked, TOTAL_ACHIEVEMENTS, 20, COLOR_YELLOW);
     cout << " (" << unlocked << "/" << TOTAL_ACHIEVEMENTS << ")\n\n";
     
-    // 显示一些基本成就
+    // 显示成就列表（带实际进度）
     cout << BOLD << "可用成就：" << COLOR_RESET << "\n";
-    printSeparator("-", 50);
+    printSeparator("-", 60);
     
-    cout << (unlocked >= 1 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
-         << " 初次起步 - 完成第一个任务\n";
-    cout << (unlocked >= 2 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
-         << " 七日坚持 - 连续7天完成任务\n";
-    cout << (unlocked >= 3 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
-         << " 番茄大师 - 完成100个番茄钟\n";
-    cout << (unlocked >= 4 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
-         << " 时间管理大师 - 单日完成5个任务\n";
+    // 成就1: 初次起步 - 完成第一个任务
+    bool ach1 = totalTasks >= 1;
+    cout << (ach1 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
+         << " 初次起步 - 完成第一个任务";
+    if (!ach1) cout << " [进度: " << totalTasks << "/1]";
+    cout << " +" << COLOR_GREEN << "10XP" << COLOR_RESET << "\n";
     
-    printSeparator("-", 50);
-    displayInfo("完整成就系统开发中...");
+    // 成就2: 七日坚持 - 连续7天完成任务
+    bool ach2 = streak >= 7;
+    cout << (ach2 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
+         << " 七日坚持 - 连续7天完成任务";
+    if (!ach2) cout << " [进度: " << streak << "/7天]";
+    cout << " +" << COLOR_GREEN << "50XP" << COLOR_RESET << "\n";
+    
+    // 成就3: 番茄大师 - 完成100个番茄钟
+    bool ach3 = totalPomodoros >= 100;
+    cout << (ach3 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
+         << " 番茄大师 - 完成100个番茄钟";
+    if (!ach3) cout << " [进度: " << totalPomodoros << "/100]";
+    cout << " +" << COLOR_GREEN << "100XP" << COLOR_RESET << "\n";
+    
+    // 成就4: 时间管理大师 - 单日完成5个任务
+    bool ach4 = todayTasks >= 5;
+    cout << (ach4 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
+         << " 时间管理大师 - 单日完成5个任务";
+    if (!ach4) cout << " [今日: " << todayTasks << "/5]";
+    cout << " +" << COLOR_GREEN << "30XP" << COLOR_RESET << "\n";
+    
+    printSeparator("-", 60);
+    
+    // 显示统计信息
+    cout << "\n" << BOLD << "📊 成就统计：" << COLOR_RESET << "\n";
+    cout << "  已解锁: " << COLOR_GREEN << unlocked << COLOR_RESET << " 个\n";
+    cout << "  未解锁: " << COLOR_YELLOW << (TOTAL_ACHIEVEMENTS - unlocked) << COLOR_RESET << " 个\n";
+    cout << "  完成率: " << (unlocked * 100 / TOTAL_ACHIEVEMENTS) << "%\n";
     
     pause();
 }
@@ -1231,22 +1383,56 @@ void UIManager::showChallenges() {
     printHeader("🎯 挑战系统");
     
     int completed = statsAnalyzer->getChallengesCompleted();
+    int todayTasks = statsAnalyzer->getTasksCompletedToday();
+    int todayPomodoros = statsAnalyzer->getPomodorosToday();
+    int weeklyTasks = statsAnalyzer->getTotalTasksCompleted(); // 简化处理
+    int streak = statsAnalyzer->getCurrentStreak();
     
     cout << "\n" << BOLD << "🏅 已完成挑战: " << COLOR_RESET 
          << COLOR_GREEN << completed << COLOR_RESET << " 个\n\n";
     
     cout << BOLD << "📅 每日挑战：" << COLOR_RESET << "\n";
-    printSeparator("-", 50);
-    cout << "  🎯 今日目标 - 完成3个任务 (奖励: 30XP)\n";
-    cout << "  🍅 番茄达人 - 完成4个番茄钟 (奖励: 20XP)\n";
+    printSeparator("-", 60);
+    
+    // 每日挑战1: 完成3个任务
+    bool daily1 = todayTasks >= 3;
+    cout << (daily1 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳") << COLOR_RESET
+         << " 今日目标 - 完成3个任务";
+    cout << " [" << todayTasks << "/3]";
+    cout << " 奖励: +" << COLOR_GREEN << "30XP" << COLOR_RESET << "\n";
+    
+    // 每日挑战2: 完成4个番茄钟
+    bool daily2 = todayPomodoros >= 4;
+    cout << (daily2 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳") << COLOR_RESET
+         << " 番茄达人 - 完成4个番茄钟";
+    cout << " [" << todayPomodoros << "/4]";
+    cout << " 奖励: +" << COLOR_GREEN << "20XP" << COLOR_RESET << "\n";
     
     cout << "\n" << BOLD << "📆 每周挑战：" << COLOR_RESET << "\n";
-    printSeparator("-", 50);
-    cout << "  📋 周计划王 - 完成15个任务 (奖励: 100XP)\n";
-    cout << "  🔥 连续作战 - 连续7天有任务完成 (奖励: 70XP)\n";
+    printSeparator("-", 60);
     
-    printSeparator("-", 50);
-    displayInfo("完整挑战系统开发中...");
+    // 每周挑战1: 完成15个任务
+    bool weekly1 = weeklyTasks >= 15;
+    cout << (weekly1 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳") << COLOR_RESET
+         << " 周计划王 - 完成15个任务";
+    cout << " [" << min(weeklyTasks, 15) << "/15]";
+    cout << " 奖励: +" << COLOR_GREEN << "100XP" << COLOR_RESET << "\n";
+    
+    // 每周挑战2: 连续7天完成任务
+    bool weekly2 = streak >= 7;
+    cout << (weekly2 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳") << COLOR_RESET
+         << " 连续作战 - 连续7天有任务完成";
+    cout << " [" << streak << "/7天]";
+    cout << " 奖励: +" << COLOR_GREEN << "70XP" << COLOR_RESET << "\n";
+    
+    printSeparator("-", 60);
+    
+    // 显示统计
+    int dailyDone = (daily1 ? 1 : 0) + (daily2 ? 1 : 0);
+    int weeklyDone = (weekly1 ? 1 : 0) + (weekly2 ? 1 : 0);
+    cout << "\n" << BOLD << "📊 挑战统计：" << COLOR_RESET << "\n";
+    cout << "  每日挑战: " << dailyDone << "/2 完成\n";
+    cout << "  每周挑战: " << weeklyDone << "/2 完成\n";
     
     pause();
 }
@@ -1259,21 +1445,15 @@ void UIManager::showSettingsMenu() {
     
     vector<string> options = {
         "📋 查看当前设置",
-        "🍅 修改番茄钟时长",
-        "🔔 修改通知设置"
+        "🍅 修改番茄钟时长"
     };
     
     printMenu(options);
-    int choice = getUserChoice(3);
+    int choice = getUserChoice(2);
     
     switch (choice) {
         case 1: viewSettings(); break;
         case 2: updateSettings(); break;
-        case 3: {
-            displayInfo("🔔 通知设置功能开发中...");
-            pause();
-            break;
-        }
         case 0: return;
     }
 }
@@ -1283,14 +1463,10 @@ void UIManager::viewSettings() {
     printHeader("📋 当前设置");
     
     cout << "\n" << BOLD << "🍅 番茄钟设置：" << COLOR_RESET << "\n";
-    cout << "  工作时长: 25 分钟\n";
-    cout << "  短休息: 5 分钟\n";
-    cout << "  长休息: 15 分钟\n";
-    cout << "  长休息间隔: 4 个番茄钟\n";
-    
-    cout << "\n" << BOLD << "🔔 通知设置：" << COLOR_RESET << "\n";
-    cout << "  声音: 开启\n";
-    cout << "  桌面通知: 开启\n";
+    cout << "  工作时长: " << COLOR_CYAN << pomodoro->getWorkDuration() << " 分钟" << COLOR_RESET << "\n";
+    cout << "  短休息: " << COLOR_CYAN << pomodoro->getBreakDuration() << " 分钟" << COLOR_RESET << "\n";
+    cout << "  长休息: " << COLOR_CYAN << pomodoro->getLongBreakDuration() << " 分钟" << COLOR_RESET << "\n";
+    cout << "  已完成番茄钟: " << COLOR_GREEN << pomodoro->getCycleCount() << " 个" << COLOR_RESET << "\n";
     
     cout << "\n" << BOLD << "🎨 界面设置：" << COLOR_RESET << "\n";
     cout << "  主题: 默认\n";
@@ -1301,24 +1477,57 @@ void UIManager::viewSettings() {
 
 void UIManager::updateSettings() {
     clearScreen();
-    printHeader("✏️  修改设置");
+    printHeader("✏️  修改番茄钟设置");
+    
+    cout << "\n" << BOLD << "当前设置：" << COLOR_RESET << "\n";
+    cout << "  [1] 🍅 工作时长: " << pomodoro->getWorkDuration() << " 分钟\n";
+    cout << "  [2] ☕ 短休息: " << pomodoro->getBreakDuration() << " 分钟\n";
+    cout << "  [3] 🛋️  长休息: " << pomodoro->getLongBreakDuration() << " 分钟\n";
     
     cout << "\n" << BOLD << "选择要修改的设置：" << COLOR_RESET << "\n";
     printSeparator("-", 40);
-    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " 🍅 番茄钟工作时长\n";
-    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " ☕ 短休息时长\n";
-    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " 🛋️  长休息时长\n";
+    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " 🍅 番茄钟工作时长 (1-120分钟)\n";
+    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " ☕ 短休息时长 (1-60分钟)\n";
+    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " 🛋️  长休息时长 (1-60分钟)\n";
     cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " ❌ 返回\n";
     printSeparator("-", 40);
     
     int choice = getUserChoice(3);
     
     switch (choice) {
-        case 1:
-        case 2:
-        case 3:
-            displayInfo("⚙️  设置修改功能开发中...");
+        case 1: {
+            cout << "\n当前工作时长: " << pomodoro->getWorkDuration() << " 分钟\n";
+            int newDuration = getIntInput("请输入新的工作时长 (1-120分钟): ");
+            if (newDuration >= 1 && newDuration <= 120) {
+                pomodoro->setWorkDuration(newDuration);
+                displaySuccess("工作时长已更新为 " + to_string(newDuration) + " 分钟");
+            } else {
+                displayError("无效的时长，请输入1-120之间的数字");
+            }
             break;
+        }
+        case 2: {
+            cout << "\n当前短休息时长: " << pomodoro->getBreakDuration() << " 分钟\n";
+            int newDuration = getIntInput("请输入新的短休息时长 (1-60分钟): ");
+            if (newDuration >= 1 && newDuration <= 60) {
+                pomodoro->setBreakDuration(newDuration);
+                displaySuccess("短休息时长已更新为 " + to_string(newDuration) + " 分钟");
+            } else {
+                displayError("无效的时长，请输入1-60之间的数字");
+            }
+            break;
+        }
+        case 3: {
+            cout << "\n当前长休息时长: " << pomodoro->getLongBreakDuration() << " 分钟\n";
+            int newDuration = getIntInput("请输入新的长休息时长 (1-60分钟): ");
+            if (newDuration >= 1 && newDuration <= 60) {
+                pomodoro->setLongBreakDuration(newDuration);
+                displaySuccess("长休息时长已更新为 " + to_string(newDuration) + " 分钟");
+            } else {
+                displayError("无效的时长，请输入1-60之间的数字");
+            }
+            break;
+        }
         case 0:
             return;
     }
