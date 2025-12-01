@@ -33,7 +33,8 @@ SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/HeatmapVisualizer/HeatmapVisualizer.cpp \
        $(SRC_DIR)/ui/UIManager.cpp \
        $(SRC_DIR)/task/task.cpp \
-       $(SRC_DIR)/task/TaskManager.cpp
+       $(SRC_DIR)/task/TaskManager.cpp \
+       $(SRC_DIR)/Pomodoro/pomodoro.cpp
 
 # Object files
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
@@ -55,6 +56,7 @@ directories:
 	@mkdir -p $(BUILD_DIR)/HeatmapVisualizer
 	@mkdir -p $(BUILD_DIR)/ui
 	@mkdir -p $(BUILD_DIR)/task
+	@mkdir -p $(BUILD_DIR)/Pomodoro
 	@mkdir -p $(BIN_DIR)
 
 # Link

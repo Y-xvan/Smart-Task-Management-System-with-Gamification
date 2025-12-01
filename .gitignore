@@ -1,0 +1,29 @@
+# Build artifacts
+build/
+bin/
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Object files
+*.o
+*.obj
+
+# Executables
+*.exe
+task_manager
+
+# Temporary files
+*.tmp
+*.log
