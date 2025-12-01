@@ -81,12 +81,12 @@ UIManager::UIManager() {
 }
 
 UIManager::~UIManager() {
-    delete statsAnalyzer;
-    delete xpSystem;
-    delete heatmap;
-    delete projectManager;
-    delete taskManager;
-    delete pomodoro;
+    if (statsAnalyzer) delete statsAnalyzer;
+    if (xpSystem) delete xpSystem;
+    if (heatmap) delete heatmap;
+    if (projectManager) delete projectManager;
+    if (taskManager) delete taskManager;
+    if (pomodoro) delete pomodoro;
 }
 
 // === UI辅助方法 ===
@@ -293,8 +293,9 @@ void UIManager::printProgressBar(int current, int total, int width, string color
     cout << " [";
     cout << color;
     for (int i = 0; i < width; ++i) {
-        if (i < filled) cout << "#";
-        else cout << "-";
+        // 使用Unicode进度条字符
+        if (i < filled) cout << "\xe2\x96\x88";  // █ filled block
+        else cout << "\xe2\x96\x91";              // ░ light shade
     }
     cout << COLOR_RESET << "] " << int(percentage * 100) << "%";
 }
@@ -1073,7 +1074,9 @@ void UIManager::startPomodoroSession() {
     cout << "  Focus Time: 25 minutes\n";
     cout << "  Stay focused, minimize distractions!\n\n";
     
-    // 简化版：不实际等待25分钟，而是模拟完成
+    // TODO: 生产环境中应使用实际计时器，这里为演示目的简化
+    // In production, implement actual timer with countdown display
+    // For now, simulate completion for demonstration purposes
     cout << COLOR_YELLOW << "  (Demo mode: Press Enter to simulate completion)" << COLOR_RESET << "\n";
     pause();
     
@@ -1198,11 +1201,12 @@ void UIManager::showAchievements() {
     printHeader("Achievements (成就系统)");
     
     int unlocked = statsAnalyzer->getAchievementsUnlocked();
-    int total = 10; // 假设总共10个成就
+    // 成就总数常量 - 实际应从AchievementManager获取
+    const int TOTAL_ACHIEVEMENTS = 10;
     
     cout << "\n" << BOLD << "Achievement Progress: " << COLOR_RESET;
-    printProgressBar(unlocked, total, 20, COLOR_YELLOW);
-    cout << " (" << unlocked << "/" << total << ")\n\n";
+    printProgressBar(unlocked, TOTAL_ACHIEVEMENTS, 20, COLOR_YELLOW);
+    cout << " (" << unlocked << "/" << TOTAL_ACHIEVEMENTS << ")\n\n";
     
     // 显示一些基本成就
     cout << BOLD << "Available Achievements (可用成就)：" << COLOR_RESET << "\n";
@@ -1338,17 +1342,21 @@ void UIManager::displayMessage(const string& msg, const string& type) {
 }
 
 void UIManager::displayError(const string& error) {
-    cout << COLOR_RED << "[Error] " << error << COLOR_RESET << "\n";
+    // UTF-8 encoding for ❌
+    cout << COLOR_RED << "\xe2\x9d\x8c " << error << COLOR_RESET << "\n";
 }
 
 void UIManager::displaySuccess(const string& msg) {
-    cout << COLOR_GREEN << "[Success] " << msg << COLOR_RESET << "\n";
+    // UTF-8 encoding for ✅
+    cout << COLOR_GREEN << "\xe2\x9c\x85 " << msg << COLOR_RESET << "\n";
 }
 
 void UIManager::displayWarning(const string& warning) {
-    cout << COLOR_YELLOW << "[Warning] " << warning << COLOR_RESET << "\n";
+    // UTF-8 encoding for ⚠️
+    cout << COLOR_YELLOW << "\xe2\x9a\xa0\xef\xb8\x8f  " << warning << COLOR_RESET << "\n";
 }
 
 void UIManager::displayInfo(const string& info) {
-    cout << COLOR_CYAN << "[Info] " << info << COLOR_RESET << "\n";
+    // UTF-8 encoding for ℹ️
+    cout << COLOR_CYAN << "\xe2\x84\xb9\xef\xb8\x8f  " << info << COLOR_RESET << "\n";
 }
