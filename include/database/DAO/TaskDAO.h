@@ -71,6 +71,9 @@ public:
     
     bool incrementPomodoro(int taskId) override;
     int getPomodoroCount(int taskId) override;
+
+    bool updateTaskProject(int taskId, std::optional<int> projectId);
+
 };
 
 #endif // TASKDAO_H
