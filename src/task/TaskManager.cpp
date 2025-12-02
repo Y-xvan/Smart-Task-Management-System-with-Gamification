@@ -84,3 +84,8 @@ bool TaskManager::addPomodoro(int taskId) {
 int TaskManager::getPomodoroCount(int taskId) {
     return dao->getPomodoroCount(taskId);
 }
+
+bool TaskManager::moveTaskToProject(int taskId, std::optional<int> projectId) {
+    return dao->updateTaskProject(taskId, projectId);
+}
+
