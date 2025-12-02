@@ -50,6 +50,9 @@ public:
     // ===== 番茄钟 =====
     bool addPomodoro(int taskId);
     int getPomodoroCount(int taskId);
+
+    bool moveTaskToProject(int taskId, std::optional<int> projectId);
+
 };
 
 #endif // TASK_MANAGER_H
