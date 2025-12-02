@@ -33,6 +33,7 @@ public:
     
     // 项目分配
     virtual bool assignTaskToProject(int taskId, int projectId) = 0;
+    virtual bool updateTaskProject(int taskId, std::optional<int> projectId) = 0;
     
     // 番茄钟
     virtual bool incrementPomodoro(int taskId) = 0;
@@ -71,6 +72,9 @@ public:
     
     bool incrementPomodoro(int taskId) override;
     int getPomodoroCount(int taskId) override;
+
+    bool updateTaskProject(int taskId, std::optional<int> projectId) override;
+
 };
 
 #endif // TASKDAO_H

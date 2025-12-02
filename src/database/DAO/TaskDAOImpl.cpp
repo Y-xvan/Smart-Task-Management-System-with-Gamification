@@ -57,6 +57,34 @@ bool TaskDAOImpl::createTable() {
     return dbManager.tableExists("tasks") || dbManager.createTables();
 }
 
+bool TaskDAOImpl::updateTaskProject(int taskId, std::optional<int> projectId) {
+    sqlite3* db = getDatabaseConnection();
+    if (!db) return false;
+
+    const char* sql = R"(
+        UPDATE tasks
+        SET project_id = ?
+        WHERE id = ?
+    )";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << "\n";
+        return false;
+    }
+
+    if (projectId.has_value())
+        sqlite3_bind_int(stmt, 1, projectId.value());
+    else
+        sqlite3_bind_null(stmt, 1);
+
+    sqlite3_bind_int(stmt, 2, taskId);
+
+    bool ok = sqlite3_step(stmt) == SQLITE_DONE;
+    sqlite3_finalize(stmt);
+    return ok;
+}
+
 // =======================
 // insertTask
 // =======================

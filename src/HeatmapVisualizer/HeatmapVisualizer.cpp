@@ -37,54 +37,31 @@ void HeatmapVisualizer::closeDatabase() {
 bool HeatmapVisualizer::initialize() {
     if (!openDatabase()) return false;
     
-    const char* sql = 
-        "CREATE TABLE IF NOT EXISTS tasks ("
-        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "title TEXT NOT NULL, "
-        "completed INTEGER DEFAULT 0, "
-        "completed_date TEXT"
-        ");";
+    const char* checkSQL = 
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='tasks';";
     
-    char* errMsg = nullptr;
-    int result = sqlite3_exec(db, sql, nullptr, nullptr, &errMsg);
+    sqlite3_stmt* stmt;
+    int result = sqlite3_prepare_v2(db, checkSQL, -1, &stmt, nullptr);
     
     if (result != SQLITE_OK) {
-        cerr << "Create table failed: " << errMsg << endl;
-        sqlite3_free(errMsg);
+        cerr << "Failed to check tasks table" << endl;
         closeDatabase();
         return false;
     }
     
-    const char* insertSQL = 
-        "INSERT INTO tasks (title, completed, completed_date) VALUES "
-        "('Task 1', 1, '2025-10-01'), "
-        "('Task 2', 1, '2025-10-01'), "
-        "('Task 3', 1, '2025-10-02'), "
-        "('Task 4', 1, '2025-10-02'), "
-        "('Task 5', 1, '2025-10-02'), "
-        "('Task 6', 1, '2025-10-03'), "
-        "('Task 7', 1, '2025-10-04'), "
-        "('Task 8', 1, '2025-10-04'), "
-        "('Task 9', 1, '2025-10-05'), "
-        "('Task 10', 1, '2025-11-01'), "
-        "('Task 11', 1, '2025-11-01'), "
-        "('Task 12', 1, '2025-11-02'), "
-        "('Task 13', 1, '2025-11-03'), "
-        "('Task 14', 1, '2025-11-04'), "
-        "('Task 15', 1, '2025-11-05'), "
-        "('Task 16', 1, '2025-11-05'), "
-        "('Task 17', 1, '2025-11-06'), "
-        "('Task 18', 1, '2025-11-07'), "
-        "('Task 19', 1, '2025-11-08'), "
-        "('Task 20', 1, '2025-11-09');";
-    
-    result = sqlite3_exec(db, insertSQL, nullptr, nullptr, &errMsg);
-    
-    if (result != SQLITE_OK) {
-        sqlite3_free(errMsg);
+    bool tableExists = false;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        tableExists = true;
     }
     
+    sqlite3_finalize(stmt);
     closeDatabase();
+    
+    if (!tableExists) {
+        cerr << "Warning: tasks table does not exist" << endl;
+        return false;
+    }
+    
     return true;
 }
 
@@ -97,7 +74,9 @@ map<string, int> HeatmapVisualizer::getTaskDataFromDB(int days) {
     sql << "SELECT DATE(completed_date) as date, COUNT(*) as count "
         << "FROM tasks "
         << "WHERE completed = 1 "
-        << "AND completed_date >= DATE('now', '-" << days << " days') "
+        << "AND completed_date IS NOT NULL "
+        << "AND completed_date != '' "
+        << "AND DATE(completed_date) >= DATE('now', '-" << days << " days') "
         << "GROUP BY DATE(completed_date);";
     
     sqlite3_stmt* stmt;
@@ -167,6 +146,11 @@ string HeatmapVisualizer::generateHeatmap(int days) {
     map<string, int> taskData = getTaskDataFromDB(days);
     vector<string> dates = generateDateRange(days);
     
+    if (taskData.empty()) {
+        output << "No completed tasks found.\n\n";
+        return output.str();
+    }
+    
     output << "      ";
     for (int week = 0; week < days/7; week++) {
         output << "W" << (week + 1) << "  ";
@@ -179,7 +163,6 @@ string HeatmapVisualizer::generateHeatmap(int days) {
         output << weekdays[day] << "   ";
         
         for (int week = 0; week < days/7; week++) {
-            // week and day are always non-negative from loop bounds, so the index is safe
             int rawIndex = week * 7 + day;
             if (rawIndex >= 0) {
                 size_t index = static_cast<size_t>(rawIndex);
@@ -270,7 +253,7 @@ string HeatmapVisualizer::generateWeekView(string startDate) {
 int HeatmapVisualizer::getTotalTasks() {
     if (!openDatabase()) return 0;
     
-    const char* sql = "SELECT COUNT(*) FROM tasks WHERE completed = 1;";
+    const char* sql = "SELECT COUNT(*) FROM tasks WHERE completed = 1 AND completed_date IS NOT NULL;";
     sqlite3_stmt* stmt;
     
     sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
@@ -291,7 +274,7 @@ string HeatmapVisualizer::getMostActiveDay() {
     
     const char* sql = 
         "SELECT DATE(completed_date) as date, COUNT(*) as count "
-        "FROM tasks WHERE completed = 1 "
+        "FROM tasks WHERE completed = 1 AND completed_date IS NOT NULL "
         "GROUP BY DATE(completed_date) "
         "ORDER BY count DESC LIMIT 1;";
     
