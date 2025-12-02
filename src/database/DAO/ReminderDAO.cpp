@@ -12,8 +12,7 @@ private:
     std::string dbPath;
 
     // SQL 语句常量（与 DatabaseManager::createReminderTable 保持一致）
-    static constexpr const char* SELECT_COLUMNS =
-        "id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered ";
+    // Note: SELECT_COLUMNS expanded inline due to constexpr limitations
 
     static constexpr const char* INSERT_REMINDER_SQL =
         "INSERT INTO reminders (title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered) "
@@ -27,33 +26,33 @@ private:
         "DELETE FROM reminders WHERE id=?;";
 
     static constexpr const char* SELECT_BY_ID_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders WHERE id=?;";
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders WHERE id=?;";
 
     static constexpr const char* SELECT_ALL_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders ORDER BY trigger_time ASC;";
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders ORDER BY trigger_time ASC;";
 
     static constexpr const char* SELECT_ACTIVE_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders WHERE enabled = 1 AND triggered = 0 ORDER BY trigger_time ASC;";
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders WHERE enabled = 1 AND triggered = 0 ORDER BY trigger_time ASC;";
 
     static constexpr const char* SELECT_BY_TASK_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders WHERE task_id=? AND enabled = 1 ORDER BY trigger_time ASC;";
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders WHERE task_id=? AND enabled = 1 ORDER BY trigger_time ASC;";
 
     static constexpr const char* SELECT_BY_RECURRENCE_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders WHERE recurrence=? AND enabled = 1 ORDER BY trigger_time ASC;";
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders WHERE recurrence=? AND enabled = 1 ORDER BY trigger_time ASC;";
 
     static constexpr const char* SELECT_DUE_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders WHERE trigger_time <= ? AND enabled = 1 AND triggered = 0 ORDER BY trigger_time ASC;";
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders WHERE trigger_time <= ? AND enabled = 1 AND triggered = 0 ORDER BY trigger_time ASC;";
 
     static constexpr const char* SELECT_DUE_TODAY_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders WHERE date(trigger_time) = date('now') AND enabled = 1 AND triggered = 0 "
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders WHERE date(trigger_time) = date('now') AND enabled = 1 AND triggered = 0 "
         "ORDER BY trigger_time ASC;";
 
     static constexpr const char* SELECT_DUE_WEEK_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders WHERE date(trigger_time) BETWEEN date('now') AND date('now', '+6 days') "
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders WHERE date(trigger_time) BETWEEN date('now') AND date('now', '+6 days') "
         "AND enabled = 1 AND triggered = 0 ORDER BY trigger_time ASC;";
 
     static constexpr const char* SELECT_BY_DATE_RANGE_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders WHERE trigger_time BETWEEN ? AND ? AND enabled = 1 ORDER BY trigger_time ASC;";
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders WHERE trigger_time BETWEEN ? AND ? AND enabled = 1 ORDER BY trigger_time ASC;";
 
     static constexpr const char* MARK_TRIGGERED_SQL =
         "UPDATE reminders SET triggered = 1, last_triggered = datetime('now'), updated_date = datetime('now') WHERE id=?;";
@@ -65,7 +64,7 @@ private:
         "UPDATE reminders SET trigger_time=?, triggered = 0, enabled = 1, updated_date = datetime('now') WHERE id=?;";
 
     static constexpr const char* SELECT_RECURRING_SQL =
-        "SELECT " SELECT_COLUMNS "FROM reminders WHERE recurrence != 'once' AND enabled = 1 ORDER BY trigger_time ASC;";
+        "SELECT id, title, message, trigger_time, recurrence, triggered, task_id, enabled, last_triggered FROM reminders WHERE recurrence != 'once' AND enabled = 1 ORDER BY trigger_time ASC;";
 
     static constexpr const char* DELETE_EXPIRED_SQL =
         "DELETE FROM reminders WHERE triggered = 1 AND last_triggered < datetime('now', '-30 days');";
