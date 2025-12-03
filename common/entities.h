@@ -65,6 +65,7 @@ struct BaseEntity {
  * 
  * 负责人: Kuang Wenqing (任务管理模块)
  */
+namespace Entity { 
 struct Task : BaseEntity {
     std::string title;                   // 任务标题
     std::string description;             // 任务描述
@@ -82,7 +83,7 @@ struct Task : BaseEntity {
     Task(const std::string& t, const std::string& desc = "", int prio = 1) 
         : title(t), description(desc), priority(prio) {}
 };
-
+}
 /**
  * @brief 项目实体 - 任务分组容器
  * 
