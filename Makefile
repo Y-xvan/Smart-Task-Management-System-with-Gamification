@@ -27,6 +27,7 @@ SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/database/DAO/ProjectDAO.cpp \
        $(SRC_DIR)/database/DAO/TaskDAOImpl.cpp \
        $(SRC_DIR)/database/DAO/ReminderDAO.cpp \
+       $(SRC_DIR)/database/DAO/AchievementDAO.cpp \
        $(SRC_DIR)/project/Project.cpp \
        $(SRC_DIR)/project/ProjectManager.cpp \
        $(SRC_DIR)/statistics/StatisticsAnalyzer.cpp \
@@ -36,7 +37,8 @@ SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/task/task.cpp \
        $(SRC_DIR)/task/TaskManager.cpp \
        $(SRC_DIR)/Pomodoro/pomodoro.cpp \
-       $(SRC_DIR)/reminder/ReminderSystem.cpp
+       $(SRC_DIR)/reminder/ReminderSystem.cpp \
+       $(SRC_DIR)/achievement/AchievementManager.cpp
 
 # Object files
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
@@ -59,6 +61,7 @@ directories:
 	@mkdir -p $(BUILD_DIR)/ui
 	@mkdir -p $(BUILD_DIR)/task
 	@mkdir -p $(BUILD_DIR)/Pomodoro
+	@mkdir -p $(BUILD_DIR)/achievement
 	@mkdir -p $(BIN_DIR)
 
 # Link

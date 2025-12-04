@@ -6,6 +6,7 @@
  * - 提供完整的用户界面交互
  * - 任务管理、项目管理、统计分析、游戏化功能
  * - 提醒管理（创建、查看、删除、重新安排）
+ * - 成就管理（查看、检查解锁、统计）
  * - 番茄钟计时器
  * - 使用选择式输入提升用户体验
  * - 颜色选择和名称选择代替ID输入
@@ -26,6 +27,8 @@
 #include "Pomodoro/pomodoro.h"
 #include "reminder/ReminderSystem.h"
 #include "database/DAO/ReminderDAO.h"
+#include "achievement/AchievementManager.h"
+#include "database/DAO/AchievementDAO.h"
 
 #include <iostream>
 #include <iomanip>
@@ -91,6 +94,10 @@ UIManager::UIManager() {
     auto reminderDAO = createReminderDAO("task_manager.db");
     reminderSystem = new ReminderSystem(std::move(reminderDAO));
     
+    // 初始化成就系统
+    auto achievementDAO = std::make_unique<AchievementDAO>("./data/");
+    achievementMgr = new AchievementManager(std::move(achievementDAO), 1);
+    
     cout << COLOR_GREEN << "✅ UI管理器初始化成功" << COLOR_RESET << endl;
 }
 
@@ -102,6 +109,7 @@ UIManager::~UIManager() {
     if (taskManager) delete taskManager;
     if (pomodoro) delete pomodoro;
     if (reminderSystem) delete reminderSystem;
+    if (achievementMgr) delete achievementMgr;
 }
 
 // === UI辅助方法 ===
@@ -1436,7 +1444,7 @@ void UIManager::showGamificationMenu() {
     
     switch (choice) {
         case 1: showXPAndLevel(); break;
-        case 2: showAchievements(); break;
+        case 2: showAchievementMenu(); break;
         case 0: return;
     }
 }
@@ -1455,62 +1463,324 @@ void UIManager::showXPAndLevel() {
     pause();
 }
 
-void UIManager::showAchievements() {
+/**
+ * @brief 成就系统主菜单
+ * 
+ * 提供成就系统的完整功能入口
+ */
+void UIManager::showAchievementMenu() {
     clearScreen();
-    printHeader("🏆 成就系统");
+    printHeader("🏆 成就系统 (Achievement System)");
     
-    int unlocked = statsAnalyzer->getAchievementsUnlocked();
+    // 显示成就概览
+    auto allAchievements = achievementMgr->getAchievementProgress(1);
+    int unlockedCount = 0;
+    for (const auto& prog : allAchievements) {
+        if (prog.progressPercent >= 100.0) unlockedCount++;
+    }
+    
+    cout << "\n" << COLOR_CYAN << "📊 成就概览: " << COLOR_RESET;
+    cout << COLOR_GREEN << unlockedCount << COLOR_RESET << " / " 
+         << allAchievements.size() << " 已解锁\n";
+    
+    vector<string> options = {
+        "📋 查看所有成就 (All Achievements)",
+        "✅ 已解锁成就 (Unlocked Achievements)",
+        "📊 成就统计 (Statistics)",
+        "🔄 检查成就解锁 (Check Achievements)"
+    };
+    
+    printMenu(options);
+    int choice = getUserChoice(4);
+    
+    switch (choice) {
+        case 1: showAllAchievements(); break;
+        case 2: showUnlockedAchievements(); break;
+        case 3: showAchievementStatistics(); break;
+        case 4: checkAchievements(); break;
+        case 0: return;
+    }
+}
+
+/**
+ * @brief 显示所有成就（旧接口，保持兼容）
+ */
+void UIManager::showAchievements() {
+    showAchievementMenu();
+}
+
+/**
+ * @brief 显示所有成就及其进度
+ * 
+ * 从AchievementManager读取所有成就定义并显示进度
+ */
+void UIManager::showAllAchievements() {
+    clearScreen();
+    printHeader("📋 所有成就 (All Achievements)");
+    
+    // 刷新成就数据
+    achievementMgr->checkAllAchievements();
+    auto allProgress = achievementMgr->getAchievementProgress(1);
+    
+    if (allProgress.empty()) {
+        displayInfo("暂无成就数据，请先使用系统功能！");
+        pause();
+        return;
+    }
+    
+    cout << "\n" << BOLD << "🏆 成就列表" << COLOR_RESET << "\n";
+    printSeparator("═", 65);
+    
+    // 成就显示使用AchievementManager的displayAllAchievements
+    // 但为了更好的UI效果，我们手动渲染
+    
+    // 从statsAnalyzer获取当前进度数据
     int totalTasks = statsAnalyzer->getTotalTasksCompleted();
     int streak = statsAnalyzer->getCurrentStreak();
     int totalPomodoros = statsAnalyzer->getTotalPomodoros();
     int todayTasks = statsAnalyzer->getTasksCompletedToday();
     
-    // 成就定义（与后台AchievementManager一致）
-    const int TOTAL_ACHIEVEMENTS = 4;
-    
-    cout << "\n" << BOLD << "🏆 成就进度: " << COLOR_RESET;
-    printProgressBar(unlocked, TOTAL_ACHIEVEMENTS, 20, COLOR_YELLOW);
-    cout << " (" << unlocked << "/" << TOTAL_ACHIEVEMENTS << ")\n\n";
-    
-    // 显示成就列表（带实际进度）
-    cout << BOLD << "可用成就：" << COLOR_RESET << "\n";
-    printSeparator("-", 60);
-    
-    // 成就1: 初次起步 - 完成第一个任务
+    // 成就1: 首次任务
+    cout << "\n";
     bool ach1 = totalTasks >= 1;
-    cout << (ach1 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
-         << " 初次起步 - 完成第一个任务";
-    if (!ach1) cout << " [进度: " << totalTasks << "/1]";
-    cout << " +" << COLOR_GREEN << "10XP" << COLOR_RESET << "\n";
+    cout << "  " << (ach1 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET;
+    cout << " " << BOLD << "🎯 首次任务" << COLOR_RESET << "\n";
+    cout << "     完成第一个任务\n";
+    cout << "     进度: ";
+    printProgressBar(min(totalTasks, 1), 1, 20, ach1 ? COLOR_GREEN : COLOR_YELLOW);
+    cout << " (" << min(totalTasks, 1) << "/1)\n";
+    cout << "     奖励: " << COLOR_YELLOW << "+100 XP" << COLOR_RESET << "\n";
     
-    // 成就2: 七日坚持 - 连续7天完成任务
+    // 成就2: 七日连胜
+    cout << "\n";
     bool ach2 = streak >= 7;
-    cout << (ach2 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
-         << " 七日坚持 - 连续7天完成任务";
-    if (!ach2) cout << " [进度: " << streak << "/7天]";
-    cout << " +" << COLOR_GREEN << "50XP" << COLOR_RESET << "\n";
+    cout << "  " << (ach2 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET;
+    cout << " " << BOLD << "🔥 七日连胜" << COLOR_RESET << "\n";
+    cout << "     连续完成7天任务\n";
+    cout << "     进度: ";
+    printProgressBar(min(streak, 7), 7, 20, ach2 ? COLOR_GREEN : COLOR_YELLOW);
+    cout << " (" << min(streak, 7) << "/7天)\n";
+    cout << "     奖励: " << COLOR_YELLOW << "+300 XP" << COLOR_RESET << "\n";
     
-    // 成就3: 番茄大师 - 完成100个番茄钟
-    bool ach3 = totalPomodoros >= 100;
-    cout << (ach3 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
-         << " 番茄大师 - 完成100个番茄钟";
-    if (!ach3) cout << " [进度: " << totalPomodoros << "/100]";
-    cout << " +" << COLOR_GREEN << "100XP" << COLOR_RESET << "\n";
+    // 成就3: 时间管理达人
+    cout << "\n";
+    bool ach3 = todayTasks >= 10;
+    cout << "  " << (ach3 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET;
+    cout << " " << BOLD << "⏱️ 时间管理达人" << COLOR_RESET << "\n";
+    cout << "     单日完成10个任务\n";
+    cout << "     进度: ";
+    printProgressBar(min(todayTasks, 10), 10, 20, ach3 ? COLOR_GREEN : COLOR_YELLOW);
+    cout << " (今日: " << todayTasks << "/10)\n";
+    cout << "     奖励: " << COLOR_YELLOW << "+200 XP" << COLOR_RESET << "\n";
     
-    // 成就4: 时间管理大师 - 单日完成5个任务
-    bool ach4 = todayTasks >= 5;
-    cout << (ach4 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET
-         << " 时间管理大师 - 单日完成5个任务";
-    if (!ach4) cout << " [今日: " << todayTasks << "/5]";
-    cout << " +" << COLOR_GREEN << "30XP" << COLOR_RESET << "\n";
+    // 成就4: 番茄钟大师
+    cout << "\n";
+    bool ach4 = totalPomodoros >= 20;
+    cout << "  " << (ach4 ? COLOR_GREEN + "✅" : COLOR_YELLOW + "🔒") << COLOR_RESET;
+    cout << " " << BOLD << "🍅 番茄钟大师" << COLOR_RESET << "\n";
+    cout << "     累计完成20个番茄钟\n";
+    cout << "     进度: ";
+    printProgressBar(min(totalPomodoros, 20), 20, 20, ach4 ? COLOR_GREEN : COLOR_YELLOW);
+    cout << " (" << min(totalPomodoros, 20) << "/20)\n";
+    cout << "     奖励: " << COLOR_YELLOW << "+250 XP" << COLOR_RESET << "\n";
     
-    printSeparator("-", 60);
+    printSeparator("═", 65);
     
-    // 显示统计信息
-    cout << "\n" << BOLD << "📊 成就统计：" << COLOR_RESET << "\n";
-    cout << "  已解锁: " << COLOR_GREEN << unlocked << COLOR_RESET << " 个\n";
-    cout << "  未解锁: " << COLOR_YELLOW << (TOTAL_ACHIEVEMENTS - unlocked) << COLOR_RESET << " 个\n";
-    cout << "  完成率: " << (unlocked * 100 / TOTAL_ACHIEVEMENTS) << "%\n";
+    // 统计
+    int unlockedCount = (ach1 ? 1 : 0) + (ach2 ? 1 : 0) + (ach3 ? 1 : 0) + (ach4 ? 1 : 0);
+    cout << "\n" << BOLD << "📈 完成进度: " << COLOR_RESET;
+    printProgressBar(unlockedCount, 4, 25, COLOR_MAGENTA);
+    cout << " (" << unlockedCount << "/4)\n";
+    
+    pause();
+}
+
+/**
+ * @brief 显示已解锁的成就
+ */
+void UIManager::showUnlockedAchievements() {
+    clearScreen();
+    printHeader("✅ 已解锁成就 (Unlocked Achievements)");
+    
+    // 获取统计数据判断成就状态
+    int totalTasks = statsAnalyzer->getTotalTasksCompleted();
+    int streak = statsAnalyzer->getCurrentStreak();
+    int totalPomodoros = statsAnalyzer->getTotalPomodoros();
+    int todayTasks = statsAnalyzer->getTasksCompletedToday();
+    
+    bool ach1 = totalTasks >= 1;
+    bool ach2 = streak >= 7;
+    bool ach3 = todayTasks >= 10;
+    bool ach4 = totalPomodoros >= 20;
+    
+    int unlockedCount = (ach1 ? 1 : 0) + (ach2 ? 1 : 0) + (ach3 ? 1 : 0) + (ach4 ? 1 : 0);
+    
+    if (unlockedCount == 0) {
+        cout << "\n";
+        cout << BOLD << COLOR_CYAN;
+        cout << "   ╔══════════════════════════════════════════╗\n";
+        cout << "   ║                                          ║\n";
+        cout << "   ║     🎯 暂无已解锁成就                    ║\n";
+        cout << "   ║                                          ║\n";
+        cout << "   ║     完成任务、保持连续打卡               ║\n";
+        cout << "   ║     来解锁你的第一个成就吧！             ║\n";
+        cout << "   ║                                          ║\n";
+        cout << "   ╚══════════════════════════════════════════╝\n";
+        cout << COLOR_RESET;
+        pause();
+        return;
+    }
+    
+    cout << "\n" << COLOR_GREEN << "🎉 恭喜！你已解锁 " << unlockedCount << " 个成就！" << COLOR_RESET << "\n\n";
+    
+    printSeparator("─", 55);
+    
+    if (ach1) {
+        cout << "\n  " << COLOR_GREEN << "✅" << COLOR_RESET << " " << BOLD << "🎯 首次任务" << COLOR_RESET << "\n";
+        cout << "     完成第一个任务\n";
+        cout << "     获得: " << COLOR_YELLOW << "+100 XP" << COLOR_RESET << "\n";
+    }
+    
+    if (ach2) {
+        cout << "\n  " << COLOR_GREEN << "✅" << COLOR_RESET << " " << BOLD << "🔥 七日连胜" << COLOR_RESET << "\n";
+        cout << "     连续完成7天任务\n";
+        cout << "     获得: " << COLOR_YELLOW << "+300 XP" << COLOR_RESET << "\n";
+    }
+    
+    if (ach3) {
+        cout << "\n  " << COLOR_GREEN << "✅" << COLOR_RESET << " " << BOLD << "⏱️ 时间管理达人" << COLOR_RESET << "\n";
+        cout << "     单日完成10个任务\n";
+        cout << "     获得: " << COLOR_YELLOW << "+200 XP" << COLOR_RESET << "\n";
+    }
+    
+    if (ach4) {
+        cout << "\n  " << COLOR_GREEN << "✅" << COLOR_RESET << " " << BOLD << "🍅 番茄钟大师" << COLOR_RESET << "\n";
+        cout << "     累计完成20个番茄钟\n";
+        cout << "     获得: " << COLOR_YELLOW << "+250 XP" << COLOR_RESET << "\n";
+    }
+    
+    printSeparator("─", 55);
+    
+    // 计算获得的总XP
+    int totalXP = 0;
+    if (ach1) totalXP += 100;
+    if (ach2) totalXP += 300;
+    if (ach3) totalXP += 200;
+    if (ach4) totalXP += 250;
+    
+    cout << "\n" << BOLD << "💰 成就奖励总计: " << COLOR_YELLOW << totalXP << " XP" << COLOR_RESET << "\n";
+    
+    pause();
+}
+
+/**
+ * @brief 显示成就统计信息
+ */
+void UIManager::showAchievementStatistics() {
+    clearScreen();
+    printHeader("📊 成就统计 (Achievement Statistics)");
+    
+    // 获取统计数据
+    int totalTasks = statsAnalyzer->getTotalTasksCompleted();
+    int streak = statsAnalyzer->getCurrentStreak();
+    int totalPomodoros = statsAnalyzer->getTotalPomodoros();
+    int todayTasks = statsAnalyzer->getTasksCompletedToday();
+    
+    bool ach1 = totalTasks >= 1;
+    bool ach2 = streak >= 7;
+    bool ach3 = todayTasks >= 10;
+    bool ach4 = totalPomodoros >= 20;
+    
+    int unlockedCount = (ach1 ? 1 : 0) + (ach2 ? 1 : 0) + (ach3 ? 1 : 0) + (ach4 ? 1 : 0);
+    int lockedCount = 4 - unlockedCount;
+    double unlockRate = (unlockedCount * 100.0) / 4.0;
+    
+    cout << "\n";
+    cout << BOLD << "╔═══════════════════════════════════════════════════╗\n";
+    cout << "║           🏆 成就系统统计报告                     ║\n";
+    cout << "╚═══════════════════════════════════════════════════╝" << COLOR_RESET << "\n\n";
+    
+    // 解锁进度
+    cout << BOLD << "📈 解锁进度:" << COLOR_RESET << "\n";
+    cout << "   ";
+    printProgressBar(unlockedCount, 4, 30, COLOR_GREEN);
+    cout << " " << fixed << setprecision(1) << unlockRate << "%\n\n";
+    
+    // 统计数据
+    cout << BOLD << "📊 统计数据:" << COLOR_RESET << "\n";
+    printSeparator("-", 45);
+    cout << "  总成就数量:    " << COLOR_CYAN << "4" << COLOR_RESET << " 个\n";
+    cout << "  已解锁成就:    " << COLOR_GREEN << unlockedCount << COLOR_RESET << " 个\n";
+    cout << "  未解锁成就:    " << COLOR_YELLOW << lockedCount << COLOR_RESET << " 个\n";
+    cout << "  解锁率:        " << COLOR_MAGENTA << fixed << setprecision(1) << unlockRate << "%" << COLOR_RESET << "\n";
+    printSeparator("-", 45);
+    
+    // 当前进度
+    cout << "\n" << BOLD << "🎯 当前进度数据:" << COLOR_RESET << "\n";
+    printSeparator("-", 45);
+    cout << "  累计完成任务:  " << COLOR_CYAN << totalTasks << COLOR_RESET << " 个\n";
+    cout << "  连续打卡天数:  " << COLOR_CYAN << streak << COLOR_RESET << " 天\n";
+    cout << "  今日完成任务:  " << COLOR_CYAN << todayTasks << COLOR_RESET << " 个\n";
+    cout << "  累计番茄钟:    " << COLOR_CYAN << totalPomodoros << COLOR_RESET << " 个\n";
+    printSeparator("-", 45);
+    
+    // XP奖励统计
+    int totalXP = 0;
+    int potentialXP = 100 + 300 + 200 + 250;  // 所有成就的总XP
+    if (ach1) totalXP += 100;
+    if (ach2) totalXP += 300;
+    if (ach3) totalXP += 200;
+    if (ach4) totalXP += 250;
+    
+    cout << "\n" << BOLD << "💰 XP奖励:" << COLOR_RESET << "\n";
+    printSeparator("-", 45);
+    cout << "  已获得XP:      " << COLOR_GREEN << totalXP << COLOR_RESET << " XP\n";
+    cout << "  潜在XP:        " << COLOR_YELLOW << (potentialXP - totalXP) << COLOR_RESET << " XP\n";
+    cout << "  总可用XP:      " << COLOR_MAGENTA << potentialXP << COLOR_RESET << " XP\n";
+    printSeparator("-", 45);
+    
+    pause();
+}
+
+/**
+ * @brief 检查并解锁成就
+ * 
+ * 调用AchievementManager检查所有成就条件
+ */
+void UIManager::checkAchievements() {
+    clearScreen();
+    printHeader("🔄 检查成就解锁 (Check Achievements)");
+    
+    cout << "\n" << COLOR_CYAN << "⏳ 正在检查成就解锁条件..." << COLOR_RESET << "\n\n";
+    
+    // 获取检查前的状态
+    int totalTasks = statsAnalyzer->getTotalTasksCompleted();
+    int streak = statsAnalyzer->getCurrentStreak();
+    int totalPomodoros = statsAnalyzer->getTotalPomodoros();
+    int todayTasks = statsAnalyzer->getTasksCompletedToday();
+    
+    // 显示检查动画
+    cout << "  " << COLOR_YELLOW << "▶" << COLOR_RESET << " 检查任务成就... ";
+    cout << (totalTasks >= 1 ? COLOR_GREEN + "✅ 已完成" : COLOR_YELLOW + "⏳ 进行中 (" + to_string(totalTasks) + "/1)") << COLOR_RESET << "\n";
+    
+    cout << "  " << COLOR_YELLOW << "▶" << COLOR_RESET << " 检查连续打卡成就... ";
+    cout << (streak >= 7 ? COLOR_GREEN + "✅ 已完成" : COLOR_YELLOW + "⏳ 进行中 (" + to_string(streak) + "/7天)") << COLOR_RESET << "\n";
+    
+    cout << "  " << COLOR_YELLOW << "▶" << COLOR_RESET << " 检查时间管理成就... ";
+    cout << (todayTasks >= 10 ? COLOR_GREEN + "✅ 已完成" : COLOR_YELLOW + "⏳ 进行中 (" + to_string(todayTasks) + "/10)") << COLOR_RESET << "\n";
+    
+    cout << "  " << COLOR_YELLOW << "▶" << COLOR_RESET << " 检查番茄钟成就... ";
+    cout << (totalPomodoros >= 20 ? COLOR_GREEN + "✅ 已完成" : COLOR_YELLOW + "⏳ 进行中 (" + to_string(totalPomodoros) + "/20)") << COLOR_RESET << "\n";
+    
+    // 调用AchievementManager进行检查
+    achievementMgr->checkAllAchievements();
+    
+    cout << "\n" << COLOR_GREEN << "✅ 成就检查完成！" << COLOR_RESET << "\n";
+    
+    // 显示提示
+    cout << "\n" << BOLD << "💡 提示:" << COLOR_RESET << "\n";
+    cout << "  继续完成任务、保持连续打卡、使用番茄钟\n";
+    cout << "  来解锁更多成就获取XP奖励！\n";
     
     pause();
 }

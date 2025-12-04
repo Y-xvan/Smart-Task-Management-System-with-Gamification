@@ -15,6 +15,8 @@ class TaskManager;
 class Pomodoro;
 class ReminderSystem;
 class ReminderDAO;
+class AchievementManager;
+class AchievementDAO;
 
 class UIManager {
 private:
@@ -25,7 +27,8 @@ private:
     ProjectManager* projectManager;
     TaskManager* taskManager;
     Pomodoro* pomodoro;
-    ReminderSystem* reminderSystem;  // 提醒系统
+    ReminderSystem* reminderSystem;      // 提醒系统
+    AchievementManager* achievementMgr;  // 成就管理器
 
     bool running;
 
@@ -115,6 +118,11 @@ public:
     // === 游戏化功能 ===
     void showXPAndLevel();
     void showAchievements();
+    void showAchievementMenu();           // 成就管理主菜单
+    void showAllAchievements();           // 显示所有成就
+    void showUnlockedAchievements();      // 显示已解锁成就
+    void showAchievementStatistics();     // 成就统计
+    void checkAchievements();             // 检查成就解锁
 
     // === 番茄钟功能 ===
     void showPomodoroMenu();
