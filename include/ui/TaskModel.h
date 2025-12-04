@@ -4,7 +4,7 @@
 #include <QAbstractListModel>
 #include <QObject>
 #include <QString>
-#include <QVector>
+#include <QList>
 #include <memory>
 
 #include "task/TaskManager.h"
@@ -84,7 +84,7 @@ private:
         bool isCompleted;
     };
 
-    QVector<TaskData> m_tasks;
+    QList<TaskData> m_tasks;
     std::unique_ptr<TaskManager> m_taskManager;
     std::unique_ptr<XPSystem> m_xpSystem;
 
