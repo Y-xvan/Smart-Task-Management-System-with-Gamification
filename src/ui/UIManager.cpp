@@ -17,6 +17,8 @@
 #include "project/ProjectManager.h"
 #include "task/TaskManager.h"
 #include "Pomodoro/pomodoro.h"
+#include "reminder/ReminderSystem.h"
+#include "database/DAO/ReminderDAO.h"
 
 #include <iostream>
 #include <iomanip>
@@ -78,6 +80,10 @@ UIManager::UIManager() {
     taskManager = new TaskManager();
     pomodoro = new Pomodoro();
     
+    // 初始化提醒系统
+    auto reminderDAO = createReminderDAO("task_manager.db");
+    reminderSystem = new ReminderSystem(std::move(reminderDAO));
+    
     cout << COLOR_GREEN << "✅ UI管理器初始化成功" << COLOR_RESET << endl;
 }
 
@@ -88,6 +94,7 @@ UIManager::~UIManager() {
     if (projectManager) delete projectManager;
     if (taskManager) delete taskManager;
     if (pomodoro) delete pomodoro;
+    if (reminderSystem) delete reminderSystem;
 }
 
 // === UI辅助方法 ===
@@ -484,6 +491,7 @@ void UIManager::showMainMenu() {
     vector<string> options = {
         "📋 任务管理 (Task Management)",
         "📁 项目管理 (Project Management)",
+        "⏰ 提醒管理 (Reminder Management)",
         "🍅 番茄钟 (Pomodoro Timer)",
         "📊 统计分析 (Statistics)",
         "🎮 游戏化功能 (Gamification)"
@@ -498,14 +506,15 @@ void UIManager::run() {
     
     while (running) {
         showMainMenu();
-        int choice = getUserChoice(5);
+        int choice = getUserChoice(6);
         
         switch (choice) {
             case 1: showTaskMenu(); break;
             case 2: showProjectMenu(); break;
-            case 3: showPomodoroMenu(); break;
-            case 4: showStatisticsMenu(); break;
-            case 5: showGamificationMenu(); break;
+            case 3: showReminderMenu(); break;
+            case 4: showPomodoroMenu(); break;
+            case 5: showStatisticsMenu(); break;
+            case 6: showGamificationMenu(); break;
             case 0: exitProgram(); break;
         }
     }
@@ -1527,4 +1536,444 @@ void UIManager::displayWarning(const string& warning) {
 
 void UIManager::displayInfo(const string& info) {
     cout << COLOR_CYAN << "ℹ️  " << info << COLOR_RESET << "\n";
+}
+
+// ============================================================================
+// === 提醒系统 UI 界面 ===
+// ============================================================================
+
+/**
+ * @brief 提醒管理主菜单
+ * 
+ * 提供提醒系统的完整功能入口，包括创建、查看、删除和重新安排提醒
+ */
+void UIManager::showReminderMenu() {
+    clearScreen();
+    printHeader("⏰ 提醒管理 (Reminder Management)");
+    
+    // 显示今日待处理提醒数量
+    auto todayReminders = reminderSystem->getDueRemindersForToday();
+    if (!todayReminders.empty()) {
+        cout << "\n" << COLOR_YELLOW << "📌 今日有 " << todayReminders.size() 
+             << " 个待处理提醒！" << COLOR_RESET << "\n";
+    }
+    
+    vector<string> options = {
+        "✨ 创建新提醒 (Create Reminder)",
+        "📋 查看所有提醒 (View All Reminders)",
+        "⏳ 查看待处理提醒 (Pending Reminders)",
+        "📅 查看今日提醒 (Today's Reminders)",
+        "🗑️  删除提醒 (Delete Reminder)",
+        "🔄 重新安排提醒 (Reschedule Reminder)"
+    };
+    
+    printMenu(options);
+    int choice = getUserChoice(6);
+    
+    switch (choice) {
+        case 1: createReminder(); break;
+        case 2: listAllReminders(); break;
+        case 3: listPendingReminders(); break;
+        case 4: listTodayReminders(); break;
+        case 5: deleteReminder(); break;
+        case 6: rescheduleReminder(); break;
+        case 0: return;
+    }
+}
+
+/**
+ * @brief 选择重复规则
+ * 
+ * 提供友好的选择界面，让用户选择提醒的重复规则
+ * @return 重复规则字符串 ("once", "daily", "weekly", "monthly")
+ */
+string UIManager::selectRecurrence() {
+    cout << "\n" << BOLD << "请选择重复规则：" << COLOR_RESET << "\n";
+    printSeparator("-", 40);
+    cout << "  " << COLOR_YELLOW << "[1]" << COLOR_RESET << " 🔔 一次性 (Once)\n";
+    cout << "  " << COLOR_YELLOW << "[2]" << COLOR_RESET << " 📆 每日 (Daily)\n";
+    cout << "  " << COLOR_YELLOW << "[3]" << COLOR_RESET << " 📅 每周 (Weekly)\n";
+    cout << "  " << COLOR_YELLOW << "[4]" << COLOR_RESET << " 🗓️  每月 (Monthly)\n";
+    printSeparator("-", 40);
+    
+    int choice = getUserChoice(4);
+    
+    switch (choice) {
+        case 1: return "once";
+        case 2: return "daily";
+        case 3: return "weekly";
+        case 4: return "monthly";
+        default: return "once";
+    }
+}
+
+/**
+ * @brief 创建新提醒
+ * 
+ * 引导用户创建新的提醒，支持关联任务和设置重复规则
+ */
+void UIManager::createReminder() {
+    clearScreen();
+    printHeader("✨ 创建新提醒 (Create New Reminder)");
+    
+    // 标题
+    string title = getInput("📌 提醒标题 (Title): ");
+    if (title.empty()) {
+        displayError("提醒标题不能为空！");
+        pause();
+        return;
+    }
+    
+    // 内容
+    string message = getInput("📝 提醒内容 (Message): ");
+    
+    // 提醒时间 (带验证)
+    string reminderTime;
+    while (true) {
+        cout << "\n" << COLOR_CYAN << "💡 提示：时间格式为 YYYY-MM-DD HH:MM:SS" << COLOR_RESET << "\n";
+        cout << COLOR_CYAN << "   例如：2025-12-31 09:00:00" << COLOR_RESET << "\n";
+        reminderTime = getInput("⏰ 提醒时间: ");
+        
+        if (reminderTime.empty()) {
+            displayError("提醒时间不能为空！");
+            continue;
+        }
+        
+        if (isValidDateTimeFormat(reminderTime)) {
+            break;
+        }
+        displayError("时间格式错误！请使用 YYYY-MM-DD HH:MM:SS 格式");
+    }
+    
+    // 选择重复规则
+    string recurrence = selectRecurrence();
+    
+    // 是否关联任务
+    int taskId = 0;
+    if (confirmAction("是否关联到任务？")) {
+        int selectedTaskId = selectTaskByName();
+        if (selectedTaskId > 0) {
+            taskId = selectedTaskId;
+        }
+    }
+    
+    // 创建提醒
+    reminderSystem->addReminder(title, message, reminderTime, recurrence, taskId);
+    
+    // 显示创建摘要
+    cout << "\n" << BOLD << "📋 提醒摘要：" << COLOR_RESET << "\n";
+    printSeparator("-", 45);
+    cout << "  📌 标题: " << title << "\n";
+    cout << "  📝 内容: " << (message.empty() ? "(无)" : message) << "\n";
+    cout << "  ⏰ 时间: " << reminderTime << "\n";
+    cout << "  🔄 重复: ";
+    if (recurrence == "once") cout << "一次性";
+    else if (recurrence == "daily") cout << "每日";
+    else if (recurrence == "weekly") cout << "每周";
+    else if (recurrence == "monthly") cout << "每月";
+    cout << "\n";
+    if (taskId > 0) {
+        cout << "  📎 关联任务ID: " << taskId << "\n";
+    }
+    printSeparator("-", 45);
+    
+    pause();
+}
+
+/**
+ * @brief 查看所有提醒
+ * 
+ * 显示系统中的所有提醒，包括已触发和待处理的
+ */
+void UIManager::listAllReminders() {
+    clearScreen();
+    printHeader("📋 所有提醒 (All Reminders)");
+    
+    auto reminders = reminderSystem->getActiveReminders();
+    
+    if (reminders.empty()) {
+        displayInfo("🎉 暂无提醒，生活轻松无负担！");
+        cout << "\n" << COLOR_CYAN << "💡 提示：返回菜单创建新的提醒吧！" << COLOR_RESET << "\n";
+        pause();
+        return;
+    }
+    
+    cout << "\n" << COLOR_CYAN << "📊 共 " << reminders.size() << " 个提醒" << COLOR_RESET << "\n\n";
+    
+    printSeparator("─", 60);
+    
+    for (const auto& reminder : reminders) {
+        // 状态图标
+        string statusIcon = reminder.triggered ? COLOR_GREEN + "✅" : COLOR_YELLOW + "⏳";
+        
+        cout << statusIcon << COLOR_RESET << " ";
+        cout << BOLD << "[ID:" << reminder.id << "] " << COLOR_RESET;
+        cout << reminder.title << "\n";
+        
+        cout << "   📝 " << (reminder.message.empty() ? "(无内容)" : reminder.message) << "\n";
+        cout << "   ⏰ " << reminder.trigger_time;
+        
+        // 重复规则显示
+        cout << "  🔄 ";
+        if (reminder.recurrence == "once") cout << "一次性";
+        else if (reminder.recurrence == "daily") cout << COLOR_CYAN << "每日" << COLOR_RESET;
+        else if (reminder.recurrence == "weekly") cout << COLOR_MAGENTA << "每周" << COLOR_RESET;
+        else if (reminder.recurrence == "monthly") cout << COLOR_BLUE << "每月" << COLOR_RESET;
+        
+        // 关联任务
+        if (reminder.task_id > 0) {
+            cout << "  📎 任务#" << reminder.task_id;
+        }
+        
+        cout << "\n";
+        printSeparator("─", 60);
+    }
+    
+    pause();
+}
+
+/**
+ * @brief 查看待处理提醒
+ * 
+ * 只显示尚未触发的活跃提醒
+ */
+void UIManager::listPendingReminders() {
+    clearScreen();
+    printHeader("⏳ 待处理提醒 (Pending Reminders)");
+    
+    auto reminders = reminderSystem->getActiveReminders();
+    
+    // 筛选未触发的提醒
+    vector<Reminder> pendingReminders;
+    for (const auto& r : reminders) {
+        if (!r.triggered && r.enabled) {
+            pendingReminders.push_back(r);
+        }
+    }
+    
+    if (pendingReminders.empty()) {
+        displayInfo("🎉 没有待处理的提醒！");
+        cout << "\n" << COLOR_GREEN << "  太棒了，一切尽在掌控！" << COLOR_RESET << "\n";
+        pause();
+        return;
+    }
+    
+    cout << "\n" << COLOR_YELLOW << "📌 " << pendingReminders.size() 
+         << " 个提醒等待处理" << COLOR_RESET << "\n\n";
+    
+    printSeparator("─", 55);
+    
+    for (size_t i = 0; i < pendingReminders.size(); i++) {
+        const auto& reminder = pendingReminders[i];
+        
+        cout << "  " << COLOR_YELLOW << "[" << (i + 1) << "]" << COLOR_RESET << " ";
+        cout << "⏰ " << reminder.trigger_time << "\n";
+        cout << "      📌 " << BOLD << reminder.title << COLOR_RESET << "\n";
+        
+        if (!reminder.message.empty()) {
+            cout << "      📝 " << reminder.message << "\n";
+        }
+        
+        // 显示重复类型
+        cout << "      🔄 ";
+        if (reminder.recurrence == "once") cout << "一次性";
+        else if (reminder.recurrence == "daily") cout << COLOR_CYAN << "每日重复" << COLOR_RESET;
+        else if (reminder.recurrence == "weekly") cout << COLOR_MAGENTA << "每周重复" << COLOR_RESET;
+        else if (reminder.recurrence == "monthly") cout << COLOR_BLUE << "每月重复" << COLOR_RESET;
+        cout << "\n";
+        
+        printSeparator("─", 55);
+    }
+    
+    pause();
+}
+
+/**
+ * @brief 查看今日提醒
+ * 
+ * 显示今天需要处理的所有提醒
+ */
+void UIManager::listTodayReminders() {
+    clearScreen();
+    printHeader("📅 今日提醒 (Today's Reminders)");
+    
+    auto todayReminders = reminderSystem->getDueRemindersForToday();
+    
+    if (todayReminders.empty()) {
+        displayInfo("🌟 今天没有提醒，轻松愉快的一天！");
+        cout << "\n";
+        cout << BOLD << COLOR_CYAN;
+        cout << "   ╔══════════════════════════════════╗\n";
+        cout << "   ║     今天可以专注于重要的事情     ║\n";
+        cout << "   ╚══════════════════════════════════╝\n";
+        cout << COLOR_RESET;
+        pause();
+        return;
+    }
+    
+    cout << "\n" << BOLD << "📅 今日提醒清单" << COLOR_RESET << "\n";
+    cout << COLOR_YELLOW << "   共 " << todayReminders.size() << " 个提醒需要处理" << COLOR_RESET << "\n\n";
+    
+    printSeparator("═", 50);
+    
+    for (size_t i = 0; i < todayReminders.size(); i++) {
+        const auto& reminder = todayReminders[i];
+        
+        // 时间提取 (只显示时间部分)
+        string timeOnly = reminder.trigger_time;
+        if (timeOnly.length() >= 19) {
+            timeOnly = timeOnly.substr(11, 8);  // HH:MM:SS
+        }
+        
+        cout << "\n  " << COLOR_CYAN << "⏰ " << timeOnly << COLOR_RESET;
+        cout << "  " << BOLD << reminder.title << COLOR_RESET << "\n";
+        
+        if (!reminder.message.empty()) {
+            cout << "     📝 " << reminder.message << "\n";
+        }
+        
+        // 任务关联
+        if (reminder.task_id > 0) {
+            cout << "     📎 关联任务 #" << reminder.task_id << "\n";
+        }
+    }
+    
+    printSeparator("═", 50);
+    
+    cout << "\n" << COLOR_GREEN << "💪 加油，完成今日目标！" << COLOR_RESET << "\n";
+    
+    pause();
+}
+
+/**
+ * @brief 删除提醒
+ * 
+ * 选择并删除一个提醒
+ */
+void UIManager::deleteReminder() {
+    clearScreen();
+    printHeader("🗑️  删除提醒 (Delete Reminder)");
+    
+    auto reminders = reminderSystem->getActiveReminders();
+    
+    if (reminders.empty()) {
+        displayInfo("暂无提醒可删除");
+        pause();
+        return;
+    }
+    
+    cout << "\n" << BOLD << "请选择要删除的提醒：" << COLOR_RESET << "\n";
+    printSeparator("-", 50);
+    
+    for (size_t i = 0; i < reminders.size(); i++) {
+        const auto& r = reminders[i];
+        cout << "  " << COLOR_YELLOW << "[" << (i + 1) << "]" << COLOR_RESET << " ";
+        cout << r.title << " (" << r.trigger_time << ")\n";
+    }
+    
+    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " 取消\n";
+    printSeparator("-", 50);
+    
+    int choice = getUserChoice(static_cast<int>(reminders.size()));
+    
+    if (choice == 0) {
+        displayInfo("已取消删除操作");
+        pause();
+        return;
+    }
+    
+    const auto& selectedReminder = reminders[choice - 1];
+    
+    cout << "\n" << COLOR_YELLOW << "⚠️  即将删除提醒: " << selectedReminder.title << COLOR_RESET << "\n";
+    
+    if (confirmAction("确定要删除这个提醒吗？")) {
+        if (reminderSystem->markReminderAsTriggered(selectedReminder.id)) {
+            displaySuccess("🎉 提醒已删除");
+        } else {
+            displayError("删除失败，请重试");
+        }
+    } else {
+        displayInfo("已取消删除操作");
+    }
+    
+    pause();
+}
+
+/**
+ * @brief 重新安排提醒时间
+ * 
+ * 选择一个提醒并重新设置其触发时间
+ */
+void UIManager::rescheduleReminder() {
+    clearScreen();
+    printHeader("🔄 重新安排提醒 (Reschedule Reminder)");
+    
+    auto reminders = reminderSystem->getActiveReminders();
+    
+    // 只显示未触发的提醒
+    vector<Reminder> pendingReminders;
+    for (const auto& r : reminders) {
+        if (!r.triggered && r.enabled) {
+            pendingReminders.push_back(r);
+        }
+    }
+    
+    if (pendingReminders.empty()) {
+        displayInfo("暂无可重新安排的提醒");
+        pause();
+        return;
+    }
+    
+    cout << "\n" << BOLD << "请选择要重新安排的提醒：" << COLOR_RESET << "\n";
+    printSeparator("-", 55);
+    
+    for (size_t i = 0; i < pendingReminders.size(); i++) {
+        const auto& r = pendingReminders[i];
+        cout << "  " << COLOR_YELLOW << "[" << (i + 1) << "]" << COLOR_RESET << " ";
+        cout << r.title << "\n";
+        cout << "      当前时间: " << COLOR_CYAN << r.trigger_time << COLOR_RESET << "\n";
+    }
+    
+    cout << "  " << COLOR_RED << "[0]" << COLOR_RESET << " 取消\n";
+    printSeparator("-", 55);
+    
+    int choice = getUserChoice(static_cast<int>(pendingReminders.size()));
+    
+    if (choice == 0) {
+        displayInfo("已取消操作");
+        pause();
+        return;
+    }
+    
+    const auto& selectedReminder = pendingReminders[choice - 1];
+    
+    cout << "\n📌 当前提醒: " << BOLD << selectedReminder.title << COLOR_RESET << "\n";
+    cout << "⏰ 当前时间: " << selectedReminder.trigger_time << "\n\n";
+    
+    // 输入新时间
+    string newTime;
+    while (true) {
+        cout << COLOR_CYAN << "💡 时间格式: YYYY-MM-DD HH:MM:SS" << COLOR_RESET << "\n";
+        newTime = getInput("📅 新的提醒时间: ");
+        
+        if (newTime.empty()) {
+            displayError("时间不能为空！");
+            continue;
+        }
+        
+        if (isValidDateTimeFormat(newTime)) {
+            break;
+        }
+        displayError("时间格式错误！请使用 YYYY-MM-DD HH:MM:SS 格式");
+    }
+    
+    if (reminderSystem->rescheduleReminder(selectedReminder.id, newTime)) {
+        displaySuccess("🎉 提醒时间已更新！");
+        cout << "\n  📌 " << selectedReminder.title << "\n";
+        cout << "  ⏰ 新时间: " << COLOR_GREEN << newTime << COLOR_RESET << "\n";
+    } else {
+        displayError("更新失败，请重试");
+    }
+    
+    pause();
 }

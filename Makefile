@@ -26,6 +26,7 @@ SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/database/databasemanager.cpp \
        $(SRC_DIR)/database/DAO/ProjectDAO.cpp \
        $(SRC_DIR)/database/DAO/TaskDAOImpl.cpp \
+       $(SRC_DIR)/database/DAO/ReminderDAO.cpp \
        $(SRC_DIR)/project/Project.cpp \
        $(SRC_DIR)/project/ProjectManager.cpp \
        $(SRC_DIR)/statistics/StatisticsAnalyzer.cpp \
@@ -34,7 +35,8 @@ SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/ui/UIManager.cpp \
        $(SRC_DIR)/task/task.cpp \
        $(SRC_DIR)/task/TaskManager.cpp \
-       $(SRC_DIR)/Pomodoro/pomodoro.cpp
+       $(SRC_DIR)/Pomodoro/pomodoro.cpp \
+       $(SRC_DIR)/reminder/ReminderSystem.cpp
 
 # Object files
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)

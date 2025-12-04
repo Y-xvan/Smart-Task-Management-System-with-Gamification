@@ -6,6 +6,7 @@
 #include <optional>
 #include <chrono>
 #include <string>
+#include <memory>
 
 class ReminderDAO {
 public:
@@ -55,6 +56,9 @@ public:
     virtual int getReminderCountByStatus(ReminderStatus status) = 0;
     virtual int getOverdueReminderCount() = 0;
 };
+
+// 工厂函数声明
+std::unique_ptr<ReminderDAO> createReminderDAO(const std::string& dbPath = "task_manager.db");
 
 #endif // REMINDER_DAO_H
 

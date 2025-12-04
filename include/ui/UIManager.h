@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <memory>
 
 // 前向声明，避免循环依赖
 class StatisticsAnalyzer;
@@ -12,6 +13,8 @@ class HeatmapVisualizer;
 class ProjectManager;
 class TaskManager;
 class Pomodoro;
+class ReminderSystem;
+class ReminderDAO;
 
 class UIManager {
 private:
@@ -22,6 +25,7 @@ private:
     ProjectManager* projectManager;
     TaskManager* taskManager;
     Pomodoro* pomodoro;
+    ReminderSystem* reminderSystem;  // 提醒系统
 
     bool running;
 
@@ -117,6 +121,16 @@ public:
     void startPomodoroSession();
     void startShortBreak();
     void startLongBreak();
+
+    // === 提醒功能 ===
+    void showReminderMenu();           // 提醒管理主菜单
+    void createReminder();             // 创建新提醒
+    void listAllReminders();           // 查看所有提醒
+    void listPendingReminders();       // 查看待处理提醒
+    void listTodayReminders();         // 查看今日提醒
+    void deleteReminder();             // 删除提醒
+    void rescheduleReminder();         // 重新安排提醒时间
+    std::string selectRecurrence();    // 选择重复规则
 };
 
 #endif // UI_MANAGER_H
