@@ -2,6 +2,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <functional>
 
 Pomodoro::Pomodoro(int work, int brk, int longBrk)
     : workDuration(work), breakDuration(brk), longBreakDuration(longBrk), 
