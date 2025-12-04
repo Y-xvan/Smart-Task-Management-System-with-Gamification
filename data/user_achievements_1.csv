@@ -1,5 +1,0 @@
-id,created_date,updated_date,name,description,icon,unlock_condition,unlocked,unlocked_date,reward_xp,category,progress,target_value
-5,2025-12-04 15:30:41,2025-12-04 15:30:41,首次任务,完成第一个任务,🎯,first_task,0,,100,task,0,1
-6,2025-12-04 15:30:41,2025-12-04 15:30:41,七日连胜,连续完成7天任务,🔥,seven_day_streak,0,,300,streak,0,7
-7,2025-12-04 15:30:41,2025-12-04 15:30:41,时间管理达人,单日完成10个任务,⏱️,time_management_master,0,,200,time,0,10
-8,2025-12-04 15:30:41,2025-12-04 15:30:41,番茄钟大师,累计完成20个番茄钟,🍅,pomodoro_master,0,,250,pomodoro,0,20
