@@ -546,29 +546,31 @@ void UIManager::exitProgram() {
 // === 任务管理界面 ===
 
 void UIManager::showTaskMenu() {
-    clearScreen();
-    printHeader("📋 任务管理 (Task Management)");
-    
-    vector<string> options = {
-        "✨ 创建新任务 (Create Task)",
-        "📋 查看所有任务 (View All Tasks)",
-        "✏️  更新任务 (Update Task)",
-        "🗑️  删除任务 (Delete Task)",
-        "✅ 完成任务 (Complete Task) 🎯",
-        "📎 分配任务到项目 (Assign to Project)"
-    };
-    
-    printMenu(options);
-    int choice = getUserChoice(6);
-    
-    switch (choice) {
-        case 1: createTask(); break;
-        case 2: listTasks(); break;
-        case 3: updateTask(); break;
-        case 4: deleteTask(); break;
-        case 5: completeTask(); break;
-        case 6: assignTaskToProject(); break;
-        case 0: return;
+    while (true) {
+        clearScreen();
+        printHeader("📋 任务管理 (Task Management)");
+        
+        vector<string> options = {
+            "✨ 创建新任务 (Create Task)",
+            "📋 查看所有任务 (View All Tasks)",
+            "✏️  更新任务 (Update Task)",
+            "🗑️  删除任务 (Delete Task)",
+            "✅ 完成任务 (Complete Task) 🎯",
+            "📎 分配任务到项目 (Assign to Project)"
+        };
+        
+        printMenu(options);
+        int choice = getUserChoice(6);
+        
+        switch (choice) {
+            case 1: createTask(); break;
+            case 2: listTasks(); break;
+            case 3: updateTask(); break;
+            case 4: deleteTask(); break;
+            case 5: completeTask(); break;
+            case 6: assignTaskToProject(); break;
+            case 0: return;
+        }
     }
 }
 
@@ -917,27 +919,29 @@ void UIManager::assignTaskToProject() {
 // === 项目管理界面 ===
 
 void UIManager::showProjectMenu() {
-    clearScreen();
-    printHeader("📁 项目管理 (Project Management)");
-    
-    vector<string> options = {
-        "✨ 创建新项目 (Create Project)",
-        "📁 查看所有项目 (View All Projects)",
-        "📊 查看项目详情 (Project Details)",
-        "✏️  更新项目 (Update Project)",
-        "🗑️  删除项目 (Delete Project)"
-    };
-    
-    printMenu(options);
-    int choice = getUserChoice(5);
-    
-    switch (choice) {
-        case 1: createProject(); break;
-        case 2: listProjects(); break;
-        case 3: viewProjectDetails(); break;
-        case 4: updateProject(); break;
-        case 5: deleteProject(); break;
-        case 0: return;
+    while (true) {
+        clearScreen();
+        printHeader("📁 项目管理 (Project Management)");
+        
+        vector<string> options = {
+            "✨ 创建新项目 (Create Project)",
+            "📁 查看所有项目 (View All Projects)",
+            "📊 查看项目详情 (Project Details)",
+            "✏️  更新项目 (Update Project)",
+            "🗑️  删除项目 (Delete Project)"
+        };
+        
+        printMenu(options);
+        int choice = getUserChoice(5);
+        
+        switch (choice) {
+            case 1: createProject(); break;
+            case 2: listProjects(); break;
+            case 3: viewProjectDetails(); break;
+            case 4: updateProject(); break;
+            case 5: deleteProject(); break;
+            case 0: return;
+        }
     }
 }
 
@@ -1166,37 +1170,39 @@ void UIManager::deleteProject() {
 // === 番茄钟功能 ===
 
 void UIManager::showPomodoroMenu() {
-    clearScreen();
-    printHeader("🍅 番茄钟 (Pomodoro Timer)");
-    
-    cout << "\n" << BOLD << "🍅 什么是番茄工作法？" << COLOR_RESET << "\n";
-    cout << "  专注工作一段时间，然后休息一下。\n";
-    cout << "  每完成4个番茄钟，可以休息更长时间。\n";
-    
-    cout << "\n" << COLOR_CYAN << "📊 今日番茄钟: " << COLOR_RESET 
-         << statsAnalyzer->getPomodorosToday() << " 个\n";
-    cout << COLOR_CYAN << "📈 累计番茄钟: " << COLOR_RESET 
-         << pomodoro->getCycleCount() << " 个\n";
-    
-    cout << "\n" << BOLD << "⚙️  当前设置:" << COLOR_RESET << "\n";
-    cout << "  工作: " << pomodoro->getWorkDuration() << "分钟 | ";
-    cout << "短休息: " << pomodoro->getBreakDuration() << "分钟 | ";
-    cout << "长休息: " << pomodoro->getLongBreakDuration() << "分钟\n";
-    
-    vector<string> options = {
-        "🍅 开始工作 (" + to_string(pomodoro->getWorkDuration()) + "分钟)",
-        "☕ 短休息 (" + to_string(pomodoro->getBreakDuration()) + "分钟)",
-        "🛋️  长休息 (" + to_string(pomodoro->getLongBreakDuration()) + "分钟)"
-    };
-    
-    printMenu(options);
-    int choice = getUserChoice(3);
-    
-    switch (choice) {
-        case 1: startPomodoroSession(); break;
-        case 2: startShortBreak(); break;
-        case 3: startLongBreak(); break;
-        case 0: return;
+    while (true) {
+        clearScreen();
+        printHeader("🍅 番茄钟 (Pomodoro Timer)");
+        
+        cout << "\n" << BOLD << "🍅 什么是番茄工作法？" << COLOR_RESET << "\n";
+        cout << "  专注工作一段时间，然后休息一下。\n";
+        cout << "  每完成4个番茄钟，可以休息更长时间。\n";
+        
+        cout << "\n" << COLOR_CYAN << "📊 今日番茄钟: " << COLOR_RESET 
+             << statsAnalyzer->getPomodorosToday() << " 个\n";
+        cout << COLOR_CYAN << "📈 累计番茄钟: " << COLOR_RESET 
+             << pomodoro->getCycleCount() << " 个\n";
+        
+        cout << "\n" << BOLD << "⚙️  当前设置:" << COLOR_RESET << "\n";
+        cout << "  工作: " << pomodoro->getWorkDuration() << "分钟 | ";
+        cout << "短休息: " << pomodoro->getBreakDuration() << "分钟 | ";
+        cout << "长休息: " << pomodoro->getLongBreakDuration() << "分钟\n";
+        
+        vector<string> options = {
+            "🍅 开始工作 (" + to_string(pomodoro->getWorkDuration()) + "分钟)",
+            "☕ 短休息 (" + to_string(pomodoro->getBreakDuration()) + "分钟)",
+            "🛋️  长休息 (" + to_string(pomodoro->getLongBreakDuration()) + "分钟)"
+        };
+        
+        printMenu(options);
+        int choice = getUserChoice(3);
+        
+        switch (choice) {
+            case 1: startPomodoroSession(); break;
+            case 2: startShortBreak(); break;
+            case 3: startLongBreak(); break;
+            case 0: return;
+        }
     }
 }
 
@@ -1369,27 +1375,29 @@ void UIManager::startLongBreak() {
 // === 统计分析界面 ===
 
 void UIManager::showStatisticsMenu() {
-    clearScreen();
-    printHeader("📊 统计分析 (Statistics)");
-    
-    vector<string> options = {
-        "📈 统计数据总览 (Summary)",
-        "📅 每日报告 (Daily Report)",
-        "📆 每周报告 (Weekly Report)",
-        "📊 每月报告 (Monthly Report)",
-        "🔥 任务完成热力图 (Task Heatmap)"
-    };
-    
-    printMenu(options);
-    int choice = getUserChoice(5);
-    
-    switch (choice) {
-        case 1: showStatisticsSummary(); break;
-        case 2: showDailyReport(); break;
-        case 3: showWeeklyReport(); break;
-        case 4: showMonthlyReport(); break;
-        case 5: showHeatmap(); break;
-        case 0: return;
+    while (true) {
+        clearScreen();
+        printHeader("📊 统计分析 (Statistics)");
+        
+        vector<string> options = {
+            "📈 统计数据总览 (Summary)",
+            "📅 每日报告 (Daily Report)",
+            "📆 每周报告 (Weekly Report)",
+            "📊 每月报告 (Monthly Report)",
+            "🔥 任务完成热力图 (Task Heatmap)"
+        };
+        
+        printMenu(options);
+        int choice = getUserChoice(5);
+        
+        switch (choice) {
+            case 1: showStatisticsSummary(); break;
+            case 2: showDailyReport(); break;
+            case 3: showWeeklyReport(); break;
+            case 4: showMonthlyReport(); break;
+            case 5: showHeatmap(); break;
+            case 0: return;
+        }
     }
 }
 
@@ -1431,21 +1439,23 @@ void UIManager::showHeatmap() {
 // === 游戏化界面 ===
 
 void UIManager::showGamificationMenu() {
-    clearScreen();
-    printHeader("🎮 游戏化功能 (Gamification)");
-    
-    vector<string> options = {
-        "⭐ 经验值和等级 (XP & Level)",
-        "🏆 成就系统 (Achievements)"
-    };
-    
-    printMenu(options);
-    int choice = getUserChoice(2);
-    
-    switch (choice) {
-        case 1: showXPAndLevel(); break;
-        case 2: showAchievementMenu(); break;
-        case 0: return;
+    while (true) {
+        clearScreen();
+        printHeader("🎮 游戏化功能 (Gamification)");
+        
+        vector<string> options = {
+            "⭐ 经验值和等级 (XP & Level)",
+            "🏆 成就系统 (Achievements)"
+        };
+        
+        printMenu(options);
+        int choice = getUserChoice(2);
+        
+        switch (choice) {
+            case 1: showXPAndLevel(); break;
+            case 2: showAchievementMenu(); break;
+            case 0: return;
+        }
     }
 }
 
@@ -1469,36 +1479,38 @@ void UIManager::showXPAndLevel() {
  * 提供成就系统的完整功能入口
  */
 void UIManager::showAchievementMenu() {
-    clearScreen();
-    printHeader("🏆 成就系统 (Achievement System)");
-    
-    // 显示成就概览
-    auto allAchievements = achievementMgr->getAchievementProgress(1);
-    int unlockedCount = 0;
-    for (const auto& prog : allAchievements) {
-        if (prog.progressPercent >= 100.0) unlockedCount++;
-    }
-    
-    cout << "\n" << COLOR_CYAN << "📊 成就概览: " << COLOR_RESET;
-    cout << COLOR_GREEN << unlockedCount << COLOR_RESET << " / " 
-         << allAchievements.size() << " 已解锁\n";
-    
-    vector<string> options = {
-        "📋 查看所有成就 (All Achievements)",
-        "✅ 已解锁成就 (Unlocked Achievements)",
-        "📊 成就统计 (Statistics)",
-        "🔄 检查成就解锁 (Check Achievements)"
-    };
-    
-    printMenu(options);
-    int choice = getUserChoice(4);
-    
-    switch (choice) {
-        case 1: showAllAchievements(); break;
-        case 2: showUnlockedAchievements(); break;
-        case 3: showAchievementStatistics(); break;
-        case 4: checkAchievements(); break;
-        case 0: return;
+    while (true) {
+        clearScreen();
+        printHeader("🏆 成就系统 (Achievement System)");
+        
+        // 显示成就概览
+        auto allAchievements = achievementMgr->getAchievementProgress(1);
+        int unlockedCount = 0;
+        for (const auto& prog : allAchievements) {
+            if (prog.progressPercent >= 100.0) unlockedCount++;
+        }
+        
+        cout << "\n" << COLOR_CYAN << "📊 成就概览: " << COLOR_RESET;
+        cout << COLOR_GREEN << unlockedCount << COLOR_RESET << " / " 
+             << allAchievements.size() << " 已解锁\n";
+        
+        vector<string> options = {
+            "📋 查看所有成就 (All Achievements)",
+            "✅ 已解锁成就 (Unlocked Achievements)",
+            "📊 成就统计 (Statistics)",
+            "🔄 检查成就解锁 (Check Achievements)"
+        };
+        
+        printMenu(options);
+        int choice = getUserChoice(4);
+        
+        switch (choice) {
+            case 1: showAllAchievements(); break;
+            case 2: showUnlockedAchievements(); break;
+            case 3: showAchievementStatistics(); break;
+            case 4: checkAchievements(); break;
+            case 0: return;
+        }
     }
 }
 
@@ -1825,36 +1837,38 @@ void UIManager::displayInfo(const string& info) {
  * 提供提醒系统的完整功能入口，包括创建、查看、删除和重新安排提醒
  */
 void UIManager::showReminderMenu() {
-    clearScreen();
-    printHeader("⏰ 提醒管理 (Reminder Management)");
-    
-    // 显示今日待处理提醒数量
-    auto todayReminders = reminderSystem->getDueRemindersForToday();
-    if (!todayReminders.empty()) {
-        cout << "\n" << COLOR_YELLOW << "📌 今日有 " << todayReminders.size() 
-             << " 个待处理提醒！" << COLOR_RESET << "\n";
-    }
-    
-    vector<string> options = {
-        "✨ 创建新提醒 (Create Reminder)",
-        "📋 查看所有提醒 (View All Reminders)",
-        "⏳ 查看待处理提醒 (Pending Reminders)",
-        "📅 查看今日提醒 (Today's Reminders)",
-        "🗑️  删除提醒 (Delete Reminder)",
-        "🔄 重新安排提醒 (Reschedule Reminder)"
-    };
-    
-    printMenu(options);
-    int choice = getUserChoice(6);
-    
-    switch (choice) {
-        case 1: createReminder(); break;
-        case 2: listAllReminders(); break;
-        case 3: listPendingReminders(); break;
-        case 4: listTodayReminders(); break;
-        case 5: deleteReminder(); break;
-        case 6: rescheduleReminder(); break;
-        case 0: return;
+    while (true) {
+        clearScreen();
+        printHeader("⏰ 提醒管理 (Reminder Management)");
+        
+        // 显示今日待处理提醒数量
+        auto todayReminders = reminderSystem->getDueRemindersForToday();
+        if (!todayReminders.empty()) {
+            cout << "\n" << COLOR_YELLOW << "📌 今日有 " << todayReminders.size() 
+                 << " 个待处理提醒！" << COLOR_RESET << "\n";
+        }
+        
+        vector<string> options = {
+            "✨ 创建新提醒 (Create Reminder)",
+            "📋 查看所有提醒 (View All Reminders)",
+            "⏳ 查看待处理提醒 (Pending Reminders)",
+            "📅 查看今日提醒 (Today's Reminders)",
+            "🗑️  删除提醒 (Delete Reminder)",
+            "🔄 重新安排提醒 (Reschedule Reminder)"
+        };
+        
+        printMenu(options);
+        int choice = getUserChoice(6);
+        
+        switch (choice) {
+            case 1: createReminder(); break;
+            case 2: listAllReminders(); break;
+            case 3: listPendingReminders(); break;
+            case 4: listTodayReminders(); break;
+            case 5: deleteReminder(); break;
+            case 6: rescheduleReminder(); break;
+            case 0: return;
+        }
     }
 }
 
