@@ -10,7 +10,8 @@ class StatisticsAnalyzer;
 class XPSystem;
 class HeatmapVisualizer;
 class ProjectManager;
-class TaskManager; 
+class TaskManager;
+class Pomodoro;
 
 class UIManager {
 private:
@@ -19,11 +20,15 @@ private:
     XPSystem* xpSystem;
     HeatmapVisualizer* heatmap;
     ProjectManager* projectManager;
-    TaskManager* taskManager; // ⭐ 新增：任务管理器
+    TaskManager* taskManager;
+    Pomodoro* pomodoro;
 
     bool running;
 
-    // === 颜色常量 (保留原定义) ===
+    // === 预定义颜色选项 ===
+    static const std::vector<std::pair<std::string, std::string>> COLOR_OPTIONS;
+
+    // === 颜色常量 ===
     static const std::string COLOR_RESET;
     static const std::string COLOR_RED;
     static const std::string COLOR_GREEN;
@@ -46,8 +51,14 @@ private:
     void pause();
     bool confirmAction(const std::string& prompt);
 
-    // === ⭐ 游戏化视觉特效 (UI增强) ===
-    void displayHUD(); // 替代原有的 displayUserStatusBar
+    // === 选择式输入辅助方法 ===
+    int selectTaskByName();           // 通过名称选择任务，返回任务ID
+    int selectProjectByName();        // 通过名称选择项目，返回项目ID
+    std::string selectColor();        // 颜色选择，返回颜色代码
+    int selectPriority();             // 优先级选择
+
+    // === 游戏化视觉特效 ===
+    void displayHUD();
     void printProgressBar(int current, int total, int width = 30, std::string color = COLOR_CYAN);
     void printEncouragement();
     void showTaskCompleteCelebration(int xpGained);
@@ -67,7 +78,6 @@ public:
     void showProjectMenu();
     void showStatisticsMenu();
     void showGamificationMenu();
-    void showSettingsMenu();
 
     // === 消息显示 ===
     void displayMessage(const std::string& msg, const std::string& type = "info");
@@ -76,37 +86,37 @@ public:
     void displayWarning(const std::string& warning);
     void displayInfo(const std::string& info);
 
-    // === 业务逻辑方法 ===
-    
-    // 任务功能 (已增强逻辑)
+    // === 任务功能 ===
     void createTask();
     void listTasks();
     void updateTask();
     void deleteTask();
     void completeTask();
+    void assignTaskToProject();
 
-    // 项目功能 (完整保留)
+    // === 项目功能 ===
     void createProject();
     void listProjects();
     void viewProjectDetails();
     void updateProject();
     void deleteProject();
 
-    // 统计功能 (完整保留)
+    // === 统计功能 ===
     void showStatisticsSummary();
     void showDailyReport();
     void showWeeklyReport();
     void showMonthlyReport();
     void showHeatmap();
 
-    // 游戏化功能 (完整保留)
+    // === 游戏化功能 ===
     void showXPAndLevel();
     void showAchievements();
-    void showChallenges();
 
-    // 设置功能 (完整保留)
-    void viewSettings();
-    void updateSettings();
+    // === 番茄钟功能 ===
+    void showPomodoroMenu();
+    void startPomodoroSession();
+    void startShortBreak();
+    void startLongBreak();
 };
 
 #endif // UI_MANAGER_H
