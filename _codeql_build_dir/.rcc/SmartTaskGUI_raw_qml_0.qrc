@@ -1,8 +1,0 @@
-<RCC>
-  <qresource prefix="/SmartTaskGUI/">
-    <file alias="resources/qml/Main.qml">/home/runner/work/Smart-Task-Management-System-with-Gamification/Smart-Task-Management-System-with-Gamification/resources/qml/Main.qml</file>
-    <file alias="resources/qml/QuestBoard.qml">/home/runner/work/Smart-Task-Management-System-with-Gamification/Smart-Task-Management-System-with-Gamification/resources/qml/QuestBoard.qml</file>
-    <file alias="resources/qml/QuestCard.qml">/home/runner/work/Smart-Task-Management-System-with-Gamification/Smart-Task-Management-System-with-Gamification/resources/qml/QuestCard.qml</file>
-  </qresource>
-</RCC>
-

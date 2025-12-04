@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="/SmartTaskGUI">
-    <file alias="qmldir">/home/runner/work/Smart-Task-Management-System-with-Gamification/Smart-Task-Management-System-with-Gamification/_codeql_build_dir/SmartTaskGUI/qmldir</file>
-  </qresource>
-</RCC>
-
