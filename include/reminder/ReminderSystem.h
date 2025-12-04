@@ -47,6 +47,7 @@ public:
     std::vector<Reminder> getDueRemindersForToday();
     bool markReminderAsTriggered(int reminderId);
     bool rescheduleReminder(int reminderId, const std::string& newTime);
+    bool deleteReminder(int reminderId);  // 删除提醒
     
     // 当提醒触发时，通知UI显示
     void notifyUser(const Reminder& reminder);

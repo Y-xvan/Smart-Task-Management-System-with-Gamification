@@ -299,6 +299,18 @@ bool ReminderSystem::rescheduleReminder(int reminderId, const std::string& newTi
     return false;
 }
 
+bool ReminderSystem::deleteReminder(int reminderId) {
+    if (reminderDAO) {
+        bool result = reminderDAO->deleteReminder(reminderId);
+        if (result) {
+            // 重新加载提醒列表以反映删除
+            loadRemindersFromDB();
+        }
+        return result;
+    }
+    return false;
+}
+
 void ReminderSystem::notifyUser(const Reminder& reminder) {
     // TODO: 将这里替换为实际 UI 通知逻辑（例如发信号、调用回调等）
     std::cout << "🔔 提醒: " << reminder.title << "\n";

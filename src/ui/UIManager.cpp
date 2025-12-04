@@ -1887,7 +1887,7 @@ void UIManager::deleteReminder() {
     cout << "\n" << COLOR_YELLOW << "⚠️  即将删除提醒: " << selectedReminder.title << COLOR_RESET << "\n";
     
     if (confirmAction("确定要删除这个提醒吗？")) {
-        if (reminderSystem->markReminderAsTriggered(selectedReminder.id)) {
+        if (reminderSystem->deleteReminder(selectedReminder.id)) {
             displaySuccess("🎉 提醒已删除");
         } else {
             displayError("删除失败，请重试");
