@@ -9,14 +9,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
-# Include directories
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/common)
-include_directories(${CMAKE_SOURCE_DIR}/sqlite)
-
-# Find SQLite3
-link_directories(${CMAKE_SOURCE_DIR}/sqlite)
+# SQLite3 configuration
+set(SQLITE3_DIR ${CMAKE_SOURCE_DIR}/sqlite)
 
 # Source files
 set(SOURCES
@@ -42,12 +36,21 @@ set(SOURCES
 # Create executable
 add_executable(task_manager ${SOURCES})
 
-# Link libraries
-target_link_libraries(task_manager sqlite3)
+# Set include directories for target
+target_include_directories(task_manager PRIVATE
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/common
+    ${SQLITE3_DIR}
+)
+
+# Link directories and libraries
+target_link_directories(task_manager PRIVATE ${SQLITE3_DIR})
+target_link_libraries(task_manager PRIVATE sqlite3)
 
 # Windows specific settings
 if(WIN32)
-    target_link_libraries(task_manager -static -static-libgcc -static-libstdc++)
+    target_link_options(task_manager PRIVATE -static -static-libgcc -static-libstdc++)
 endif()
 
 # Set output directory
@@ -56,10 +59,10 @@ set_target_properties(task_manager PROPERTIES
 )
 
 # Copy SQLite DLL on Windows
-if(WIN32)
+if(WIN32 AND EXISTS ${SQLITE3_DIR}/sqlite3.dll)
     add_custom_command(TARGET task_manager POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/sqlite/sqlite3.dll"
+        "${SQLITE3_DIR}/sqlite3.dll"
         $<TARGET_FILE_DIR:task_manager>
         COMMENT "Copying SQLite3 DLL to output directory"
     )
