@@ -60,7 +60,7 @@ target_link_libraries(task_manager PRIVATE sqlite3)
 
 # Platform-specific settings for console
 if(WIN32)
-    target_link_libraries(task_manager PRIVATE -static -static-libgcc -static-libstdc++)
+    target_link_libraries(task_manager PRIVATE -static-libgcc -static-libstdc++)
 endif()
 
 # ============================================

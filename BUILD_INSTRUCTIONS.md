@@ -32,6 +32,10 @@ This project supports building both **Console** and **GUI** versions using CMake
 
 # Specify Qt path if not in PATH
 .\build_cmake.ps1 -QtPath "C:\Qt\6.x\mingw_64\bin"
+
+# Use different CMake generator (default is MinGW Makefiles)
+.\build_cmake.ps1 -Generator "Visual Studio 17 2022"
+.\build_cmake.ps1 -Generator "Ninja"
 ```
 
 ### Option 2: Manual CMake Build

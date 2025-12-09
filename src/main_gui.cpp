@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     engine.rootContext()->setContextProperty("reminderModel", &reminderModel);
     engine.rootContext()->setContextProperty("gameController", &gameController);
 
-    const QUrl url(QStringLiteral("qrc:/resources/qml/MainView.qml"));
+    const QUrl url(QStringLiteral("qrc:/qml/MainView.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
         &app, [url](QObject* obj, const QUrl& objUrl) {
             if (!obj && url == objUrl)

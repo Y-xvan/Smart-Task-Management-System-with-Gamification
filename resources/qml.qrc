@@ -1,13 +1,13 @@
 <RCC>
     <qresource prefix="/">
-        <file>resources/qml/MainView.qml</file>
-        <file>resources/qml/QuestView.qml</file>
-        <file>resources/qml/QuestCard.qml</file>
-        <file>resources/qml/ProjectView.qml</file>
-        <file>resources/qml/ProjectCard.qml</file>
-        <file>resources/qml/FocusView.qml</file>
-        <file>resources/qml/StatsView.qml</file>
-        <file>resources/qml/ReminderView.qml</file>
-        <file>resources/qml/NewTaskDialog.qml</file>
+        <file>qml/MainView.qml</file>
+        <file>qml/QuestView.qml</file>
+        <file>qml/QuestCard.qml</file>
+        <file>qml/ProjectView.qml</file>
+        <file>qml/ProjectCard.qml</file>
+        <file>qml/FocusView.qml</file>
+        <file>qml/StatsView.qml</file>
+        <file>qml/ReminderView.qml</file>
+        <file>qml/NewTaskDialog.qml</file>
     </qresource>
 </RCC>

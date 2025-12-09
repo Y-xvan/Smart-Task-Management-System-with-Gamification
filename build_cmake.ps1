@@ -3,7 +3,8 @@
 param(
     [switch]$Debug,
     [switch]$Clean,
-    [string]$QtPath = ""
+    [string]$QtPath = "",
+    [string]$Generator = "MinGW Makefiles"
 )
 
 # Clear any errors
@@ -40,8 +41,8 @@ Push-Location $BUILD_DIR
 
 try {
     # Configure with CMake
-    Write-Host "Configuring CMake (Build Type: $BUILD_TYPE)..." -ForegroundColor Green
-    cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" ..
+    Write-Host "Configuring CMake (Build Type: $BUILD_TYPE, Generator: $Generator)..." -ForegroundColor Green
+    cmake -G $Generator -DCMAKE_BUILD_TYPE="$BUILD_TYPE" ..
     
     if ($LASTEXITCODE -ne 0) {
         throw "CMake configuration failed"
