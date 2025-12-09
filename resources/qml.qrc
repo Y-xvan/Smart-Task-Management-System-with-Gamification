@@ -9,6 +9,5 @@
         <file>resources/qml/StatsView.qml</file>
         <file>resources/qml/ReminderView.qml</file>
         <file>resources/qml/NewTaskDialog.qml</file>
-        <file>resources/qml/NewProjectDialog.qml</file>
     </qresource>
 </RCC>
