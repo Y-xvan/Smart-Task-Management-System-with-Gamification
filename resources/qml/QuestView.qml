@@ -2,13 +2,13 @@ import QtQuick
 import QtQuick.Controls
 
 Item {
-    // ±³¾°
+    // ï¿½ï¿½ï¿½ï¿½
     Rectangle {
         anchors.fill: parent
         color: "#121212"
     }
 
-    // ÁÐ±í
+    // ï¿½Ð±ï¿½
     ListView {
         id: taskList
         anchors.fill: parent
@@ -21,7 +21,7 @@ Item {
         delegate: QuestCard {
             width: taskList.width
             
-            // °ó¶¨Êý¾Ý
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             title: model.title
             desc: model.description
             priority: model.priority
@@ -29,16 +29,22 @@ Item {
             projectName: model.projectName
             dueDate: model.dueDate
 
-            // ÐÅºÅ´¦Àí
-            onComplete: taskModel.completeTask(index)
-            onDelete: taskModel.deleteTask(index)
+            // ï¿½ÅºÅ´ï¿½ï¿½ï¿½
+            onComplete: {
+                taskModel.completeTask(index)
+                gameController.refresh()
+            }
+            onDelete: {
+                taskModel.deleteTask(index)
+                gameController.refresh()
+            }
         }
 
-        // µ×²¿Áô°×
+        // ï¿½×²ï¿½ï¿½ï¿½ï¿½ï¿½
         footer: Item { height: 80 }
     }
 
-    // ÐÂ½¨°´Å¥ (FAB)
+    // ï¿½Â½ï¿½ï¿½ï¿½Å¥ (FAB)
     Button {
         anchors.right: parent.right
         anchors.bottom: parent.bottom

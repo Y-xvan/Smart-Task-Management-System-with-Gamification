@@ -24,6 +24,7 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
     Q_INVOKABLE void addReminder(const QString& title, const QString& time);
+    Q_INVOKABLE void addReminder(const QString& title, const QString& message, const QString& time, const QString& recurrence);
     Q_INVOKABLE void deleteReminder(int index);
     Q_INVOKABLE void reload();
 

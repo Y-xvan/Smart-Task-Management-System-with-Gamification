@@ -39,8 +39,12 @@ QHash<int, QByteArray> ReminderModel::roleNames() const {
 }
 
 void ReminderModel::addReminder(const QString& title, const QString& time) {
-    // Ä¬ÈÏÒ»´ÎÐÔÌáÐÑ£¬ÎÞ¹ØÁªÈÎÎñ
-    m_rs->addReminder(title.toStdString(), "", time.toStdString(), "once", 0);
+    addReminder(title, "", time, "once");
+}
+
+void ReminderModel::addReminder(const QString& title, const QString& message, const QString& time, const QString& recurrence) {
+    // é»˜è®¤ä¸€ä¸ªæé†’ä¸€æ¬¡ï¼Œå…è®¸å‰ç«¯æŒ‡å®šæ¶ˆæ¯ä¸Žé‡å¤è§„åˆ™
+    m_rs->addReminder(title.toStdString(), message.toStdString(), time.toStdString(), recurrence.toStdString(), 0);
     reload();
 }
 

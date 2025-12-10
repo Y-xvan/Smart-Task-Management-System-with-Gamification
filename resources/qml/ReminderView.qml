@@ -41,5 +41,5 @@ Item {
         onClicked: newRemDialog.open()
     }
     
-    NewReminderDialog { id: newRemDialog } // 需创建
+    NewReminderDialog { id: newRemDialog }
 }
