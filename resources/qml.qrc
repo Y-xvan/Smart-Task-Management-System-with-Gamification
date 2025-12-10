@@ -9,5 +9,8 @@
         <file>qml/StatsView.qml</file>
         <file>qml/ReminderView.qml</file>
         <file>qml/NewTaskDialog.qml</file>
+        <file>images/bg_guild_board.jpg</file>
+        <file>images/texture_parchment.png</file>
+        <file>images/icon_stamp_completed.png</file>
     </qresource>
 </RCC>

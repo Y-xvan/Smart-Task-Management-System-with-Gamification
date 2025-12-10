@@ -10,6 +10,14 @@ Window {
     title: "SmartTask RPG"
     color: "#121212" // 深色背景
 
+    // 公会背景图
+    Image {
+        anchors.fill: parent
+        source: "qrc:/images/bg_guild_board.jpg"
+        fillMode: Image.PreserveAspectCrop
+        z: -1
+    }
+
     // 全局信号槽：处理 XP 获取弹窗
     Connections {
         target: gameController

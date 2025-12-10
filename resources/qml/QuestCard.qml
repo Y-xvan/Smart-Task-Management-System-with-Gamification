@@ -19,19 +19,42 @@ Item {
         id: cardBg
         anchors.fill: parent
         radius: 8
-        color: "#FDF5E6" // Old Lace color
+        color: "transparent" // 使用透明背景以显示纹理
         border.color: "#D7CCC8"; border.width: 1
+        clip: true
+
+        // 羊皮纸纹理背景
+        Image {
+            anchors.fill: parent
+            source: "qrc:/images/texture_parchment.png"
+            fillMode: Image.Tile
+            z: 0
+        }
 
         // 优先级色条
         Rectangle {
             width: 6; height: parent.height - 16
             anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
             anchors.leftMargin: 6; radius: 3
+            z: 1
             color: {
                 if(priority === 2) return "#FF5252" // High
                 if(priority === 1) return "#FFB74D" // Med
                 return "#66BB6A" // Low
             }
+        }
+
+        // 完成印章 (任务完成时显示)
+        Image {
+            id: completedStamp
+            source: "qrc:/images/icon_stamp_completed.png"
+            width: 100
+            height: 100
+            anchors.centerIn: parent
+            visible: false
+            rotation: -15
+            z: 50
+            opacity: 0.9
         }
 
         // 标题与描述
@@ -40,6 +63,7 @@ Item {
             anchors.right: parent.right; anchors.rightMargin: 70
             anchors.verticalCenter: parent.verticalCenter
             spacing: 4
+            z: 2
 
             Text { 
                 text: title
@@ -75,6 +99,7 @@ Item {
             anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 8
             width: 60; height: 24; radius: 12
             color: "#FFF8E1"; border.color: "#FFB74D"
+            z: 2
             
             Row {
                 anchors.centerIn: parent
@@ -89,6 +114,7 @@ Item {
             anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 8
             text: "Hold to Clear"
             font.pixelSize: 10; color: "#aaa"
+            z: 2
         }
 
         // === 长按交互 ===
@@ -99,10 +125,12 @@ Item {
             opacity: 0.3
             width: 0 // Animated
             visible: width > 0
+            z: 10
         }
 
         MouseArea {
             anchors.fill: parent
+            z: 100
             onPressAndHold: pressAnim.start()
             onReleased: {
                 pressAnim.stop()
@@ -123,8 +151,18 @@ Item {
             duration: 800
             onFinished: {
                 progressOverlay.width = 0
-                root.complete()
+                // 显示完成印章
+                completedStamp.visible = true
+                // 延迟一下再触发完成信号，让用户看到印章
+                stampTimer.start()
             }
+        }
+
+        // 延迟触发完成信号
+        Timer {
+            id: stampTimer
+            interval: 500
+            onTriggered: root.complete()
         }
     }
 }
