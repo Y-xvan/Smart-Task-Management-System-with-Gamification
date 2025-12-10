@@ -20,7 +20,7 @@
 #include "database/DAO/AchievementDAO.h"
 
 int main(int argc, char* argv[]) {
-    // Ç¿ÖÆ UTF-8 »·¾³
+    // Ç¿ï¿½ï¿½ UTF-8 ï¿½ï¿½ï¿½ï¿½
     std::setlocale(LC_ALL, "en_US.UTF-8");
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -30,43 +30,43 @@ int main(int argc, char* argv[]) {
     app.setOrganizationName("HeroGuild");
     app.setApplicationName("SmartTaskRPG");
 
-    // === 1. ³õÊ¼»¯ºó¶ËºËÐÄÒµÎñ ===
-    // Ê¹ÓÃ static ±£Ö¤ÉúÃüÖÜÆÚ¸²¸ÇÕû¸ö App ÔËÐÐÆÚ
+    // === 1. ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ëºï¿½ï¿½ï¿½Òµï¿½ï¿½ ===
+    // Ê¹ï¿½ï¿½ static ï¿½ï¿½Ö¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ App ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     static TaskManager taskMgr;
     static ProjectManager projectMgr;
     static XPSystem xpSys;
     static StatisticsAnalyzer statsAna;
     static Pomodoro pomodoro;
 
-    // ³õÊ¼»¯ÌáÐÑÏµÍ³
+    // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÏµÍ³
     auto reminderDAO = createReminderDAO("task_manager.db");
     static ReminderSystem reminderSys(std::move(reminderDAO));
 
-    // ³õÊ¼»¯³É¾ÍÏµÍ³
+    // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½É¾ï¿½ÏµÍ³
     auto achieveDAO = std::make_unique<AchievementDAO>("./data/");
     static AchievementManager achieveMgr(std::move(achieveDAO), 1);
 
-    // Êý¾Ý¿â³õÊ¼»¯¼ì²é
+    // ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½
     if (!taskMgr.initialize()) {
         qWarning("CRITICAL: Database initialization failed!");
     }
 
-    // === 2. ´´½¨ ViewModel ÊÊÅäÆ÷ ===
+    // === 2. ï¿½ï¿½ï¿½ï¿½ ViewModel ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ===
     TaskModel taskModel(&taskMgr, &projectMgr, &xpSys);
     ProjectModel projectModel(&projectMgr);
     ReminderModel reminderModel(&reminderSys);
     GameController gameController(&xpSys, &statsAna, &pomodoro, &achieveMgr);
 
-    // === 3. Æô¶¯ QML ÒýÇæ ===
+    // === 3. ï¿½ï¿½ï¿½ï¿½ QML ï¿½ï¿½ï¿½ï¿½ ===
     QQmlApplicationEngine engine;
 
-    // ×¢Èë C++ ¶ÔÏóµ½ QML
+    // ×¢ï¿½ï¿½ C++ ï¿½ï¿½ï¿½ï¿½ QML
     engine.rootContext()->setContextProperty("taskModel", &taskModel);
     engine.rootContext()->setContextProperty("projectModel", &projectModel);
     engine.rootContext()->setContextProperty("reminderModel", &reminderModel);
     engine.rootContext()->setContextProperty("gameController", &gameController);
 
-    const QUrl url(u"qrc:/resources/qml/MainView.qml"_qs);
+    const QUrl url(QStringLiteral("qrc:/qml/MainView.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
         &app, [url](QObject* obj, const QUrl& objUrl) {
             if (!obj && url == objUrl)

@@ -2,6 +2,13 @@
 build/
 bin/
 
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+*.cmake
+!CMakeLists.txt
+
 # Database files
 *.db
 *.db-shm
@@ -30,3 +37,4 @@ task_manager
 
 # CodeQL
 _codeql_detected_source_root
+_codeql_build_dir/

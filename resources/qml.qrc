@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/MainView.qml</file>
+        <file>qml/QuestView.qml</file>
+        <file>qml/QuestCard.qml</file>
+        <file>qml/ProjectView.qml</file>
+        <file>qml/ProjectCard.qml</file>
+        <file>qml/FocusView.qml</file>
+        <file>qml/StatsView.qml</file>
+        <file>qml/ReminderView.qml</file>
+        <file>qml/NewTaskDialog.qml</file>
+        <file>images/bg_guild_board.jpg</file>
+        <file>images/texture_parchment.png</file>
+        <file>images/icon_stamp_completed.png</file>
+    </qresource>
+</RCC>
