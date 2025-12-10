@@ -43,7 +43,7 @@ void ReminderModel::addReminder(const QString& title, const QString& time) {
 }
 
 void ReminderModel::addReminder(const QString& title, const QString& message, const QString& time, const QString& recurrence) {
-    // 默认一个提醒一次，允许前端指定消息与重复规则
+    // Default to a one-time reminder while allowing the UI to provide message and recurrence
     m_rs->addReminder(title.toStdString(), message.toStdString(), time.toStdString(), recurrence.toStdString(), 0);
     reload();
 }

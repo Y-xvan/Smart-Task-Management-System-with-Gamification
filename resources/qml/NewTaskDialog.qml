@@ -41,7 +41,7 @@ Dialog {
     }
 
     onAccepted: {
-        // ��ȡ Project ID (��Ҫӳ��)
+        // Map combo selection back to project id
         var pid = -1
         if (tProj.currentIndex >= 0) {
              pid = projectModel.getProjectId(tProj.currentIndex)
@@ -52,5 +52,9 @@ Dialog {
         // Reset
         tTitle.text = ""
         tDesc.text = ""
+        tPrio.currentIndex = 0
+        tProj.currentIndex = -1
+        tPomo.value = 1
+        tDate.text = ""
     }
 }

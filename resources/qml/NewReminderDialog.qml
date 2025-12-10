@@ -10,11 +10,11 @@ Dialog {
     width: 320
     modal: true
     standardButtons: Dialog.Ok | Dialog.Cancel
+    closePolicy: Popup.NoAutoClose
 
     ColumnLayout {
         width: parent.width
         spacing: 8
-        padding: 8
 
         TextField { id: rTitle; placeholderText: "Title"; Layout.fillWidth: true }
         TextField { id: rMessage; placeholderText: "Message (optional)"; Layout.fillWidth: true }
@@ -26,16 +26,36 @@ Dialog {
             model: ["once", "daily", "weekly", "monthly"]
             Layout.fillWidth: true
         }
+        Label {
+            id: reminderError
+            visible: false
+            color: "#e53935"
+            text: "Reminder title and time are required"
+            font.pixelSize: 12
+        }
     }
 
-    onOpened: rTitle.forceActiveFocus()
+    onOpened: {
+        rTitle.forceActiveFocus()
+        reminderError.visible = false
+    }
 
     onAccepted: {
-        reminderModel.addReminder(rTitle.text, rMessage.text, rTime.text, rRule.currentText)
-        reminderModel.reload()
-        rTitle.text = ""
-        rMessage.text = ""
-        rTime.text = ""
-        rRule.currentIndex = 0
+        if (rTitle.text.trim() === "" || rTime.text.trim() === "") {
+            reminderError.visible = true
+        } else {
+            reminderError.visible = false
+            reminderModel.addReminder(rTitle.text, rMessage.text, rTime.text, rRule.currentText)
+            rTitle.text = ""
+            rMessage.text = ""
+            rTime.text = ""
+            rRule.currentIndex = 0
+            dialog.close()
+        }
+    }
+
+    onRejected: {
+        reminderError.visible = false
+        dialog.close()
     }
 }
