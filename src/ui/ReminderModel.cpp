@@ -39,8 +39,12 @@ QHash<int, QByteArray> ReminderModel::roleNames() const {
 }
 
 void ReminderModel::addReminder(const QString& title, const QString& time) {
-    // 默认一次性提醒，无关联任务
-    m_rs->addReminder(title.toStdString(), "", time.toStdString(), "once", 0);
+    addReminder(title, "", time, "once");
+}
+
+void ReminderModel::addReminder(const QString& title, const QString& message, const QString& time, const QString& recurrence) {
+    // Default to a one-time reminder while allowing the UI to provide message and recurrence
+    m_rs->addReminder(title.toStdString(), message.toStdString(), time.toStdString(), recurrence.toStdString(), 0);
     reload();
 }
 

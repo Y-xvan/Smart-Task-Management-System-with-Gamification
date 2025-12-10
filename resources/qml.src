@@ -10,5 +10,6 @@
         <file>resources/qml/ReminderView.qml</file>
         <file>resources/qml/NewTaskDialog.qml</file>
         <file>resources/qml/NewProjectDialog.qml</file>
+        <file>resources/qml/NewReminderDialog.qml</file>
     </qresource>
 </RCC>

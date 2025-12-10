@@ -25,7 +25,7 @@ Dialog {
         Label { text: "Project (Optional)" }
         ComboBox {
             id: tProj
-            model: projectModel.getProjectNames() // 需要 ProjectModel 实现此方法
+            model: projectModel.getProjectNames()
             Layout.fillWidth: true
         }
 
@@ -36,17 +36,25 @@ Dialog {
         TextField { id: tDate; placeholderText: "2025-12-31"; Layout.fillWidth: true }
     }
 
+    onOpened: {
+        tProj.model = projectModel.getProjectNames()
+    }
+
     onAccepted: {
-        // 获取 Project ID (需要映射)
+        // Map combo selection back to project id
         var pid = -1
         if (tProj.currentIndex >= 0) {
              pid = projectModel.getProjectId(tProj.currentIndex)
         }
-        
         taskModel.addTask(tTitle.text, tDesc.text, tPrio.currentIndex, pid, tPomo.value, tDate.text)
-        
+        gameController.refresh()
+
         // Reset
         tTitle.text = ""
         tDesc.text = ""
+        tPrio.currentIndex = 0
+        tProj.currentIndex = -1
+        tPomo.value = 1
+        tDate.text = ""
     }
 }

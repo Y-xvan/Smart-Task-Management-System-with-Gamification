@@ -2,13 +2,13 @@ import QtQuick
 import QtQuick.Controls
 
 Item {
-    // 背景
+    // Background
     Rectangle {
         anchors.fill: parent
         color: "#121212"
     }
 
-    // 列表
+    // Task list
     ListView {
         id: taskList
         anchors.fill: parent
@@ -21,7 +21,7 @@ Item {
         delegate: QuestCard {
             width: taskList.width
             
-            // 绑定数据
+            // Quest card bindings
             title: model.title
             desc: model.description
             priority: model.priority
@@ -29,16 +29,22 @@ Item {
             projectName: model.projectName
             dueDate: model.dueDate
 
-            // 信号处理
-            onComplete: taskModel.completeTask(index)
-            onDelete: taskModel.deleteTask(index)
+            // Signal handlers
+            onComplete: {
+                taskModel.completeTask(index)
+                gameController.refresh()
+            }
+            onDelete: {
+                taskModel.deleteTask(index)
+                gameController.refresh()
+            }
         }
 
-        // 底部留白
+        // Footer spacing
         footer: Item { height: 80 }
     }
 
-    // 新建按钮 (FAB)
+    // New task button (FAB)
     Button {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
