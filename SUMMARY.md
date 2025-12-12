@@ -8,6 +8,7 @@
 - **Achievements & XP** (`AchievementManager`, `XPSystem`): XP awarding, level/title calculation, progress queries, checking/unlocking achievements, streak tracking.
 - **Pomodoro timer** (`Pomodoro`): work/short/long break timers with countdown callbacks, cycle tracking, stats integration.
 - **Statistics & visualization** (`StatisticsAnalyzer`, `HeatmapVisualizer`): daily/weekly/monthly reports, summary/streak/XP stats, 90-day completion heatmap generation.
+- **Console UI coverage**: UIManager menus drive every manager above (tasks, projects, reminders, pomodoro, stats, XP/achievements), with selection helpers, validation, and gamified feedback.
 
 ## Current UI coverage
 
