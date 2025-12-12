@@ -20,7 +20,8 @@
 - **Missing Qt toolchain**: `main.cpp` depends on `QApplication/QQmlApplicationEngine`, so builds fail without Qt dev packages installed.
 - **Link configuration**: Makefile does not link QtQuick/QtWidgets libraries, so even with headers present the GUI binary would not link.
 - **Resource deployment**: QML files exist but are not packaged (no qrc/bundle step) in the current build.
-- **Integration work needed**: expose backend data/models (tasks, projects, reminders, XP/achievement stats) to QML via `QObject`/`QQmlContext` or model types, implement the `gameController` bridge, and register models for lists/cards. Wire QML actions back to TaskManager/ProjectManager/etc.
+- **Expose backend data**: publish tasks/projects/reminders/XP stats to QML via `QObject` properties, `QQmlContext`, or list models.
+- **Bridge & actions**: implement the `gameController` QObject, register list models for cards, and wire QML actions back to TaskManager/ProjectManager/ReminderSystem/AchievementManager.
 - **Fallback behavior**: console UI remains the working path; GUI cannot run until the Qt toolchain and C++/QML bridge are added.
 
 ## Next-step recommendations
