@@ -1,0 +1,84 @@
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --card: #111827;
+  --accent: linear-gradient(135deg, #7c3aed, #06b6d4);
+  --muted: #9ca3af;
+  --text: #e5e7eb;
+  --border: #1f2937;
+  --pill: #10b981;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.15), transparent 25%),
+              radial-gradient(circle at 80% 0%, rgba(6,182,212,0.15), transparent 20%),
+              var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px clamp(20px, 5vw, 48px);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.eyebrow { letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; opacity: 0.8; margin: 0 0 8px; }
+.sub { margin-top: 6px; color: rgba(255,255,255,0.8); }
+.badge { padding: 8px 14px; background: rgba(255,255,255,0.15); border-radius: 999px; backdrop-filter: blur(6px); }
+
+.grid {
+  display: grid;
+  gap: 18px;
+  padding: 24px clamp(16px, 4vw, 48px) 32px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.card {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  backdrop-filter: blur(8px);
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.pill {
+  background: #10b98133;
+  color: #34d399;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.list { display: flex; flex-direction: column; gap: 10px; }
+.item {
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.item .title { font-weight: 600; }
+.item .meta { color: var(--muted); font-size: 12px; }
+.chip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  color: #c084fc;
+}

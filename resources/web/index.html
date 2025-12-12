@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Task - Web UI</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Smart Task Management</p>
+      <h1>Control Center</h1>
+      <p class="sub">Tasks · Projects · Reminders · XP · Pomodoro · Stats</p>
+    </div>
+    <div class="badge">Live</div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <div class="card-head">
+        <h2>Tasks</h2><span id="task-count" class="pill"></span>
+      </div>
+      <div id="task-list" class="list"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Projects</h2><span id="project-count" class="pill"></span>
+      </div>
+      <div id="project-list" class="list"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>Reminders</h2><span id="reminder-count" class="pill"></span>
+      </div>
+      <div id="reminder-list" class="list"></div>
+    </section>
+  </main>
+
+  <script src="/static/main.js"></script>
+</body>
+</html>

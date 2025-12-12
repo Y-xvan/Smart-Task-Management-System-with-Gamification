@@ -2,8 +2,8 @@
 # C++17 Standard, SQLite3 Database
 
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -I. -I./include -I./common -I./sqlite
-LDFLAGS = -L./sqlite -lsqlite3
+CXXFLAGS = -std=c++17 -Wall -Wextra -I. -I./src -I./include -I./common -I./sqlite
+LDFLAGS = -lsqlite3 -pthread -ldl
 
 # For Windows with SQLite DLL, add the sqlite directory to PATH
 ifeq ($(OS),Windows_NT)
@@ -38,7 +38,8 @@ SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/task/TaskManager.cpp \
        $(SRC_DIR)/Pomodoro/pomodoro.cpp \
        $(SRC_DIR)/reminder/ReminderSystem.cpp \
-       $(SRC_DIR)/achievement/AchievementManager.cpp
+       $(SRC_DIR)/achievement/AchievementManager.cpp \
+       $(SRC_DIR)/web/WebServer.cpp
 
 # Object files
 OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
@@ -62,6 +63,7 @@ directories:
 	@mkdir -p $(BUILD_DIR)/task
 	@mkdir -p $(BUILD_DIR)/Pomodoro
 	@mkdir -p $(BUILD_DIR)/achievement
+	@mkdir -p $(BUILD_DIR)/web
 	@mkdir -p $(BIN_DIR)
 
 # Link
