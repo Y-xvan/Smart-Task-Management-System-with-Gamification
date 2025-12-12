@@ -18,22 +18,27 @@
 #define FILENO fileno
 #endif
 
-// ---- Qt includes for GUI/QML mode ----
+// ---- Qt includes for GUI/QML mode (guarded) ----
+#ifdef USE_QT_GUI
 #include <QApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QFile>
 #include <QDir>
 #include <QDebug>
+#endif
 
 // 项目内部头（保持原有结构）
 #include "database/DatabaseManager.h"
 #include "ui/UIManager.h"
-#include "utils/platform.h" // 如果需要（按你仓库原来组织）
 #include "Pomodoro/pomodoro.h"
 #include "gamification/XPSystem.h"
+#include "web/WebServer.h"
 
 using namespace std;
+
+// 控制台初始化占位（避免缺失头文件阻塞构建）
+void setupConsole() {}
 
 // 你原来的辅助函数（保留）
 void sleepMs(int ms) {
@@ -167,53 +172,63 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        // --- 决策：启动 GUI(QML) 还是 Console UI ---
-        bool forceGui = false;
+        // --- 决策：启动 本地 Web UI 还是 Console UI ---
         bool forceConsole = false;
         for (int i = 1; i < argc; ++i) {
             string a(argv[i]);
-            if (a == "--gui") forceGui = true;
             if (a == "--console") forceConsole = true;
         }
 
         bool hasStdinTTY = ISATTY(FILENO(stdin));
-        bool preferGui = forceGui || (!hasStdinTTY && !forceConsole);
+        bool preferWeb = !forceConsole && !hasStdinTTY ? true : !forceConsole;
 
-        if (preferGui) {
-            // ---- GUI 启动分支 (QML) ----
-            // 使用 QApplication，因为 QML Controls 需要 GUI 支持
-            QApplication app(argc, argv);
-
-            QQmlApplicationEngine engine;
-
-            // 优先尝试 exe 旁的 resources/qml/AppLauncher.qml（便于开发）
-            QString localQml = QCoreApplication::applicationDirPath() + "/resources/qml/AppLauncher.qml";
-            QUrl url;
-            if (QFile::exists(localQml)) {
-                url = QUrl::fromLocalFile(localQml);
-            }
-            else {
-                // 如果你把 QML 放进 qrc，使用 qrc 路径 (qrc prefix 在 qml.qrc 中我们使用 /qml)
-                url = QUrl(QStringLiteral("qrc:/qml/AppLauncher.qml"));
-            }
-
-            qDebug() << "Loading QML from" << url.toString();
-            engine.load(url);
-
-            if (engine.rootObjects().isEmpty()) {
-                qCritical() << "Failed to load QML root object:" << url;
-                // GUI 启动失败，进行清理并退出（回退到控制台模式不是自动尝试的策略）
-                cleanupSystem();
-                return -1;
-            }
-
-            // 在 GUI 程序退出后继续清理
-            int ret = app.exec();
-            cleanupSystem();
-            return ret;
+#ifdef USE_QT_GUI
+        bool forceGui = false;
+        for (int i = 1; i < argc; ++i) {
+            string a(argv[i]);
+            if (a == "--gui") forceGui = true;
         }
-        else {
-            // ---- 保持原来的控制台 UI 启动 ----
+        if (forceGui) preferWeb = false;
+#endif
+
+        if (preferWeb) {
+            // ---- 本地 Web UI ----
+            cout << "\n\033[1;36m>> Launching local Web UI on http://127.0.0.1:8787 ...\033[0m\n";
+
+            // 初始化各管理器
+            auto reminderDAO = createReminderDAO("task_manager.db");
+            TaskManager taskMgr;
+            taskMgr.initialize();
+            ProjectManager projMgr;
+            projMgr.initialize();
+            ReminderSystem reminderSys(std::move(reminderDAO));
+            XPSystem xpSys;
+            StatisticsAnalyzer statsAnalyzer;
+            auto achievementDAO = std::make_unique<AchievementDAO>("./data/");
+            AchievementManager achieveMgr(std::move(achievementDAO), 1);
+            HeatmapVisualizer heatmap("task_manager.db");
+            heatmap.initialize();
+            Pomodoro pomodoro;
+            achieveMgr.initialize();
+
+            WebServer server(8787, "resources/web", &taskMgr, &projMgr, &reminderSys, &xpSys, &statsAnalyzer, &achieveMgr, &pomodoro, &heatmap);
+            server.start();
+
+            // 尝试自动打开默认浏览器
+#ifdef _WIN32
+            system("start http://127.0.0.1:8787");
+#elif __APPLE__
+            system("open http://127.0.0.1:8787");
+#else
+            system("xdg-open http://127.0.0.1:8787 >/dev/null 2>&1");
+#endif
+
+            cout << "\nPress Ctrl+C to exit the server.\n";
+            while (true) {
+                this_thread::sleep_for(chrono::seconds(1));
+            }
+        } else {
+            // ---- 控制台 UI ----
             cout << "\033[1;36m>> Press ENTER to Start Session <<\033[0m";
             cin.get();
 

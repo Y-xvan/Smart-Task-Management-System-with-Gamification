@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Task - Web UI</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="topnav">
+    <a href="#tasks">Tasks</a>
+    <a href="#projects">Projects</a>
+    <a href="#reminders">Reminders</a>
+    <a href="#pomo">Pomodoro</a>
+    <a href="#stats">Stats</a>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Smart Task Management</p>
+      <h1>Control Center</h1>
+      <p class="sub">Tasks · Projects · Reminders · XP · Pomodoro · Stats</p>
+    </div>
+    <div class="badge">Live</div>
+  </header>
+
+  <main class="grid">
+    <section class="card" id="tasks">
+      <div class="card-head">
+        <h2>Tasks</h2><span id="task-count" class="pill"></span>
+      </div>
+      <div id="task-list" class="list"></div>
+      <form id="task-form" class="form">
+        <input name="name" placeholder="Name" required />
+        <input name="desc" placeholder="Description" />
+        <label class="label">Priority
+          <select name="priority">
+            <option value="0">Low *</option>
+            <option value="1" selected>Medium **</option>
+            <option value="2">High ***</option>
+          </select>
+        </label>
+        <input name="due" placeholder="Due YYYY-MM-DD" />
+        <label class="label">Project
+          <select name="projectId" id="task-project-select">
+            <option value="">(No project)</option>
+          </select>
+        </label>
+        <button type="submit">Create Task</button>
+      </form>
+    </section>
+
+    <section class="card" id="projects">
+      <div class="card-head">
+        <h2>Projects</h2><span id="project-count" class="pill"></span>
+      </div>
+      <div id="project-list" class="list"></div>
+      <form id="project-form" class="form">
+        <input name="name" placeholder="Name" required />
+        <input name="desc" placeholder="Description" />
+        <label class="label">Color
+          <select name="color" id="project-color">
+            <option value="#F44336">Red</option>
+            <option value="#E91E63">Pink</option>
+            <option value="#9C27B0">Purple</option>
+            <option value="#3F51B5">Indigo</option>
+            <option value="#2196F3">Blue</option>
+            <option value="#00BCD4">Cyan</option>
+            <option value="#4CAF50" selected>Green</option>
+            <option value="#FFC107">Amber</option>
+            <option value="#FF5722">Deep Orange</option>
+            <option value="#795548">Brown</option>
+            <option value="#607D8B">Blue Grey</option>
+          </select>
+        </label>
+        <input name="target" placeholder="Target YYYY-MM-DD" />
+        <button type="submit">Create Project</button>
+      </form>
+    </section>
+
+    <section class="card" id="reminders">
+      <div class="card-head">
+        <h2>Reminders</h2><span id="reminder-count" class="pill"></span>
+      </div>
+      <div id="reminder-list" class="list"></div>
+      <form id="reminder-form" class="form">
+        <input name="title" placeholder="Title" required />
+        <input name="message" placeholder="Message" />
+        <input name="time" placeholder="Time YYYY-MM-DD HH:MM:SS" required />
+        <label class="label">Recurrence
+          <select name="recurrence">
+            <option value="once">Once</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </label>
+        <label class="label">Task Link
+          <select name="taskId" id="reminder-task-select">
+            <option value="">(No task)</option>
+          </select>
+        </label>
+        <button type="submit">Create Reminder</button>
+      </form>
+    </section>
+
+    <section class="card wide" id="pomo">
+      <div class="card-head"><h2>Pomodoro & Gamification</h2></div>
+      <div class="controls">
+        <button data-action="pomo-work">Start Work</button>
+        <button data-action="pomo-break">Short Break</button>
+        <button data-action="pomo-long">Long Break</button>
+        <button data-action="pomo-stop">Stop</button>
+      </div>
+      <pre id="xp-box" class="pre"></pre>
+      <pre id="ach-box" class="pre"></pre>
+    </section>
+
+    <section class="card wide" id="stats">
+      <div class="card-head"><h2>Statistics</h2></div>
+      <div class="controls">
+        <button data-stat="summary">Summary</button>
+        <button data-stat="daily">Daily</button>
+        <button data-stat="weekly">Weekly</button>
+        <button data-stat="monthly">Monthly</button>
+        <button data-stat="heatmap">Heatmap</button>
+      </div>
+      <pre id="stat-box" class="pre"></pre>
+    </section>
+  </main>
+
+  <script src="/static/main.js"></script>
+</body>
+</html>
