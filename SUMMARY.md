@@ -1,6 +1,7 @@
 ## Backend capabilities
 
-- **SQLite-backed data layer** via `DatabaseManager` and DAO classes (`TaskDAOImpl`, `ProjectDAO`, `ReminderDAO`, `AchievementDAO`) for tasks, projects, reminders, achievements, user stats/settings, integrity checks, and table existence verification.
+- **Database manager**: `DatabaseManager` handles SQLite connection, initialization, integrity checks, and table existence verification for `task_manager.db`.
+- **DAO layer**: `TaskDAOImpl`, `ProjectDAO`, `ReminderDAO`, `AchievementDAO` provide CRUD/persistence for tasks, projects, reminders, achievements, plus user stats/settings.
 - **Task management** (`TaskManager`/`Task`): create/update/delete, priority, due dates, tags, completion state, pomodoro counters, project assignment, list & lookup helpers.
 - **Project management** (`ProjectManager`/`Project`): create/update/delete, color labels, target dates, archive toggle, progress computed from task completion, task listings per project.
 - **Reminder system** (`ReminderSystem`): create active reminders with recurrence (once/daily/weekly/monthly), pending/today views, reschedule/delete, task linkage.
@@ -16,9 +17,10 @@
 
 ## Gap to a pop-out GUI
 
-- **Build blockers**: `main.cpp` includes Qt headers (`QApplication`, `QQmlApplicationEngine`, etc.), so the project fails to compile without Qt dev packages; Makefile also lacks Qt link flags. QML files are present but not packaged/loaded in this environment.
+- **Missing Qt toolchain**: `main.cpp` depends on `QApplication/QQmlApplicationEngine`, so builds fail without Qt dev packages installed.
+- **Link configuration**: Makefile does not link QtQuick/QtWidgets libraries, so even with headers present the GUI binary would not link.
+- **Resource deployment**: QML files exist but are not packaged (no qrc/bundle step) in the current build.
 - **Integration work needed**: expose backend data/models (tasks, projects, reminders, XP/achievement stats) to QML via `QObject`/`QQmlContext` or model types, implement the `gameController` bridge, and register models for lists/cards. Wire QML actions back to TaskManager/ProjectManager/etc.
-- **Packaging**: add Qt to the toolchain, update the build to link QtQuick/QtWidgets, and ensure QML resources are deployed (qrc or install alongside binary).
 - **Fallback behavior**: console UI remains the working path; GUI cannot run until the Qt toolchain and C++/QML bridge are added.
 
 ## Next-step recommendations
