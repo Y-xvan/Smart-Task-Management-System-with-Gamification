@@ -5,6 +5,7 @@
 #include <thread>
 #include <atomic>
 #include <functional>
+#include <unordered_map>
 
 #include "task/TaskManager.h"
 #include "project/ProjectManager.h"
@@ -83,6 +84,9 @@ private:
 
     static std::string urlDecode(const std::string& str);
     static std::unordered_map<std::string, std::string> parseQuery(const std::string& path);
+    static bool tryGetInt(const std::unordered_map<std::string, std::string>& q,
+                          const std::string& key,
+                          int& out);
     std::string okJson(const std::string& msg = "ok");
     std::string errorJson(const std::string& msg);
     void stopPomodoroThread();

@@ -12,6 +12,7 @@
     <a href="#projects">Projects</a>
     <a href="#reminders">Reminders</a>
     <a href="#pomo">Pomodoro</a>
+    <a href="#xp">XP & Achievements</a>
     <a href="#stats">Stats</a>
   </nav>
 
@@ -25,9 +26,44 @@
   </header>
 
   <main class="grid">
+    <section class="card wide" id="xp">
+      <div class="card-head">
+        <h2>XP & Achievements</h2><span id="xp-level-pill" class="pill"></span>
+      </div>
+      <div class="xp-progress">
+        <div class="xp-track">
+          <div id="xp-bar" class="xp-fill"></div>
+        </div>
+        <div class="xp-meta">
+          <div id="xp-level-text"></div>
+          <div id="xp-progress-text" class="muted"></div>
+          <div id="xp-title-text" class="muted"></div>
+        </div>
+      </div>
+      <div class="ach-block">
+        <div class="card-head small-gap">
+          <h3>Achievements</h3><span id="ach-count" class="pill muted-pill"></span>
+        </div>
+        <div id="achievements-list" class="ach-list"></div>
+      </div>
+    </section>
+
     <section class="card" id="tasks">
       <div class="card-head">
         <h2>Tasks</h2><span id="task-count" class="pill"></span>
+      </div>
+      <div class="gamified-inline">
+        <div class="inline-block">
+          <div class="eyebrow small">XP Progress</div>
+          <div class="xp-track mini">
+            <div id="xp-bar-inline" class="xp-fill"></div>
+          </div>
+          <div id="xp-inline-text" class="micro muted"></div>
+        </div>
+        <div class="inline-block">
+          <div class="eyebrow small">Achievements</div>
+          <div id="achievements-inline" class="ach-inline micro"></div>
+        </div>
       </div>
       <div id="task-list" class="list"></div>
       <form id="task-form" class="form">
