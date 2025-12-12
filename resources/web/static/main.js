@@ -1,3 +1,8 @@
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const DATETIME_REGEX = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+let cachedProjects = [];
+let cachedTasks = [];
+
 async function fetchJSON(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(r.statusText);
@@ -27,6 +32,17 @@ async function load() {
       fetchJSON("/api/projects"),
       fetchJSON("/api/reminders"),
     ]);
+    cachedProjects = projects;
+    cachedTasks = tasks;
+
+    // update selects
+    const projSelect = document.getElementById("task-project-select");
+    projSelect.innerHTML = `<option value="">(No project)</option>` +
+      projects.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+
+    const reminderTaskSelect = document.getElementById("reminder-task-select");
+    reminderTaskSelect.innerHTML = `<option value="">(No task)</option>` +
+      tasks.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
 
     document.getElementById("task-count").textContent = `${tasks.length} items`;
     renderList(
@@ -105,6 +121,10 @@ async function loadXPAndAchievements() {
 document.getElementById("task-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target).entries());
+  if (data.due && !DATE_REGEX.test(data.due)) {
+    alert("Invalid due date. Use YYYY-MM-DD");
+    return;
+  }
   const qs = new URLSearchParams(data).toString();
   await post("/api/tasks/create?" + qs);
   await load();
@@ -114,6 +134,10 @@ document.getElementById("task-form").addEventListener("submit", async (e) => {
 document.getElementById("project-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target).entries());
+  if (data.target && !DATE_REGEX.test(data.target)) {
+    alert("Invalid target date. Use YYYY-MM-DD");
+    return;
+  }
   const qs = new URLSearchParams(data).toString();
   await post("/api/projects/create?" + qs);
   await load();
@@ -123,6 +147,10 @@ document.getElementById("project-form").addEventListener("submit", async (e) => 
 document.getElementById("reminder-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target).entries());
+  if (!DATETIME_REGEX.test(data.time)) {
+    alert("Invalid time. Use YYYY-MM-DD HH:MM:SS");
+    return;
+  }
   const qs = new URLSearchParams(data).toString();
   await post("/api/reminders/create?" + qs);
   await load();
@@ -141,19 +169,24 @@ document.body.addEventListener("click", async (e) => {
     } else if (action === "delete") {
       await post(`/api/tasks/delete?id=${id}`);
     } else if (action === "assign") {
-      const pid = prompt("Project ID?");
-      if (pid) await post(`/api/tasks/assign?id=${id}&projectId=${pid}`);
+      const choice = prompt("Project ID? Available: " + cachedProjects.map(p=>p.id+":"+p.name).join(", "));
+      if (!choice) return;
+      const pid = parseInt(choice, 10);
+      if (Number.isNaN(pid)) { alert("Invalid project id"); return; }
+      await post(`/api/tasks/assign?id=${id}&projectId=${pid}`);
     } else if (action === "proj-delete") {
       await post(`/api/projects/delete?id=${id}`);
     } else if (action === "proj-update") {
-      const name = prompt("Name?");
-      const desc = prompt("Description?");
+      const name = prompt("Name?", cachedProjects.find(p=>p.id==id)?.name || "");
+      const desc = prompt("Description?", cachedProjects.find(p=>p.id==id)?.desc || "");
       await post(`/api/projects/update?id=${id}&name=${encodeURIComponent(name || "")}&desc=${encodeURIComponent(desc || "")}`);
     } else if (action === "rem-delete") {
       await post(`/api/reminders/delete?id=${id}`);
     } else if (action === "rem-reschedule") {
       const t = prompt("New time YYYY-MM-DD HH:MM:SS");
-      if (t) await post(`/api/reminders/reschedule?id=${id}&time=${encodeURIComponent(t)}`);
+      if (!t) return;
+      if (!DATETIME_REGEX.test(t)) { alert("Invalid time format"); return; }
+      await post(`/api/reminders/reschedule?id=${id}&time=${encodeURIComponent(t)}`);
     } else if (action === "pomo-work") {
       await post("/api/pomodoro/start");
     } else if (action === "pomo-break") {
