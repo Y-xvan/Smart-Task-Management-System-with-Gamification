@@ -204,8 +204,14 @@ int main(int argc, char* argv[]) {
             ReminderSystem reminderSys(std::move(reminderDAO));
             XPSystem xpSys;
             StatisticsAnalyzer statsAnalyzer;
+            auto achievementDAO = std::make_unique<AchievementDAO>("./data/");
+            AchievementManager achieveMgr(std::move(achievementDAO), 1);
+            HeatmapVisualizer heatmap("task_manager.db");
+            heatmap.initialize();
+            Pomodoro pomodoro;
+            achieveMgr.initialize();
 
-            WebServer server(8787, "resources/web", &taskMgr, &projMgr, &reminderSys, &xpSys, &statsAnalyzer);
+            WebServer server(8787, "resources/web", &taskMgr, &projMgr, &reminderSys, &xpSys, &statsAnalyzer, &achieveMgr, &pomodoro, &heatmap);
             server.start();
 
             // 尝试自动打开默认浏览器

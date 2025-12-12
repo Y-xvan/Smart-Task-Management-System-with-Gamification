@@ -22,6 +22,14 @@
         <h2>Tasks</h2><span id="task-count" class="pill"></span>
       </div>
       <div id="task-list" class="list"></div>
+      <form id="task-form" class="form">
+        <input name="name" placeholder="Name" required />
+        <input name="desc" placeholder="Description" />
+        <input name="priority" placeholder="Priority 0/1/2" />
+        <input name="due" placeholder="Due YYYY-MM-DD" />
+        <input name="projectId" placeholder="Project ID (optional)" />
+        <button type="submit">Create Task</button>
+      </form>
     </section>
 
     <section class="card">
@@ -29,6 +37,13 @@
         <h2>Projects</h2><span id="project-count" class="pill"></span>
       </div>
       <div id="project-list" class="list"></div>
+      <form id="project-form" class="form">
+        <input name="name" placeholder="Name" required />
+        <input name="desc" placeholder="Description" />
+        <input name="color" placeholder="Color #hex" />
+        <input name="target" placeholder="Target YYYY-MM-DD" />
+        <button type="submit">Create Project</button>
+      </form>
     </section>
 
     <section class="card">
@@ -36,6 +51,38 @@
         <h2>Reminders</h2><span id="reminder-count" class="pill"></span>
       </div>
       <div id="reminder-list" class="list"></div>
+      <form id="reminder-form" class="form">
+        <input name="title" placeholder="Title" required />
+        <input name="message" placeholder="Message" />
+        <input name="time" placeholder="Time YYYY-MM-DD HH:MM:SS" required />
+        <input name="recurrence" placeholder="once/daily/weekly/monthly" value="once" />
+        <input name="taskId" placeholder="Task ID (optional)" />
+        <button type="submit">Create Reminder</button>
+      </form>
+    </section>
+
+    <section class="card wide">
+      <div class="card-head"><h2>Pomodoro & Gamification</h2></div>
+      <div class="controls">
+        <button data-action="pomo-work">Start Work</button>
+        <button data-action="pomo-break">Short Break</button>
+        <button data-action="pomo-long">Long Break</button>
+        <button data-action="pomo-stop">Stop</button>
+      </div>
+      <pre id="xp-box" class="pre"></pre>
+      <pre id="ach-box" class="pre"></pre>
+    </section>
+
+    <section class="card wide">
+      <div class="card-head"><h2>Statistics</h2></div>
+      <div class="controls">
+        <button data-stat="summary">Summary</button>
+        <button data-stat="daily">Daily</button>
+        <button data-stat="weekly">Weekly</button>
+        <button data-stat="monthly">Monthly</button>
+        <button data-stat="heatmap">Heatmap</button>
+      </div>
+      <pre id="stat-box" class="pre"></pre>
     </section>
   </main>
 
