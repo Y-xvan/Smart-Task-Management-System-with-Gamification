@@ -324,8 +324,12 @@ document.getElementById("reminder-form").addEventListener("submit", async (e) =>
   e.preventDefault();
   const data = cleanEmptyFields(Object.fromEntries(new FormData(e.target).entries()));
   data.time = toDateTimeString(data.time);
-  if (!data.time || !isValidDateTimeStrict(data.time)) {
-    alert("Invalid time. Please pick a valid date and time using the date picker.");
+  if (!data.time) {
+    alert("Please select a date and time for the reminder.");
+    return;
+  }
+  if (!isValidDateTimeStrict(data.time)) {
+    alert("Invalid time format. Please use the date picker to select a valid date and time.");
     return;
   }
   const qs = new URLSearchParams(data).toString();
@@ -491,9 +495,14 @@ function startPomoTimer(minutes, mode) {
       if (statusEl) statusEl.textContent = mode + " completed!";
       // Play notification sound or show alert
       try {
-        new Notification("Pomodoro", { body: mode + " completed!" });
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Pomodoro", { body: mode + " completed!" });
+        } else {
+          alert("⏰ " + mode + " completed!");
+        }
       } catch (e) {
-        // Notifications might not be supported
+        // Fallback to alert if notifications fail
+        alert("⏰ " + mode + " completed!");
       }
     }
   }, 1000);

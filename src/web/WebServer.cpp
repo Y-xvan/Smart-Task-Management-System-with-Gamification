@@ -566,7 +566,9 @@ std::string WebServer::jsonAchievements() {
     // Ensure user achievements are loaded
     achieve->checkAllAchievements();
     
-    // Known achievement keys (from achievement definitions)
+    // Achievement keys are defined in AchievementDAO::initializeDefaultAchievements
+    // These are the core achievement types and are unlikely to change frequently.
+    // If new achievements are added, they should be added here as well.
     const std::vector<std::string> achievementKeys = {
         "first_task",
         "seven_day_streak", 
