@@ -564,3 +564,26 @@ void AchievementManager::refreshUserAchievementCache(const std::vector<Achieveme
         userAchievements[entry.unlock_condition] = entry;
     }
 }
+
+const Achievement* AchievementManager::getDefinitionById(int id) const {
+    for (const auto& definition : achievementDefinitions) {
+        if (definition.id == id) {
+            return &definition;
+        }
+    }
+    return nullptr;
+}
+
+bool AchievementManager::updateAchievementDefinition(int id,
+                                                     const std::string& name,
+                                                     const std::string& description,
+                                                     int targetValue) {
+    if (!achievementDAO) {
+        return false;
+    }
+    bool updated = achievementDAO->updateAchievementDefinition(id, name, description, targetValue);
+    if (updated) {
+        loadAchievementDefinitions();
+    }
+    return updated;
+}

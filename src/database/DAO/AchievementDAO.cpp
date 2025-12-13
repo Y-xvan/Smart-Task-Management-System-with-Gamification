@@ -169,6 +169,22 @@ bool AchievementDAO::saveAchievementDefinitions() {
     return true;
 }
 
+bool AchievementDAO::updateAchievementDefinition(int id,
+                                                 const std::string& name,
+                                                 const std::string& description,
+                                                 int targetValue) {
+    for (auto& achievement : achievementDefinitions) {
+        if (achievement.id == id) {
+            if (!name.empty()) achievement.name = name;
+            if (!description.empty()) achievement.description = description;
+            if (targetValue > 0) achievement.target_value = targetValue;
+            achievement.updated_date = getCurrentTimestamp();
+            return saveAchievementDefinitions();
+        }
+    }
+    return false;
+}
+
 vector<Achievement> AchievementDAO::getAllAchievementDefinitions() const {
     return achievementDefinitions;
 }

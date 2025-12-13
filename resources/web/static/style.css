@@ -41,6 +41,11 @@ body {
 .topnav a:hover {
   background: rgba(124,58,237,0.15);
 }
+.topnav a.active {
+  background: rgba(124,58,237,0.25);
+  color: #fff;
+}
+.hidden { display: none !important; }
 
 .hero {
   display: flex;
@@ -96,6 +101,7 @@ body {
 }
 .item .title { font-weight: 600; }
 .item .meta { color: var(--muted); font-size: 12px; }
+.item .meta.small { font-size: 11px; }
 .chip {
   padding: 4px 8px;
   border-radius: 999px;
@@ -103,6 +109,10 @@ body {
   background: #111827;
   border: 1px solid #1f2937;
   color: #c084fc;
+}
+.project-head {
+  border-left: 4px solid var(--border);
+  padding-left: 10px;
 }
 
 .form {
@@ -133,6 +143,10 @@ body {
   color: var(--text);
   padding: 10px 12px;
   border-radius: 10px;
+}
+.form.inline {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  align-items: end;
 }
 .label {
   color: var(--muted);
