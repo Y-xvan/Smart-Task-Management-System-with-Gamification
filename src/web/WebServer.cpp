@@ -153,9 +153,17 @@ void WebServer::handleClient(int clientSock) {
     int status = 200;
     string contentType = "text/html; charset=utf-8";
     string respBody = handleRequest(method, path, body, status, contentType);
+    auto reason = [&](int code) {
+        switch (code) {
+            case 200: return "OK";
+            case 400: return "Bad Request";
+            case 404: return "Not Found";
+            default: return "Unknown Status";
+        }
+    };
 
     stringstream resp;
-    resp << "HTTP/1.1 " << status << " OK\r\n";
+    resp << "HTTP/1.1 " << status << " " << reason(status) << "\r\n";
     resp << "Content-Type: " << contentType << "\r\n";
     resp << "Content-Length: " << respBody.size() << "\r\n";
     resp << "Connection: close\r\n\r\n";
@@ -195,34 +203,42 @@ std::string WebServer::handleRequest(const std::string& method,
         if (path == "/api/tasks/today" && method == "GET") return jsonTodayTasks();
         if (path.rfind("/api/tasks/create", 0) == 0 && method == "POST") {
             Task t(q["name"], q["desc"]);
-            if (q.count("priority")) t.setPriority(stoi(q["priority"]));
+            int priority;
+            if (tryGetInt(q, "priority", priority)) t.setPriority(priority);
             if (q.count("due")) t.setDueDate(q["due"]);
             if (q.count("tags")) t.setTags(q["tags"]);
-            if (q.count("projectId")) t.setProjectId(stoi(q["projectId"]));
-            if (q.count("estPomodoro")) t.setEstimatedPomodoros(stoi(q["estPomodoro"]));
+            int projectId;
+            if (tryGetInt(q, "projectId", projectId)) t.setProjectId(projectId);
+            int est;
+            if (tryGetInt(q, "estPomodoro", est)) t.setEstimatedPomodoros(est);
             int id = taskMgr->createTask(t);
             return okJson("created:" + to_string(id));
         }
         if (path.rfind("/api/tasks/update", 0) == 0 && method == "POST") {
-            int id = stoi(q["id"]);
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
             auto opt = taskMgr->getTask(id);
             if (!opt.has_value()) return errorJson("not found");
             auto task = opt.value();
             if (q.count("name")) task.setName(q["name"]);
             if (q.count("desc")) task.setDescription(q["desc"]);
-            if (q.count("priority")) task.setPriority(stoi(q["priority"]));
+            int priority;
+            if (tryGetInt(q, "priority", priority)) task.setPriority(priority);
             if (q.count("due")) task.setDueDate(q["due"]);
             if (q.count("tags")) task.setTags(q["tags"]);
             if (q.count("completed")) task.setCompleted(q["completed"] == "true");
-            if (q.count("projectId")) task.setProjectId(stoi(q["projectId"]));
+            int projectId;
+            if (tryGetInt(q, "projectId", projectId)) task.setProjectId(projectId);
             if (taskMgr->updateTask(task)) return okJson(); else return errorJson("update failed");
         }
         if (path.rfind("/api/tasks/delete", 0) == 0 && method == "POST") {
-            int id = stoi(q["id"]);
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
             if (taskMgr->deleteTask(id)) return okJson(); else return errorJson("delete failed");
         }
         if (path.rfind("/api/tasks/complete", 0) == 0 && method == "POST") {
-            int id = stoi(q["id"]);
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
             if (taskMgr->completeTask(id)) {
                 int prio = 1;
                 auto t = taskMgr->getTask(id);
@@ -235,12 +251,14 @@ std::string WebServer::handleRequest(const std::string& method,
             return errorJson("complete failed");
         }
         if (path.rfind("/api/tasks/assign", 0) == 0 && method == "POST") {
-            int id = stoi(q["id"]);
-            int pid = stoi(q["projectId"]);
+            int id, pid;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
+            if (!tryGetInt(q, "projectId", pid)) { status = 400; return errorJson("missing or invalid projectId"); }
             if (taskMgr->assignTaskToProject(id, pid)) return okJson(); else return errorJson("assign failed");
         }
         if (path.rfind("/api/tasks/pomodoro", 0) == 0 && method == "POST") {
-            int id = stoi(q["id"]);
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
             if (taskMgr->addPomodoro(id)) return okJson(); else return errorJson("pomodoro failed");
         }
     }
@@ -257,7 +275,8 @@ std::string WebServer::handleRequest(const std::string& method,
             return okJson("created:" + to_string(id));
         }
         if (path.rfind("/api/projects/update", 0) == 0 && method == "POST") {
-            int id = stoi(q["id"]);
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
             Project* p = projMgr->getProject(id);
             if (!p) return errorJson("not found");
             if (q.count("name")) p->setName(q["name"]);
@@ -267,7 +286,8 @@ std::string WebServer::handleRequest(const std::string& method,
             if (projMgr->updateProject(*p)) return okJson(); else return errorJson("update failed");
         }
         if (path.rfind("/api/projects/delete", 0) == 0 && method == "POST") {
-            int id = stoi(q["id"]);
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
             if (projMgr->deleteProject(id)) return okJson(); else return errorJson("delete failed");
         }
     }
@@ -280,15 +300,19 @@ std::string WebServer::handleRequest(const std::string& method,
         if (path == "/api/reminders/today" && method == "GET") return jsonRemindersToday();
         if (path == "/api/reminders/pending" && method == "GET") return jsonRemindersPending();
         if (path.rfind("/api/reminders/create", 0) == 0 && method == "POST") {
-            reminderSys->addReminder(q["title"], q["message"], q["time"], q["recurrence"], q.count("taskId") ? stoi(q["taskId"]) : 0);
+            int taskId = 0;
+            tryGetInt(q, "taskId", taskId);
+            reminderSys->addReminder(q["title"], q["message"], q["time"], q["recurrence"], taskId);
             return okJson();
         }
         if (path.rfind("/api/reminders/reschedule", 0) == 0 && method == "POST") {
-            int id = stoi(q["id"]);
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
             if (reminderSys->rescheduleReminder(id, q["time"])) return okJson(); else return errorJson("reschedule failed");
         }
         if (path.rfind("/api/reminders/delete", 0) == 0 && method == "POST") {
-            int id = stoi(q["id"]);
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
             if (reminderSys->deleteReminder(id)) return okJson(); else return errorJson("delete failed");
         }
         if (path == "/api/reminders/check" && method == "POST") {
@@ -550,6 +574,20 @@ std::unordered_map<std::string, std::string> WebServer::parseQuery(const std::st
         m[k] = urlDecode(v);
     }
     return m;
+}
+
+bool WebServer::tryGetInt(const std::unordered_map<std::string, std::string>& q,
+                          const std::string& key,
+                          int& out) {
+    auto it = q.find(key);
+    if (it == q.end()) return false;
+    if (it->second.empty()) return false;
+    try {
+        out = stoi(it->second);
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 
 std::string WebServer::okJson(const std::string& msg) {

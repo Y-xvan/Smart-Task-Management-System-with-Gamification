@@ -15,6 +15,14 @@ async function post(url) {
   return r.json();
 }
 
+function cleanEmptyFields(data) {
+  const cleaned = { ...data };
+  Object.keys(cleaned).forEach((k) => {
+    if (cleaned[k] === "") delete cleaned[k];
+  });
+  return cleaned;
+}
+
 function renderList(container, items, formatter) {
   container.innerHTML = "";
   items.forEach((it) => {
@@ -105,10 +113,57 @@ async function load() {
 
 async function loadXPAndAchievements() {
   try {
-    const xp = await fetchJSON("/api/xp");
-    const ach = await fetchJSON("/api/achievements");
+    const [xp, ach] = await Promise.all([
+      fetchJSON("/api/xp"),
+      fetchJSON("/api/achievements"),
+    ]);
+    const percent = xp.next > 0 ? Math.min(100, (xp.xp / xp.next) * 100) : 100;
+    const bar = document.getElementById("xp-bar");
+    if (bar) bar.style.width = `${percent}%`;
+    const inlineBar = document.getElementById("xp-bar-inline");
+    if (inlineBar) inlineBar.style.width = `${percent}%`;
+
+    const levelText = `Level ${xp.level} · ${xp.title}`;
+    const progressText = `${xp.xp}/${xp.next} XP`;
+    const pill = document.getElementById("xp-level-pill");
+    if (pill) pill.textContent = `Level ${xp.level}`;
+    const levelEl = document.getElementById("xp-level-text");
+    if (levelEl) levelEl.textContent = levelText;
+    const progEl = document.getElementById("xp-progress-text");
+    if (progEl) progEl.textContent = `${progressText} to next`;
+    const titleEl = document.getElementById("xp-title-text");
+    if (titleEl) titleEl.textContent = `Title: ${xp.title}`;
+    const inlineText = document.getElementById("xp-inline-text");
+    if (inlineText) inlineText.textContent = levelText + " · " + progressText;
     document.getElementById("xp-box").textContent =
-      `Level ${xp.level} (${xp.title})\nXP: ${xp.xp}/${xp.next}`;
+      `${levelText}\nXP: ${progressText}`;
+
+    const achList = document.getElementById("achievements-list");
+    const achCount = document.getElementById("ach-count");
+    if (achCount) achCount.textContent = `${ach.length} tracked`;
+    if (achList) {
+      achList.innerHTML = ach
+        .map(
+          (a) => `
+            <div class="ach-item">
+              <div class="title">#${a.id}</div>
+              <div class="percent">${(a.percent || 0).toFixed(1)}%</div>
+              <div class="muted micro">${a.progress}/${a.target} progress</div>
+            </div>
+          `
+        )
+        .join("");
+    }
+    const achInline = document.getElementById("achievements-inline");
+    if (achInline) {
+      achInline.innerHTML = ach
+        .slice(0, 3)
+        .map(
+          (a) =>
+            `<span class="ach-chip">#${a.id} · ${(a.percent || 0).toFixed(0)}%</span>`
+        )
+        .join("");
+    }
     document.getElementById("ach-box").textContent = ach
       .map((a) => `#${a.id}: ${(a.percent || 0).toFixed(1)}% (${a.progress}/${a.target})`)
       .join("\n");
@@ -120,7 +175,7 @@ async function loadXPAndAchievements() {
 // Forms
 document.getElementById("task-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
+  const data = cleanEmptyFields(Object.fromEntries(new FormData(e.target).entries()));
   if (data.due && !DATE_REGEX.test(data.due)) {
     alert("Invalid due date. Use YYYY-MM-DD");
     return;
@@ -133,7 +188,7 @@ document.getElementById("task-form").addEventListener("submit", async (e) => {
 
 document.getElementById("project-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
+  const data = cleanEmptyFields(Object.fromEntries(new FormData(e.target).entries()));
   if (data.target && !DATE_REGEX.test(data.target)) {
     alert("Invalid target date. Use YYYY-MM-DD");
     return;
@@ -146,7 +201,7 @@ document.getElementById("project-form").addEventListener("submit", async (e) => 
 
 document.getElementById("reminder-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target).entries());
+  const data = cleanEmptyFields(Object.fromEntries(new FormData(e.target).entries()));
   if (!DATETIME_REGEX.test(data.time)) {
     alert("Invalid time. Use YYYY-MM-DD HH:MM:SS");
     return;
