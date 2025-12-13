@@ -299,6 +299,54 @@ bool ReminderSystem::rescheduleReminder(int reminderId, const std::string& newTi
     return false;
 }
 
+bool ReminderSystem::updateReminder(int reminderId,
+                                    const std::string& title,
+                                    const std::string& message,
+                                    const std::string& time,
+                                    const std::string& recurrence,
+                                    int taskId,
+                                    bool enabled) {
+    if (!reminderDAO) {
+        return false;
+    }
+    auto existing = reminderDAO->getReminderById(reminderId);
+    if (!existing.has_value()) {
+        return false;
+    }
+
+    Reminder updated = *existing;
+    if (!title.empty()) updated.title = title;
+    if (!message.empty()) updated.message = message;
+    if (!recurrence.empty()) {
+        updated.recurrence = recurrence;
+        updated.recurrenceRule = recurrence;
+        updated.type = recurrence == "daily" ? ReminderType::DAILY
+            : recurrence == "weekly" ? ReminderType::WEEKLY
+            : recurrence == "monthly" ? ReminderType::MONTHLY
+            : ReminderType::ONCE;
+    }
+    if (!time.empty()) {
+        auto tp = stringToTimePoint(time);
+        if (tp.time_since_epoch().count() == 0) {
+            std::cerr << "Invalid time format, cannot update reminder: " << time << "\n";
+            return false;
+        }
+        updated.trigger_time = time;
+        updated.triggerTime = tp;
+        updated.triggered = false;
+    }
+    const int linkedTaskId = taskId;
+    updated.task_id = linkedTaskId;
+    updated.taskId = linkedTaskId;
+    updated.enabled = enabled;
+
+    if (reminderDAO->updateReminder(updated)) {
+        loadRemindersFromDB();
+        return true;
+    }
+    return false;
+}
+
 bool ReminderSystem::deleteReminder(int reminderId) {
     if (reminderDAO) {
         bool result = reminderDAO->deleteReminder(reminderId);

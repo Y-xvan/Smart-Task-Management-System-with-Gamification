@@ -227,6 +227,8 @@ std::string WebServer::handleRequest(const std::string& method,
             if (q.count("due")) task.setDueDate(q["due"]);
             if (q.count("tags")) task.setTags(q["tags"]);
             if (q.count("completed")) task.setCompleted(q["completed"] == "true");
+            int est;
+            if (tryGetInt(q, "estPomodoro", est)) task.setEstimatedPomodoros(est);
             int projectId;
             if (tryGetInt(q, "projectId", projectId)) task.setProjectId(projectId);
             if (taskMgr->updateTask(task)) return okJson(); else return errorJson("update failed");
@@ -305,6 +307,22 @@ std::string WebServer::handleRequest(const std::string& method,
             reminderSys->addReminder(q["title"], q["message"], q["time"], q["recurrence"], taskId);
             return okJson();
         }
+        if (path.rfind("/api/reminders/update", 0) == 0 && method == "POST") {
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
+            int taskId = 0;
+            tryGetInt(q, "taskId", taskId);
+            bool enabled = true;
+            if (q.count("enabled")) enabled = q.at("enabled") != "false";
+            if (reminderSys->updateReminder(id,
+                                             q.count("title") ? q.at("title") : "",
+                                             q.count("message") ? q.at("message") : "",
+                                             q.count("time") ? q.at("time") : "",
+                                             q.count("recurrence") ? q.at("recurrence") : "",
+                                             taskId,
+                                             enabled)) return okJson();
+            else return errorJson("update failed");
+        }
         if (path.rfind("/api/reminders/reschedule", 0) == 0 && method == "POST") {
             int id;
             if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
@@ -364,9 +382,25 @@ std::string WebServer::handleRequest(const std::string& method,
         contentType = "application/json";
         return jsonXP();
     }
-    if (path == "/api/achievements" && method == "GET") {
+    if (path.rfind("/api/achievements", 0) == 0) {
         contentType = "application/json";
-        return jsonAchievements();
+        auto q = parseQuery(path);
+        if (path == "/api/achievements" && method == "GET") {
+            return jsonAchievements();
+        }
+        if (path.rfind("/api/achievements/update", 0) == 0 && method == "POST") {
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
+            int target = -1;
+            tryGetInt(q, "target", target);
+            if (achieve->updateAchievementDefinition(id,
+                                                     q.count("name") ? q.at("name") : "",
+                                                     q.count("description") ? q.at("description") : "",
+                                                     target)) {
+                return okJson();
+            }
+            return errorJson("update failed");
+        }
     }
 
     // Stats
@@ -386,13 +420,28 @@ std::string WebServer::jsonTasks() {
     ss << "[";
     for (size_t i = 0; i < tasks.size(); ++i) {
         const auto& t = tasks[i];
+        int pid = t.getProjectId().value_or(0);
+        string projectName;
+        string projectColor;
+        if (pid > 0) {
+            auto p = projMgr->getProject(pid);
+            if (p) {
+                projectName = p->getName();
+                projectColor = p->getColorLabel();
+            }
+        }
         ss << "{"
            << "\"id\":" << t.getId() << ","
-           << "\"name\":\"" << t.getName() << "\","
-           << "\"desc\":\"" << t.getDescription() << "\","
+           << "\"name\":\"" << escape(t.getName()) << "\","
+           << "\"desc\":\"" << escape(t.getDescription()) << "\","
            << "\"completed\":" << (t.isCompleted() ? "true" : "false") << ","
            << "\"priority\":" << t.getPriority() << ","
-           << "\"due\":\"" << t.getDueDate() << "\""
+           << "\"due\":\"" << t.getDueDate() << "\","
+           << "\"projectId\":" << pid << ","
+           << "\"projectName\":\"" << escape(projectName) << "\","
+           << "\"projectColor\":\"" << projectColor << "\","
+           << "\"tags\":\"" << escape(t.getTags()) << "\","
+           << "\"estimated\":" << t.getEstimatedPomodoros()
            << "}";
         if (i + 1 < tasks.size()) ss << ",";
     }
@@ -428,10 +477,26 @@ std::string WebServer::jsonProjects() {
     ss << "[";
     for (size_t i = 0; i < projects.size(); ++i) {
         auto p = projects[i];
+        auto tasks = taskMgr->getTasksByProject(p->getId());
         ss << "{"
            << "\"id\":" << p->getId() << ","
-           << "\"name\":\"" << p->getName() << "\","
-           << "\"progress\":" << p->getProgress()
+           << "\"name\":\"" << escape(p->getName()) << "\","
+           << "\"description\":\"" << escape(p->getDescription()) << "\","
+           << "\"progress\":" << p->getProgress() << ","
+           << "\"color\":\"" << p->getColorLabel() << "\","
+           << "\"target\":\"" << p->getTargetDate() << "\","
+           << "\"tasks\":[";
+        for (size_t ti = 0; ti < tasks.size(); ++ti) {
+            const auto& t = tasks[ti];
+            ss << "{"
+               << "\"id\":" << t.getId() << ","
+               << "\"name\":\"" << escape(t.getName()) << "\","
+               << "\"completed\":" << (t.isCompleted() ? "true" : "false") << ","
+               << "\"due\":\"" << t.getDueDate() << "\""
+               << "}";
+            if (ti + 1 < tasks.size()) ss << ",";
+        }
+        ss << "]"
            << "}";
         if (i + 1 < projects.size()) ss << ",";
     }
@@ -447,9 +512,12 @@ std::string WebServer::jsonReminders() {
         const auto& r = reminders[i];
         ss << "{"
            << "\"id\":" << r.id << ","
-           << "\"title\":\"" << r.title << "\","
+           << "\"title\":\"" << escape(r.title) << "\","
+           << "\"message\":\"" << escape(r.message) << "\","
            << "\"time\":\"" << r.trigger_time << "\","
-           << "\"recurrence\":\"" << r.recurrence << "\""
+           << "\"recurrence\":\"" << r.recurrence << "\","
+           << "\"taskId\":" << r.task_id << ","
+           << "\"enabled\":" << (r.enabled ? "true" : "false")
            << "}";
         if (i + 1 < reminders.size()) ss << ",";
     }
@@ -462,7 +530,7 @@ std::string WebServer::jsonRemindersToday() {
     stringstream ss; ss<<"[";
     for(size_t i=0;i<reminders.size();++i){
         const auto& r=reminders[i];
-        ss<<"{\"id\":"<<r.id<<",\"title\":\""<<r.title<<"\",\"time\":\""<<r.trigger_time<<"\"}";
+        ss<<"{\"id\":"<<r.id<<",\"title\":\""<<escape(r.title)<<"\",\"time\":\""<<r.trigger_time<<"\",\"recurrence\":\""<<r.recurrence<<"\"}";
         if(i+1<reminders.size()) ss<<",";
     }
     ss<<"]"; return ss.str();
@@ -475,7 +543,7 @@ std::string WebServer::jsonRemindersPending() {
     stringstream ss; ss<<"[";
     for(size_t i=0;i<pending.size();++i){
         const auto& r=pending[i];
-        ss<<"{\"id\":"<<r.id<<",\"title\":\""<<r.title<<"\",\"time\":\""<<r.trigger_time<<"\"}";
+        ss<<"{\"id\":"<<r.id<<",\"title\":\""<<escape(r.title)<<"\",\"time\":\""<<r.trigger_time<<"\",\"recurrence\":\""<<r.recurrence<<"\"}";
         if(i+1<pending.size()) ss<<",";
     }
     ss<<"]"; return ss.str();
@@ -496,7 +564,21 @@ std::string WebServer::jsonAchievements() {
     stringstream ss; ss<<"[";
     for(size_t i=0;i<list.size();++i){
         const auto& a=list[i];
-        ss<<"{\"id\":"<<a.achievementId<<",\"progress\":"<<a.currentProgress<<",\"target\":"<<a.targetProgress<<",\"percent\":"<<a.progressPercent<<"}";
+        const auto* def = achieve->getDefinitionById(a.achievementId);
+        auto key = achieve->getAchievementKeyById(a.achievementId);
+        bool unlocked = false;
+        if (!key.empty()) {
+            auto user = achieve->findUserAchievement(key);
+            unlocked = user && user->unlocked;
+        }
+        ss<<"{\"id\":"<<a.achievementId
+          <<",\"name\":\""<<(def ? escape(def->name) : "")<<"\""
+          <<",\"description\":\""<<(def ? escape(def->description) : "")<<"\""
+          <<",\"progress\":"<<a.currentProgress
+          <<",\"target\":"<<a.targetProgress
+          <<",\"percent\":"<<a.progressPercent
+          <<",\"unlocked\":"<<(unlocked ? "true" : "false")
+          <<"}";
         if(i+1<list.size()) ss<<",";
     }
     ss<<"]"; return ss.str();
