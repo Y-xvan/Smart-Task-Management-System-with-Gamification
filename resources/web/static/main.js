@@ -147,7 +147,11 @@ async function snoozeReminder(reminderId, minutes = 5) {
 function playNotificationSound() {
   // Simple beep using Web Audio API
   try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    // Check if AudioContext is available
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    
+    const audioContext = new AudioContextClass();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
@@ -162,7 +166,7 @@ function playNotificationSound() {
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.5);
   } catch (e) {
-    // Audio not supported
+    // Audio not supported or failed
   }
 }
 
@@ -224,6 +228,11 @@ function escapeHtml(text) {
 function generateHeatmapHTML(heatmapData) {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const days = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
+  
+  // Validate input
+  if (heatmapData === null || heatmapData === undefined) {
+    heatmapData = '';
+  }
   
   // Parse heatmap data from text format or use API data
   const taskCounts = parseHeatmapData(heatmapData);

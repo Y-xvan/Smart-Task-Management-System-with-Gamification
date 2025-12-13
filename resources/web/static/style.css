@@ -796,7 +796,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
-  background: linear-gradient(90deg, var(--section-color, #4CAF50)20, transparent);
+  background: linear-gradient(90deg, var(--section-color, #4CAF50) 20%, transparent);
   border-left: 4px solid var(--section-color, #4CAF50);
 }
 
