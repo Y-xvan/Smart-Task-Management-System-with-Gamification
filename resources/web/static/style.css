@@ -225,3 +225,145 @@ body {
 .pill.muted-pill { background: #1f2937; color: var(--muted); }
 .card-head.small-gap { margin-bottom: 6px; }
 .inline-block { min-width: 200px; }
+
+/* Achievement Edit Section */
+.ach-edit-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.ach-edit-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Pomodoro Timer Display */
+.pomo-display {
+  text-align: center;
+  padding: 20px 0;
+}
+.pomo-timer {
+  font-size: 64px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: #c084fc;
+  text-shadow: 0 0 20px rgba(192, 132, 252, 0.3);
+}
+.pomo-mode {
+  font-size: 14px;
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.pomo-track {
+  max-width: 400px;
+  margin: 16px auto 0;
+  height: 8px;
+}
+.pomo-settings {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.setting-item {
+  background: #0b1220;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #1f2937;
+}
+.pomo-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 16px;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+/* Statistics Summary Cards */
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.stat-icon {
+  font-size: 28px;
+}
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+.stat-info .stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #10b981;
+}
+.stat-info .stat-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Project Color Groups */
+.project-group {
+  margin-bottom: 20px;
+}
+.project-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+.project-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.project-group-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Task list under project */
+.project-tasks {
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+.project-task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+.project-task-item.completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
