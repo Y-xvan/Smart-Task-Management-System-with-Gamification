@@ -202,7 +202,10 @@ public:
     // 基础CRUD操作
     bool insertReminder(Reminder& reminder) override {
         sqlite3* db = getDb();
-        if (!db) return false;
+        if (!db) {
+            std::cerr << "[DEBUG] insertReminder: db is null" << std::endl;
+            return false;
+        }
 
         sqlite3_stmt* stmt = nullptr;
         if (sqlite3_prepare_v2(db, INSERT_REMINDER_SQL, -1, &stmt, nullptr) != SQLITE_OK) {
@@ -217,11 +220,20 @@ public:
         sqlite3_bind_text(stmt, 3, triggerTimeStr.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 4, reminder.recurrence.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int(stmt, 5, reminder.triggered ? 1 : 0);
-        sqlite3_bind_int(stmt, 6, reminder.taskId);
+        // Handle task_id: bind NULL if taskId is 0 (no task linked)
+        if (reminder.taskId > 0) {
+            sqlite3_bind_int(stmt, 6, reminder.taskId);
+        } else {
+            sqlite3_bind_null(stmt, 6);
+        }
         sqlite3_bind_int(stmt, 7, reminder.enabled ? 1 : 0);
         sqlite3_bind_text(stmt, 8, reminder.last_triggered.c_str(), -1, SQLITE_TRANSIENT);
 
-        const bool success = (sqlite3_step(stmt) == SQLITE_DONE);
+        int stepResult = sqlite3_step(stmt);
+        const bool success = (stepResult == SQLITE_DONE);
+        if (!success) {
+            std::cerr << "insertReminder: sqlite3_step failed with code " << stepResult << ": " << sqlite3_errmsg(db) << std::endl;
+        }
         if (success) {
             reminder.id = static_cast<int>(sqlite3_last_insert_rowid(db));
         }
@@ -247,7 +259,12 @@ public:
         sqlite3_bind_text(stmt, 3, triggerTimeStr.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_text(stmt, 4, reminder.recurrence.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int(stmt, 5, reminder.triggered ? 1 : 0);
-        sqlite3_bind_int(stmt, 6, reminder.taskId);
+        // Handle task_id: bind NULL if taskId is 0 (no task linked)
+        if (reminder.taskId > 0) {
+            sqlite3_bind_int(stmt, 6, reminder.taskId);
+        } else {
+            sqlite3_bind_null(stmt, 6);
+        }
         sqlite3_bind_int(stmt, 7, reminder.enabled ? 1 : 0);
         sqlite3_bind_text(stmt, 8, reminder.last_triggered.c_str(), -1, SQLITE_TRANSIENT);
         sqlite3_bind_int(stmt, 9, reminder.id);

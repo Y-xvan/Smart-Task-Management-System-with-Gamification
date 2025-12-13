@@ -304,8 +304,11 @@ std::string WebServer::handleRequest(const std::string& method,
         if (path.rfind("/api/reminders/create", 0) == 0 && method == "POST") {
             int taskId = 0;
             tryGetInt(q, "taskId", taskId);
-            reminderSys->addReminder(q["title"], q["message"], q["time"], q["recurrence"], taskId);
-            return okJson();
+            if (reminderSys->addReminder(q["title"], q["message"], q["time"], q["recurrence"], taskId)) {
+                return okJson("created");
+            } else {
+                return errorJson("failed to create reminder");
+            }
         }
         if (path.rfind("/api/reminders/update", 0) == 0 && method == "POST") {
             int id;
@@ -560,28 +563,46 @@ std::string WebServer::jsonXP() {
 }
 
 std::string WebServer::jsonAchievements() {
-    auto list = achieve->getAchievementProgress(1);
-    stringstream ss; ss<<"[";
-    for(size_t i=0;i<list.size();++i){
-        const auto& a=list[i];
-        const auto* def = achieve->getDefinitionById(a.achievementId);
-        auto key = achieve->getAchievementKeyById(a.achievementId);
-        bool unlocked = false;
-        if (!key.empty()) {
-            auto user = achieve->findUserAchievement(key);
-            unlocked = user && user->unlocked;
-        }
-        ss<<"{\"id\":"<<a.achievementId
-          <<",\"name\":\""<<(def ? escape(def->name) : "")<<"\""
-          <<",\"description\":\""<<(def ? escape(def->description) : "")<<"\""
-          <<",\"progress\":"<<a.currentProgress
-          <<",\"target\":"<<a.targetProgress
-          <<",\"percent\":"<<a.progressPercent
-          <<",\"unlocked\":"<<(unlocked ? "true" : "false")
-          <<"}";
-        if(i+1<list.size()) ss<<",";
+    // Ensure user achievements are loaded
+    achieve->checkAllAchievements();
+    
+    // Achievement keys are defined in AchievementDAO::initializeDefaultAchievements
+    // These are the core achievement types and are unlikely to change frequently.
+    // If new achievements are added, they should be added here as well.
+    const std::vector<std::string> achievementKeys = {
+        "first_task",
+        "seven_day_streak", 
+        "time_management_master",
+        "pomodoro_master"
+    };
+    
+    stringstream ss;
+    ss << "[";
+    bool first = true;
+    
+    for (const auto& key : achievementKeys) {
+        auto* userAch = achieve->findUserAchievement(key);
+        if (!userAch) continue;
+        
+        if (!first) ss << ",";
+        first = false;
+        
+        double percent = userAch->target_value > 0 
+            ? static_cast<double>(userAch->progress) * 100.0 / userAch->target_value 
+            : 0.0;
+        
+        ss << "{\"id\":" << userAch->id
+           << ",\"name\":\"" << escape(userAch->name) << "\""
+           << ",\"description\":\"" << escape(userAch->description) << "\""
+           << ",\"progress\":" << userAch->progress
+           << ",\"target\":" << userAch->target_value
+           << ",\"percent\":" << percent
+           << ",\"unlocked\":" << (userAch->unlocked ? "true" : "false")
+           << "}";
     }
-    ss<<"]"; return ss.str();
+    
+    ss << "]";
+    return ss.str();
 }
 
 std::string WebServer::jsonStatsSummary() {

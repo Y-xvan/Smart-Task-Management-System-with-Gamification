@@ -168,12 +168,12 @@ std::string ReminderSystem::calculateNextReminderTime(
     return formatTime(nextTime);
 }
 
-void ReminderSystem::addReminder(const std::string& title, const std::string& message,
+bool ReminderSystem::addReminder(const std::string& title, const std::string& message,
                                 const std::string& time, const std::string& rule,
                                 int task_id) {
     if (!reminderDAO) {
         std::cerr << "ReminderDAO 未初始化\n";
-        return;
+        return false;
     }
 
     Reminder newReminder;
@@ -195,15 +195,17 @@ void ReminderSystem::addReminder(const std::string& title, const std::string& me
 
     if (newReminder.triggerTime.time_since_epoch().count() == 0) {
         std::cerr << "无效的提醒时间格式: " << time << "\n";
-        return;
+        return false;
     }
 
     if (reminderDAO->insertReminder(newReminder)) {
         std::cout << "✅ 已添加提醒: " << title << " (时间: " << time << ", 重复: " << rule << ")\n";
         // 重新加载提醒列表以包含新提醒
         loadRemindersFromDB();
+        return true;
     } else {
         std::cerr << "添加提醒失败\n";
+        return false;
     }
 }
 

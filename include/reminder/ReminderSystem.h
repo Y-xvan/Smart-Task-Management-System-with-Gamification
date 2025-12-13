@@ -19,7 +19,7 @@ public:
     // 核心方法
     void initialize();
     void checkDueReminders();
-    void addReminder(const std::string& title, const std::string& message,
+    bool addReminder(const std::string& title, const std::string& message,
                     const std::string& time, const std::string& rule = "once",
                     int task_id = 0);
     void displayAllReminders();

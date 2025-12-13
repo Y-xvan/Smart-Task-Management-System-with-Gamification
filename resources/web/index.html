@@ -44,13 +44,22 @@
           <h3>Achievements</h3><span id="ach-count" class="pill muted-pill"></span>
         </div>
         <div id="achievements-list" class="ach-list"></div>
-        <form id="achievement-form" class="form inline">
-          <input name="id" type="number" min="1" placeholder="Achievement ID" required />
-          <input name="name" placeholder="New name (optional)" />
-          <input name="description" placeholder="New description (optional)" />
-          <input name="target" type="number" min="1" placeholder="Target value" />
-          <button type="submit">Update Achievement</button>
-        </form>
+        <div class="ach-edit-section">
+          <div class="card-head small-gap">
+            <h4>Edit Achievement</h4>
+          </div>
+          <form id="achievement-form" class="form inline">
+            <label class="label">Achievement
+              <select name="id" id="achievement-select" required>
+                <option value="">Select an achievement...</option>
+              </select>
+            </label>
+            <input name="name" id="ach-name-input" placeholder="New name (optional)" />
+            <input name="description" id="ach-desc-input" placeholder="New description (optional)" />
+            <input name="target" id="ach-target-input" type="number" min="1" placeholder="Target value" />
+            <button type="submit">Update Achievement</button>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -147,26 +156,84 @@
     </section>
 
     <section class="card wide" id="pomo" data-view="pomo">
-      <div class="card-head"><h2>Pomodoro & Gamification</h2></div>
+      <div class="card-head"><h2>Pomodoro & Focus Timer</h2></div>
+      <div class="pomo-display">
+        <div id="pomo-timer" class="pomo-timer">--:--</div>
+        <div id="pomo-mode" class="pomo-mode muted">Ready to start</div>
+        <div class="xp-track pomo-track">
+          <div id="pomo-progress-bar" class="xp-fill"></div>
+        </div>
+      </div>
+      <div class="pomo-settings">
+        <div class="setting-item">
+          <span class="muted micro">Work:</span> <span id="pomo-work-duration">25</span> min
+        </div>
+        <div class="setting-item">
+          <span class="muted micro">Break:</span> <span id="pomo-break-duration">5</span> min
+        </div>
+        <div class="setting-item">
+          <span class="muted micro">Long Break:</span> <span id="pomo-long-duration">15</span> min
+        </div>
+      </div>
       <div class="controls">
-        <button data-action="pomo-work">Start Work</button>
-        <button data-action="pomo-break">Short Break</button>
-        <button data-action="pomo-long">Long Break</button>
-        <button data-action="pomo-stop">Stop</button>
+        <button data-action="pomo-work">🍅 Start Work</button>
+        <button data-action="pomo-break">☕ Short Break</button>
+        <button data-action="pomo-long">🛋️ Long Break</button>
+        <button data-action="pomo-stop">⏹️ Stop</button>
       </div>
       <div id="pomo-status" class="muted micro"></div>
+      <div class="pomo-stats">
+        <div class="stat-item">
+          <span class="stat-label">Today's Cycles:</span>
+          <span id="pomo-today-cycles" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Cycles:</span>
+          <span id="pomo-total-cycles" class="stat-value">0</span>
+        </div>
+      </div>
       <pre id="xp-box" class="pre"></pre>
       <pre id="ach-box" class="pre"></pre>
     </section>
 
     <section class="card wide" id="stats" data-view="stats">
-      <div class="card-head"><h2>Statistics</h2></div>
+      <div class="card-head"><h2>Statistics & Analytics</h2></div>
+      <div class="stats-summary">
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-info">
+            <span id="stat-tasks-completed" class="stat-value">0</span>
+            <span class="stat-label">Tasks Completed</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-info">
+            <span id="stat-completion-rate" class="stat-value">0%</span>
+            <span class="stat-label">Completion Rate</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-info">
+            <span id="stat-streak" class="stat-value">0</span>
+            <span class="stat-label">Day Streak</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🍅</div>
+          <div class="stat-info">
+            <span id="stat-pomodoros" class="stat-value">0</span>
+            <span class="stat-label">Total Pomodoros</span>
+          </div>
+        </div>
+      </div>
       <div class="controls">
-        <button data-stat="summary">Summary</button>
-        <button data-stat="daily">Daily</button>
-        <button data-stat="weekly">Weekly</button>
-        <button data-stat="monthly">Monthly</button>
-        <button data-stat="heatmap">Heatmap</button>
+        <button data-stat="summary">📈 Summary</button>
+        <button data-stat="daily">📅 Daily</button>
+        <button data-stat="weekly">📆 Weekly</button>
+        <button data-stat="monthly">📊 Monthly</button>
+        <button data-stat="heatmap">🔥 Heatmap</button>
       </div>
       <pre id="stat-box" class="pre"></pre>
     </section>
