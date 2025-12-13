@@ -336,6 +336,12 @@ std::string WebServer::handleRequest(const std::string& method,
             if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
             if (reminderSys->deleteReminder(id)) return okJson(); else return errorJson("delete failed");
         }
+        // Dismiss reminder - mark as triggered without deleting
+        if (path.rfind("/api/reminders/dismiss", 0) == 0 && method == "POST") {
+            int id;
+            if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
+            if (reminderSys->markReminderAsTriggered(id)) return okJson(); else return errorJson("dismiss failed");
+        }
         if (path == "/api/reminders/check" && method == "POST") {
             reminderSys->checkDueReminders();
             return okJson();
