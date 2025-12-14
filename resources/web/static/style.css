@@ -1658,3 +1658,61 @@ button:active {
     transform: translateX(0);
   }
 }
+
+/* ============================================= */
+/* XP RULES SECTION */
+/* ============================================= */
+.xp-rules-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.xp-rules-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #fbbf24;
+}
+
+.xp-rules-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.xp-rule-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.xp-rule-item:hover {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
+.xp-rule-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.xp-rule-text {
+  font-size: 14px;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.xp-rule-value {
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-left: auto;
+}

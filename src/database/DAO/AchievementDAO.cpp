@@ -75,11 +75,41 @@ void AchievementDAO::initializeDefaultAchievements() {
             achievementDefinitions.push_back(achievement);
         };
 
-        // 与新成就系统对应的默认成就
-        addDefinition("首次任务", "完成第一个任务", "🎯", "first_task", 100, "task", 1);
-        addDefinition("七日连胜", "连续完成7天任务", "🔥", "seven_day_streak", 300, "streak", 7);
-        addDefinition("时间管理达人", "单日完成10个任务", "⏱️", "time_management_master", 200, "time", 10);
-        addDefinition("番茄钟大师", "累计完成20个番茄钟", "🍅", "pomodoro_master", 250, "pomodoro", 20);
+        // === Task Completion Achievements (1→5→10→25→50→100→200) ===
+        addDefinition("First Task", "Complete your first task", "🎯", "task_1", 100, "task", 1);
+        addDefinition("Task Beginner", "Complete 5 tasks", "📝", "task_5", 150, "task", 5);
+        addDefinition("Task Learner", "Complete 10 tasks", "📋", "task_10", 200, "task", 10);
+        addDefinition("Task Achiever", "Complete 25 tasks", "⭐", "task_25", 300, "task", 25);
+        addDefinition("Task Expert", "Complete 50 tasks", "🌟", "task_50", 500, "task", 50);
+        addDefinition("Task Master", "Complete 100 tasks", "💫", "task_100", 800, "task", 100);
+        addDefinition("Task Legend", "Complete 200 tasks", "👑", "task_200", 1500, "task", 200);
+
+        // === Project Completion Achievements (1→5→10→25→50→100→200) ===
+        addDefinition("First Project", "Complete your first project", "📁", "project_1", 150, "task", 1);
+        addDefinition("Project Starter", "Complete 5 projects", "📂", "project_5", 250, "task", 5);
+        addDefinition("Project Builder", "Complete 10 projects", "🏗️", "project_10", 400, "task", 10);
+        addDefinition("Project Manager", "Complete 25 projects", "📊", "project_25", 600, "task", 25);
+        addDefinition("Project Director", "Complete 50 projects", "🎯", "project_50", 1000, "task", 50);
+        addDefinition("Project Executive", "Complete 100 projects", "🏆", "project_100", 1500, "task", 100);
+        addDefinition("Project Titan", "Complete 200 projects", "👑", "project_200", 2500, "task", 200);
+
+        // === Streak Achievements (1→5→10→25→50→100→200 days) ===
+        addDefinition("First Day", "Complete tasks for 1 day", "📅", "streak_1", 50, "streak", 1);
+        addDefinition("Getting Started", "Maintain a 5-day streak", "🔥", "streak_5", 150, "streak", 5);
+        addDefinition("Consistency", "Maintain a 10-day streak", "🔥", "streak_10", 300, "streak", 10);
+        addDefinition("Habit Forming", "Maintain a 25-day streak", "💪", "streak_25", 500, "streak", 25);
+        addDefinition("Dedicated", "Maintain a 50-day streak", "⚡", "streak_50", 800, "streak", 50);
+        addDefinition("Unstoppable", "Maintain a 100-day streak", "🌟", "streak_100", 1500, "streak", 100);
+        addDefinition("Legendary Streak", "Maintain a 200-day streak", "👑", "streak_200", 3000, "streak", 200);
+
+        // === Pomodoro Achievements (1→5→10→25→50→100→200 sessions) ===
+        addDefinition("First Pomodoro", "Complete your first Pomodoro session", "🍅", "pomodoro_1", 50, "time", 1);
+        addDefinition("Pomodoro Beginner", "Complete 5 Pomodoro sessions", "🍅", "pomodoro_5", 100, "time", 5);
+        addDefinition("Pomodoro Learner", "Complete 10 Pomodoro sessions", "🍅", "pomodoro_10", 200, "time", 10);
+        addDefinition("Pomodoro Practitioner", "Complete 25 Pomodoro sessions", "⏱️", "pomodoro_25", 350, "time", 25);
+        addDefinition("Pomodoro Expert", "Complete 50 Pomodoro sessions", "⏰", "pomodoro_50", 600, "time", 50);
+        addDefinition("Pomodoro Master", "Complete 100 Pomodoro sessions", "🎯", "pomodoro_100", 1000, "time", 100);
+        addDefinition("Pomodoro Legend", "Complete 200 Pomodoro sessions", "👑", "pomodoro_200", 2000, "time", 200);
 
         saveAchievementDefinitions();
     }

@@ -67,6 +67,7 @@ public:
     void checkSevenDayStreakAchievement();
     void checkTimeManagementAchievement();
     void checkPomodoroMasterAchievement();
+    void checkProgressAchievement(const std::string& achievementId, int currentValue);
     
 
     // 工具方法

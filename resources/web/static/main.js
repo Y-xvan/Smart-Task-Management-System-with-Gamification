@@ -305,21 +305,34 @@ function generateHeatmapHTML(heatmapData) {
 function parseHeatmapData(data) {
   const counts = {};
   
+  // First try to use the data array from the API (preferred method)
+  if (data && typeof data === 'object' && Array.isArray(data.data)) {
+    data.data.forEach(item => {
+      if (item.date && item.count !== undefined) {
+        counts[item.date] = item.count;
+      }
+    });
+    return counts;
+  }
+  
+  // If data is an array directly
+  if (Array.isArray(data)) {
+    data.forEach(item => {
+      if (item.date && item.count !== undefined) {
+        counts[item.date] = item.count;
+      }
+    });
+    return counts;
+  }
+  
+  // Fallback: parse text-based heatmap output
   if (typeof data === 'string') {
-    // Parse text-based heatmap output
-    const lines = data.split('\n');
     // Look for date patterns
     const dateRegex = /(\d{4}-\d{2}-\d{2})/g;
     let match;
     while ((match = dateRegex.exec(data)) !== null) {
       counts[match[1]] = (counts[match[1]] || 0) + 1;
     }
-  } else if (Array.isArray(data)) {
-    data.forEach(item => {
-      if (item.date && item.count !== undefined) {
-        counts[item.date] = item.count;
-      }
-    });
   }
   
   return counts;
@@ -666,7 +679,8 @@ async function load() {
 async function loadHeatmap() {
   try {
     const res = await fetchJSON('/api/stats/heatmap');
-    cachedHeatmapData = res.heatmap || '';
+    // Use the full response (which contains 'data' array with date-count pairs)
+    cachedHeatmapData = res;
     
     // Insert heatmap into heatmap wrapper
     const heatmapWrapper = document.getElementById('heatmap-wrapper');
@@ -830,17 +844,20 @@ async function loadXPAndAchievements() {
       fetchJSON("/api/achievements"),
     ]);
     
-    // Check for level up
+    // Check for level up (only if we have previous data)
     if (previousXpLevel > 0 && xp.level > previousXpLevel) {
       showLevelUp(xp.level, xp.title);
     }
     previousXpLevel = xp.level;
     
-    // Check for new achievements
-    const newUnlocked = ach.filter(a => 
-      a.unlocked && !previousAchievements.find(p => p.id === a.id && p.unlocked)
-    );
-    newUnlocked.forEach(a => showAchievementUnlock(a));
+    // Check for new achievements (only show unlock animation if we have previous data)
+    // On first load, previousAchievements is empty, so we don't show animations
+    if (previousAchievements.length > 0) {
+      const newUnlocked = ach.filter(a => 
+        a.unlocked && !previousAchievements.find(p => p.id === a.id && p.unlocked)
+      );
+      newUnlocked.forEach(a => showAchievementUnlock(a));
+    }
     previousAchievements = ach.map(a => ({ id: a.id, unlocked: a.unlocked }));
     
     cachedAchievements = ach;
@@ -994,28 +1011,6 @@ document.getElementById("achievement-form").addEventListener("submit", async (e)
   }
 });
 
-document.getElementById("achievement-create-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const data = cleanEmptyFields(Object.fromEntries(new FormData(e.target).entries()));
-  if (!data.name) {
-    alert("Please enter an achievement name");
-    return;
-  }
-  if (!data.target || parseInt(data.target, 10) < 1) {
-    alert("Please enter a valid target value (minimum 1)");
-    return;
-  }
-  const qs = new URLSearchParams(data).toString();
-  try {
-    await post("/api/achievements/create?" + qs);
-    await loadXPAndAchievements();
-    e.target.reset();
-    alert("Achievement created successfully!");
-  } catch (err) {
-    alert("Failed to create achievement: " + err.message);
-  }
-});
-
 // Delegated buttons
 document.body.addEventListener("click", async (e) => {
   const btn = e.target;
@@ -1126,6 +1121,12 @@ document.body.addEventListener("click", async (e) => {
       resumePomoTimer();
     } else if (action === "pomo-abandon") {
       if (confirm("Are you sure you want to abandon this Pomodoro session? This session will not be counted.")) {
+        // First stop the backend pomodoro session
+        try {
+          await post("/api/pomodoro/stop");
+        } catch (e) {
+          console.warn("Failed to stop backend pomodoro:", e);
+        }
         abandonPomoTimer();
       }
     } else if (btn.dataset.stat) {
@@ -1163,7 +1164,7 @@ function startPomoTimer(minutes, mode) {
   
   updatePomoPauseButtons(true);
   
-  pomoTimer = setInterval(() => {
+  pomoTimer = setInterval(async () => {
     const remaining = Math.max(0, pomoEndTime - Date.now());
     const mins = Math.floor(remaining / 60000);
     const secs = Math.floor((remaining % 60000) / 1000);
@@ -1178,6 +1179,17 @@ function startPomoTimer(minutes, mode) {
       if (timerEl) timerEl.textContent = "00:00";
       if (modeEl) modeEl.textContent = "✅ " + mode + " Complete!";
       if (statusEl) statusEl.textContent = mode + " completed!";
+      
+      // Award XP for completed work session
+      if (mode === "Work Session") {
+        try {
+          await post("/api/pomodoro/complete");
+          showXPCelebration(5, 'Pomodoro completed!');
+        } catch (e) {
+          console.warn("Failed to record pomodoro completion:", e);
+        }
+      }
+      
       // Play notification sound or show alert
       try {
         if ("Notification" in window && Notification.permission === "granted") {
@@ -1226,7 +1238,7 @@ function resumePomoTimer() {
   
   updatePomoPauseButtons(true);
   
-  pomoTimer = setInterval(() => {
+  pomoTimer = setInterval(async () => {
     const remaining = Math.max(0, pomoEndTime - Date.now());
     const mins = Math.floor(remaining / 60000);
     const secs = Math.floor((remaining % 60000) / 1000);
@@ -1241,6 +1253,17 @@ function resumePomoTimer() {
       if (timerEl) timerEl.textContent = "00:00";
       if (modeEl) modeEl.textContent = "✅ " + pomoMode + " Complete!";
       if (statusEl) statusEl.textContent = pomoMode + " completed!";
+      
+      // Award XP for completed work session
+      if (pomoMode === "Work Session") {
+        try {
+          await post("/api/pomodoro/complete");
+          showXPCelebration(5, 'Pomodoro completed!');
+        } catch (e) {
+          console.warn("Failed to record pomodoro completion:", e);
+        }
+      }
+      
       try {
         if ("Notification" in window && Notification.permission === "granted") {
           new Notification("Pomodoro", { body: pomoMode + " completed!" });

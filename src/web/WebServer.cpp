@@ -360,29 +360,36 @@ std::string WebServer::handleRequest(const std::string& method,
             ss << "}";
             return ss.str();
         }
-        auto startThread = [&](auto fn) {
+        auto startThread = [this](auto fn) {
             stopPomodoroThread();
             pomoRunning = true;
-            pomoThread = std::thread([&, fn]() {
+            pomoThread = std::thread([this, fn]() {
                 fn();
                 pomoRunning = false;
             });
         };
         if (path == "/api/pomodoro/start" && method == "POST") {
-            startThread([&]() { pomodoro->startWork(); });
+            startThread([this]() { pomodoro->startWorkWithCountdown(nullptr); });
             return okJson();
         }
         if (path == "/api/pomodoro/break" && method == "POST") {
-            startThread([&]() { pomodoro->startBreak(); });
+            startThread([this]() { pomodoro->startBreakWithCountdown(nullptr); });
             return okJson();
         }
         if (path == "/api/pomodoro/longbreak" && method == "POST") {
-            startThread([&]() { pomodoro->startLongBreak(); });
+            startThread([this]() { pomodoro->startLongBreakWithCountdown(nullptr); });
             return okJson();
         }
         if (path == "/api/pomodoro/stop" && method == "POST") {
             pomodoro->stop();
             stopPomodoroThread();
+            return okJson();
+        }
+        if (path == "/api/pomodoro/complete" && method == "POST") {
+            // Record a completed pomodoro session and award XP
+            int xp = xpSys->getXPForPomodoro();
+            xpSys->awardXP(xp, "complete pomodoro");
+            achieve->checkAllAchievements();
             return okJson();
         }
     }
@@ -671,7 +678,20 @@ std::string WebServer::jsonStatsMonthly() {
     return ss.str();
 }
 std::string WebServer::jsonStatsHeatmap() {
-    stringstream ss; ss<<"{\"heatmap\":\""<<escape(heatmap->generateHeatmap(90))<<"\"}";
+    // Get task completion data from stats analyzer
+    auto taskData = stats->getTaskCompletionData(90);
+    
+    stringstream ss;
+    ss << "{\"data\":[";
+    
+    bool first = true;
+    for (const auto& pair : taskData) {
+        if (!first) ss << ",";
+        first = false;
+        ss << "{\"date\":\"" << pair.first << "\",\"count\":" << pair.second << "}";
+    }
+    
+    ss << "],\"heatmap\":\"" << escape(heatmap->generateHeatmap(90)) << "\"}";
     return ss.str();
 }
 
