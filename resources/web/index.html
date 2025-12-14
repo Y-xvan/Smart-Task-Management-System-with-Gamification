@@ -91,24 +91,39 @@
             <button type="submit">Update Achievement</button>
           </form>
         </div>
-        <div class="ach-create-section">
+        <div class="xp-rules-section">
           <div class="card-head small-gap">
-            <h4>Create New Achievement</h4>
+            <h4>📚 XP Accumulation Rules</h4>
           </div>
-          <form id="achievement-create-form" class="form inline">
-            <input name="name" placeholder="Achievement name *" required />
-            <input name="description" placeholder="Description" />
-            <label class="label">Target Value
-              <input name="target" type="number" min="1" value="1" placeholder="Target value *" required />
-              <span class="field-hint">The number of actions needed to unlock this achievement (e.g., complete 5 tasks)</span>
-            </label>
-            <label class="label">Reward XP
-              <input name="rewardXP" type="number" min="0" value="100" placeholder="Reward XP" />
-              <span class="field-hint">Experience points awarded when this achievement is unlocked</span>
-            </label>
-            <button type="submit">Create Achievement</button>
-          </form>
+          <div class="xp-rules-content">
+            <div class="xp-rule-item">
+              <span class="xp-rule-icon">✅</span>
+              <span class="xp-rule-text"><strong>Complete a Task:</strong></span>
+              <span class="xp-rule-value">+10 XP (Low) / +20 XP (Medium) / +50 XP (High Priority)</span>
+            </div>
+            <div class="xp-rule-item">
+              <span class="xp-rule-icon">📁</span>
+              <span class="xp-rule-text"><strong>Complete a Project:</strong></span>
+              <span class="xp-rule-value">+100 XP (when all tasks in project are completed)</span>
+            </div>
+            <div class="xp-rule-item">
+              <span class="xp-rule-icon">🍅</span>
+              <span class="xp-rule-text"><strong>Complete a Pomodoro Session:</strong></span>
+              <span class="xp-rule-value">+5 XP per completed work session</span>
+            </div>
+            <div class="xp-rule-item">
+              <span class="xp-rule-icon">🔥</span>
+              <span class="xp-rule-text"><strong>Streak Bonus:</strong></span>
+              <span class="xp-rule-value">+10 XP × streak days (daily activity bonus)</span>
+            </div>
+            <div class="xp-rule-item">
+              <span class="xp-rule-icon">🏆</span>
+              <span class="xp-rule-text"><strong>Unlock Achievement:</strong></span>
+              <span class="xp-rule-value">Varies by achievement (see achievement rewards)</span>
+            </div>
+          </div>
         </div>
+
       </div>
     </section>
 

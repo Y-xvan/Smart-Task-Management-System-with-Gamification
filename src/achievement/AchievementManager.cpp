@@ -72,19 +72,47 @@ bool AchievementManager::loadUserAchievements() {
 void AchievementManager::checkAllAchievements() {
     std::cout << "=== 开始检查所有成就 (用户ID: " << currentUserId << ") ===\n";
     
-    checkFirstTaskAchievement();
-    checkSevenDayStreakAchievement();
-    checkTimeManagementAchievement();
-    checkPomodoroMasterAchievement();
+    // Get current stats
+    const int completedTasks = getCompletedTaskCount();
+    const int currentStreak = getCurrentStreak();
+    const int totalPomodoros = getTotalPomodoroCount();
+    
+    // Check all task completion achievements
+    const std::vector<std::string> taskAchievements = {
+        "task_1", "task_5", "task_10", "task_25", "task_50", "task_100", "task_200"
+    };
+    for (const auto& achId : taskAchievements) {
+        checkProgressAchievement(achId, completedTasks);
+    }
+    
+    // Check all streak achievements
+    const std::vector<std::string> streakAchievements = {
+        "streak_1", "streak_5", "streak_10", "streak_25", "streak_50", "streak_100", "streak_200"
+    };
+    for (const auto& achId : streakAchievements) {
+        checkProgressAchievement(achId, currentStreak);
+    }
+    
+    // Check all pomodoro achievements
+    const std::vector<std::string> pomodoroAchievements = {
+        "pomodoro_1", "pomodoro_5", "pomodoro_10", "pomodoro_25", "pomodoro_50", "pomodoro_100", "pomodoro_200"
+    };
+    for (const auto& achId : pomodoroAchievements) {
+        checkProgressAchievement(achId, totalPomodoros);
+    }
+    
+    // Project achievements (project_1, project_5, etc.) are currently defined but require
+    // a getCompletedProjectCount() method to be implemented in StatisticsAnalyzer.
+    // The achievements are marked with category "special" and will be available for
+    // manual tracking or future automatic tracking when project completion is implemented.
     
     std::cout << "=== 成就检查完成 ===\n\n";
 }
 
-void AchievementManager::checkFirstTaskAchievement() {
-    const std::string achievementId = "first_task";
+void AchievementManager::checkProgressAchievement(const std::string& achievementId, int currentValue) {
     const auto* definition = findAchievementDefinition(achievementId);
     if (!definition) {
-        std::cerr << "成就定义不存在: " << achievementId << "\n";
+        // Achievement definition doesn't exist, skip silently
         return;
     }
 
@@ -92,8 +120,7 @@ void AchievementManager::checkFirstTaskAchievement() {
         return;
     }
 
-    const int completedTasks = getCompletedTaskCount();
-    const int progressValue = std::min(definition->target_value, completedTasks);
+    const int progressValue = std::min(definition->target_value, currentValue);
 
     if (progressValue <= 0) {
         return;
@@ -105,87 +132,23 @@ void AchievementManager::checkFirstTaskAchievement() {
             unlockAchievement(achievementId);
         }
     }
+}
+
+void AchievementManager::checkFirstTaskAchievement() {
+    checkProgressAchievement("task_1", getCompletedTaskCount());
 }
 
 void AchievementManager::checkSevenDayStreakAchievement() {
-    const std::string achievementId = "seven_day_streak";
-    const auto* definition = findAchievementDefinition(achievementId);
-    if (!definition) {
-        std::cerr << "成就定义不存在: " << achievementId << "\n";
-        return;
-    }
-
-    if (isAchievementUnlocked(achievementId)) {
-        return;
-    }
-
-    const int currentStreak = getCurrentStreak();
-    const int progressValue = std::min(definition->target_value, currentStreak);
-
-    if (progressValue <= 0) {
-        return;
-    }
-
-    if (achievementDAO->updateAchievementProgress(currentUserId, achievementId, progressValue)) {
-        loadUserAchievements();
-        if (progressValue >= definition->target_value) {
-            unlockAchievement(achievementId);
-        }
-    }
+    checkProgressAchievement("streak_5", getCurrentStreak());
 }
 
 void AchievementManager::checkTimeManagementAchievement() {
-    const std::string achievementId = "time_management_master";
-    const auto* definition = findAchievementDefinition(achievementId);
-    if (!definition) {
-        std::cerr << "成就定义不存在: " << achievementId << "\n";
-        return;
-    }
-
-    if (isAchievementUnlocked(achievementId)) {
-        return;
-    }
-
-    const int dailyTasks = getDailyTaskCount("today");
-    const int progressValue = std::min(definition->target_value, dailyTasks);
-
-    if (progressValue <= 0) {
-        return;
-    }
-
-    if (achievementDAO->updateAchievementProgress(currentUserId, achievementId, progressValue)) {
-        loadUserAchievements();
-        if (progressValue >= definition->target_value) {
-            unlockAchievement(achievementId);
-        }
-    }
+    // This achievement was removed in favor of the new sequential achievements
+    // Kept for backwards compatibility but does nothing
 }
 
 void AchievementManager::checkPomodoroMasterAchievement() {
-    const std::string achievementId = "pomodoro_master";
-    const auto* definition = findAchievementDefinition(achievementId);
-    if (!definition) {
-        std::cerr << "成就定义不存在: " << achievementId << "\n";
-        return;
-    }
-
-    if (isAchievementUnlocked(achievementId)) {
-        return;
-    }
-
-    const int totalPomodoros = getTotalPomodoroCount();
-    const int progressValue = std::min(definition->target_value, totalPomodoros);
-
-    if (progressValue <= 0) {
-        return;
-    }
-
-    if (achievementDAO->updateAchievementProgress(currentUserId, achievementId, progressValue)) {
-        loadUserAchievements();
-        if (progressValue >= definition->target_value) {
-            unlockAchievement(achievementId);
-        }
-    }
+    checkProgressAchievement("pomodoro_100", getTotalPomodoroCount());
 }
 
 void AchievementManager::unlockAchievement(const std::string& achievementId) {

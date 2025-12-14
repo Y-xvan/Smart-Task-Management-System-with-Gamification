@@ -11,6 +11,7 @@ let pomoMode = null;
 let pomoPaused = false;
 let pomoRemainingMs = 0;
 let pomoTotalMs = 0;
+let pomoCompletionPending = false; // Flag to prevent duplicate XP awards
 let reminderCheckInterval = null;
 let remindersEnabled = true;
 let pendingReminderQueue = [];
@@ -305,21 +306,34 @@ function generateHeatmapHTML(heatmapData) {
 function parseHeatmapData(data) {
   const counts = {};
   
+  // First try to use the data array from the API (preferred method)
+  if (data && typeof data === 'object' && Array.isArray(data.data)) {
+    data.data.forEach(item => {
+      if (item.date && item.count !== undefined) {
+        counts[item.date] = item.count;
+      }
+    });
+    return counts;
+  }
+  
+  // If data is an array directly
+  if (Array.isArray(data)) {
+    data.forEach(item => {
+      if (item.date && item.count !== undefined) {
+        counts[item.date] = item.count;
+      }
+    });
+    return counts;
+  }
+  
+  // Fallback: parse text-based heatmap output
   if (typeof data === 'string') {
-    // Parse text-based heatmap output
-    const lines = data.split('\n');
     // Look for date patterns
     const dateRegex = /(\d{4}-\d{2}-\d{2})/g;
     let match;
     while ((match = dateRegex.exec(data)) !== null) {
       counts[match[1]] = (counts[match[1]] || 0) + 1;
     }
-  } else if (Array.isArray(data)) {
-    data.forEach(item => {
-      if (item.date && item.count !== undefined) {
-        counts[item.date] = item.count;
-      }
-    });
   }
   
   return counts;
@@ -666,7 +680,8 @@ async function load() {
 async function loadHeatmap() {
   try {
     const res = await fetchJSON('/api/stats/heatmap');
-    cachedHeatmapData = res.heatmap || '';
+    // Use the full response (which contains 'data' array with date-count pairs)
+    cachedHeatmapData = res;
     
     // Insert heatmap into heatmap wrapper
     const heatmapWrapper = document.getElementById('heatmap-wrapper');
@@ -830,17 +845,20 @@ async function loadXPAndAchievements() {
       fetchJSON("/api/achievements"),
     ]);
     
-    // Check for level up
+    // Check for level up (only if we have previous data)
     if (previousXpLevel > 0 && xp.level > previousXpLevel) {
       showLevelUp(xp.level, xp.title);
     }
     previousXpLevel = xp.level;
     
-    // Check for new achievements
-    const newUnlocked = ach.filter(a => 
-      a.unlocked && !previousAchievements.find(p => p.id === a.id && p.unlocked)
-    );
-    newUnlocked.forEach(a => showAchievementUnlock(a));
+    // Check for new achievements (only show unlock animation if we have previous data)
+    // On first load, previousAchievements is empty, so we don't show animations
+    if (previousAchievements.length > 0) {
+      const newUnlocked = ach.filter(a => 
+        a.unlocked && !previousAchievements.find(p => p.id === a.id && p.unlocked)
+      );
+      newUnlocked.forEach(a => showAchievementUnlock(a));
+    }
     previousAchievements = ach.map(a => ({ id: a.id, unlocked: a.unlocked }));
     
     cachedAchievements = ach;
@@ -994,28 +1012,6 @@ document.getElementById("achievement-form").addEventListener("submit", async (e)
   }
 });
 
-document.getElementById("achievement-create-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const data = cleanEmptyFields(Object.fromEntries(new FormData(e.target).entries()));
-  if (!data.name) {
-    alert("Please enter an achievement name");
-    return;
-  }
-  if (!data.target || parseInt(data.target, 10) < 1) {
-    alert("Please enter a valid target value (minimum 1)");
-    return;
-  }
-  const qs = new URLSearchParams(data).toString();
-  try {
-    await post("/api/achievements/create?" + qs);
-    await loadXPAndAchievements();
-    e.target.reset();
-    alert("Achievement created successfully!");
-  } catch (err) {
-    alert("Failed to create achievement: " + err.message);
-  }
-});
-
 // Delegated buttons
 document.body.addEventListener("click", async (e) => {
   const btn = e.target;
@@ -1126,6 +1122,12 @@ document.body.addEventListener("click", async (e) => {
       resumePomoTimer();
     } else if (action === "pomo-abandon") {
       if (confirm("Are you sure you want to abandon this Pomodoro session? This session will not be counted.")) {
+        // First stop the backend pomodoro session
+        try {
+          await post("/api/pomodoro/stop");
+        } catch (e) {
+          console.warn("Failed to stop backend pomodoro:", e);
+        }
         abandonPomoTimer();
       }
     } else if (btn.dataset.stat) {
@@ -1150,6 +1152,7 @@ function startPomoTimer(minutes, mode) {
   stopPomoTimer();
   pomoMode = mode;
   pomoPaused = false;
+  pomoCompletionPending = false; // Reset completion flag
   pomoTotalMs = minutes * 60 * 1000;
   pomoEndTime = Date.now() + pomoTotalMs;
   
@@ -1173,24 +1176,41 @@ function startPomoTimer(minutes, mode) {
     const progress = ((pomoTotalMs - remaining) / pomoTotalMs) * 100;
     if (progressBar) progressBar.style.width = `${progress}%`;
     
-    if (remaining <= 0) {
-      stopPomoTimer();
-      if (timerEl) timerEl.textContent = "00:00";
-      if (modeEl) modeEl.textContent = "✅ " + mode + " Complete!";
-      if (statusEl) statusEl.textContent = mode + " completed!";
-      // Play notification sound or show alert
-      try {
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("Pomodoro", { body: mode + " completed!" });
-        } else {
-          alert("⏰ " + mode + " completed!");
-        }
-      } catch (e) {
-        // Fallback to alert if notifications fail
-        alert("⏰ " + mode + " completed!");
-      }
+    if (remaining <= 0 && !pomoCompletionPending) {
+      pomoCompletionPending = true; // Prevent duplicate handling
+      handlePomodoroCompletion(mode, timerEl, modeEl, statusEl);
     }
   }, 1000);
+}
+
+// Separate async function to handle completion
+async function handlePomodoroCompletion(mode, timerEl, modeEl, statusEl) {
+  stopPomoTimer();
+  if (timerEl) timerEl.textContent = "00:00";
+  if (modeEl) modeEl.textContent = "✅ " + mode + " Complete!";
+  if (statusEl) statusEl.textContent = mode + " completed!";
+  
+  // Award XP for completed work session
+  if (mode === "Work Session") {
+    try {
+      await post("/api/pomodoro/complete");
+      showXPCelebration(5, 'Pomodoro completed!');
+    } catch (e) {
+      console.warn("Failed to record pomodoro completion:", e);
+    }
+  }
+  
+  // Play notification sound or show alert
+  try {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Pomodoro", { body: mode + " completed!" });
+    } else {
+      alert("⏰ " + mode + " completed!");
+    }
+  } catch (e) {
+    // Fallback to alert if notifications fail
+    alert("⏰ " + mode + " completed!");
+  }
 }
 
 function pausePomoTimer() {
@@ -1214,6 +1234,7 @@ function resumePomoTimer() {
   if (!pomoPaused || pomoRemainingMs <= 0) return;
   
   pomoPaused = false;
+  pomoCompletionPending = false; // Reset completion flag
   pomoEndTime = Date.now() + pomoRemainingMs;
   
   const timerEl = document.getElementById("pomo-timer");
@@ -1236,20 +1257,9 @@ function resumePomoTimer() {
     const progress = ((pomoTotalMs - remaining) / pomoTotalMs) * 100;
     if (progressBar) progressBar.style.width = `${progress}%`;
     
-    if (remaining <= 0) {
-      stopPomoTimer();
-      if (timerEl) timerEl.textContent = "00:00";
-      if (modeEl) modeEl.textContent = "✅ " + pomoMode + " Complete!";
-      if (statusEl) statusEl.textContent = pomoMode + " completed!";
-      try {
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("Pomodoro", { body: pomoMode + " completed!" });
-        } else {
-          alert("⏰ " + pomoMode + " completed!");
-        }
-      } catch (e) {
-        alert("⏰ " + pomoMode + " completed!");
-      }
+    if (remaining <= 0 && !pomoCompletionPending) {
+      pomoCompletionPending = true; // Prevent duplicate handling
+      handlePomodoroCompletion(pomoMode, timerEl, modeEl, statusEl);
     }
   }, 1000);
 }
