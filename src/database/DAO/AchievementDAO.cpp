@@ -549,7 +549,7 @@ std::string AchievementDAO::loadStoredVersionHash() const {
     
     std::string storedHash;
     std::getline(file, storedHash);
-    file.close();
+    // Using RAII - file is automatically closed when destructor is called
     return storedHash;
 }
 
@@ -559,7 +559,7 @@ bool AchievementDAO::saveVersionHash(const std::string& hash) {
         return false;
     }
     file << hash;
-    file.close();
+    // Using RAII - file is automatically flushed and closed when destructor is called
     return true;
 }
 
@@ -576,10 +576,14 @@ bool AchievementDAO::isVersionChanged() const {
 }
 
 void AchievementDAO::resetAllDataIfVersionChanged() {
-    if (!isVersionChanged()) {
-        // Version is the same, just update the hash file if needed
-        std::string currentHash = computeDefinitionVersionHash();
-        std::string storedHash = loadStoredVersionHash();
+    // Compute hash and load stored hash once to avoid redundant computation
+    std::string currentHash = computeDefinitionVersionHash();
+    std::string storedHash = loadStoredVersionHash();
+    
+    bool versionChanged = !storedHash.empty() && (currentHash != storedHash);
+    
+    if (!versionChanged) {
+        // Version is the same or first run
         if (storedHash.empty()) {
             // First run, save the current version hash
             saveVersionHash(currentHash);
@@ -613,8 +617,7 @@ void AchievementDAO::resetAllDataIfVersionChanged() {
     userAchievements.clear();
     nextAchievementId = 1;
     
-    // Save the new version hash
-    std::string currentHash = computeDefinitionVersionHash();
+    // Save the new version hash (reuse currentHash computed at start of function)
     saveVersionHash(currentHash);
     
     std::cout << "成就数据已重置为新版本\n";
