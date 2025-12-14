@@ -1409,9 +1409,9 @@ function setupExitButton() {
     });
   }
   
-  // Also listen for Ctrl+C (keyboard shortcut)
+  // Also listen for Ctrl+Q (keyboard shortcut for exit)
   document.addEventListener('keydown', (e) => {
-    // Ctrl+Q or Ctrl+Shift+Q for exit (Ctrl+C is typically for copy)
+    // Ctrl+Q or Cmd+Q for exit
     if ((e.ctrlKey || e.metaKey) && e.key === 'q') {
       e.preventDefault();
       if (confirm('Are you sure you want to exit?')) {
