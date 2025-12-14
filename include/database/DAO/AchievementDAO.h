@@ -58,21 +58,7 @@ public:
 
     static std::string getCurrentTimestamp();
 
-    // Version management for achievement definitions
-    // When the code-defined achievements change, user data should be reset
-    std::string computeDefinitionVersionHash() const;
-    std::string loadStoredVersionHash() const;
-    bool saveVersionHash(const std::string& hash);
-    bool isVersionChanged() const;
-    void resetAllDataIfVersionChanged();
-
 private:
     int generateAchievementId();
     int nextAchievementId = 1;
-    
-    std::string getVersionFilePath() const;
-    
-    // Helper to generate default achievement definitions (without timestamps/IDs)
-    // Used by both initializeDefaultAchievements() and computeDefinitionVersionHash()
-    static std::vector<Achievement> buildDefaultAchievementTemplates();
 };
