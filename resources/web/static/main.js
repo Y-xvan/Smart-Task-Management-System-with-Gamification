@@ -499,6 +499,19 @@ function getCategoryIcon(category) {
   return categoryIcons[category] || '🏆';
 }
 
+// Find the current challenge for a list of achievements
+// Returns the first non-completed achievement with progress, or the first non-completed if none have progress
+function findCurrentChallenge(achievements) {
+  const nonCompleted = achievements.filter(a => !a.unlocked);
+  if (nonCompleted.length === 0) return null;
+  
+  const inProgress = nonCompleted.filter(a => a.progress > 0);
+  if (inProgress.length > 0) {
+    return inProgress.reduce((min, a) => a.target < min.target ? a : min);
+  }
+  return nonCompleted.reduce((min, a) => a.target < min.target ? a : min);
+}
+
 // Get color name from hex
 function getColorName(hex) {
   const colorMap = {
@@ -950,18 +963,9 @@ async function loadXPAndAchievements() {
       // Generate HTML for grouped achievements
       achList.innerHTML = Object.entries(grouped)
         .map(([category, achievements]) => {
-          // Find the current challenge for this category (first non-completed with progress > 0, or first non-completed if none have progress)
-          let currentChallengeId = null;
-          const nonCompleted = achievements.filter(a => !a.unlocked);
-          const inProgress = nonCompleted.filter(a => a.progress > 0);
-          
-          if (inProgress.length > 0) {
-            // Find the one with smallest target among those in progress
-            currentChallengeId = inProgress.reduce((min, a) => a.target < min.target ? a : min).id;
-          } else if (nonCompleted.length > 0) {
-            // Find the first non-completed (smallest target)
-            currentChallengeId = nonCompleted.reduce((min, a) => a.target < min.target ? a : min).id;
-          }
+          // Find the current challenge for this category
+          const currentChallenge = findCurrentChallenge(achievements);
+          const currentChallengeId = currentChallenge ? currentChallenge.id : null;
           
           return `
             <div class="ach-category-group">
@@ -1017,10 +1021,8 @@ async function loadXPAndAchievements() {
       const currentChallenges = [];
       
       Object.entries(grouped).forEach(([category, achievements]) => {
-        const nonCompleted = achievements.filter(a => !a.unlocked);
-        if (nonCompleted.length > 0) {
-          // Get the first non-completed (smallest target)
-          const current = nonCompleted.reduce((min, a) => a.target < min.target ? a : min);
+        const current = findCurrentChallenge(achievements);
+        if (current) {
           currentChallenges.push(current);
         }
       });
