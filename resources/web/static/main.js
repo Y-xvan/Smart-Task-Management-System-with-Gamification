@@ -1124,9 +1124,10 @@ document.body.addEventListener("click", async (e) => {
       pausePomoTimer();
     } else if (action === "pomo-resume") {
       resumePomoTimer();
-    } else if (action === "pomo-stop") {
-      await post("/api/pomodoro/stop");
-      stopPomoTimer();
+    } else if (action === "pomo-abandon") {
+      if (confirm("Are you sure you want to abandon this Pomodoro session? This session will not be counted.")) {
+        abandonPomoTimer();
+      }
     } else if (btn.dataset.stat) {
       const kind = btn.dataset.stat;
       if (kind === 'heatmap') {
@@ -1287,6 +1288,33 @@ function stopPomoTimer() {
   if (resumeBtn) resumeBtn.style.display = "none";
 }
 
+function abandonPomoTimer() {
+  // Abandon the current Pomodoro session without recording it
+  if (pomoTimer) {
+    clearInterval(pomoTimer);
+    pomoTimer = null;
+  }
+  pomoPaused = false;
+  pomoRemainingMs = 0;
+  
+  const timerEl = document.getElementById("pomo-timer");
+  const modeEl = document.getElementById("pomo-mode");
+  const progressBar = document.getElementById("pomo-progress-bar");
+  const statusEl = document.getElementById("pomo-status");
+  
+  if (timerEl) timerEl.textContent = "--:--";
+  if (modeEl) modeEl.textContent = "Session Abandoned 🚫";
+  if (progressBar) progressBar.style.width = "0%";
+  if (statusEl) statusEl.textContent = "Pomodoro session abandoned. This session was discarded and will not be counted.";
+  
+  updatePomoPauseButtons(false);
+  // Hide pause/resume buttons when abandoned
+  const pauseBtn = document.getElementById("pomo-pause-btn");
+  const resumeBtn = document.getElementById("pomo-resume-btn");
+  if (pauseBtn) pauseBtn.style.display = "none";
+  if (resumeBtn) resumeBtn.style.display = "none";
+}
+
 function setupNavigation() {
   const links = Array.from(document.querySelectorAll(".topnav a[data-target]"));
   const sections = Array.from(document.querySelectorAll("section[data-view]"));
@@ -1321,11 +1349,85 @@ async function updatePomoState() {
   }
 }
 
+// ============================================
+// WELCOME ANIMATION
+// ============================================
+function hideWelcomeOverlay() {
+  const overlay = document.getElementById('welcome-overlay');
+  if (overlay) {
+    overlay.classList.add('fade-out');
+    setTimeout(() => {
+      overlay.style.display = 'none';
+    }, 800);
+  }
+}
+
+// Auto-hide welcome overlay after loading completes
+function initWelcomeAnimation() {
+  // Wait for loading bar animation (2s) plus a small buffer
+  setTimeout(hideWelcomeOverlay, 2200);
+}
+
+// ============================================
+// EXIT ANIMATION & FUNCTIONALITY
+// ============================================
+function showExitOverlay() {
+  const exitOverlay = document.getElementById('exit-overlay');
+  if (exitOverlay) {
+    exitOverlay.style.display = 'flex';
+    
+    // Auto close the page after showing exit animation
+    setTimeout(() => {
+      // Try to close the window (works if opened by script)
+      // Otherwise, provide instructions
+      try {
+        window.close();
+      } catch (e) {
+        // If window.close() doesn't work, show a message
+        const exitContent = exitOverlay.querySelector('.exit-content');
+        if (exitContent) {
+          const message = document.createElement('p');
+          message.style.marginTop = '20px';
+          message.style.color = '#fbbf24';
+          message.style.fontSize = '14px';
+          message.innerHTML = 'You can safely close this tab now.<br>Press <kbd>Ctrl+W</kbd> (or <kbd>Cmd+W</kbd> on Mac) to close.';
+          exitContent.appendChild(message);
+        }
+      }
+    }, 2500);
+  }
+}
+
+function setupExitButton() {
+  const exitBtn = document.getElementById('exit-btn');
+  if (exitBtn) {
+    exitBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('Are you sure you want to exit? Your progress has been automatically saved.')) {
+        showExitOverlay();
+      }
+    });
+  }
+  
+  // Also listen for Ctrl+Q (keyboard shortcut for exit)
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+Q or Cmd+Q for exit
+    if ((e.ctrlKey || e.metaKey) && e.key === 'q') {
+      e.preventDefault();
+      if (confirm('Are you sure you want to exit?')) {
+        showExitOverlay();
+      }
+    }
+  });
+}
+
 // Request notification permission on load
 if ("Notification" in window && Notification.permission === "default") {
   Notification.requestPermission();
 }
 
 setupNavigation();
+setupExitButton();
+initWelcomeAnimation();
 load();
 startReminderChecker();

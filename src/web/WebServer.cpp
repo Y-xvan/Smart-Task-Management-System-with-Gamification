@@ -610,35 +610,35 @@ std::string WebServer::jsonAchievements() {
     // Ensure user achievements are loaded
     achieve->checkAllAchievements();
     
-    // Get all achievement definitions and collect their keys
-    std::vector<std::string> achievementKeys;
+    // Get all achievement definitions
     const auto& definitions = achieve->getAllDefinitions();
-    for (const auto& def : definitions) {
-        achievementKeys.push_back(def.unlock_condition);
-    }
     
     stringstream ss;
     ss << "[";
     bool first = true;
     
-    for (const auto& key : achievementKeys) {
-        auto* userAch = achieve->findUserAchievement(key);
-        if (!userAch) continue;
+    for (const auto& def : definitions) {
+        auto* userAch = achieve->findUserAchievement(def.unlock_condition);
         
         if (!first) ss << ",";
         first = false;
         
-        double percent = userAch->target_value > 0 
-            ? static_cast<double>(userAch->progress) * 100.0 / userAch->target_value 
+        // Use user achievement data if available, otherwise use definition defaults
+        int progress = userAch ? userAch->progress : 0;
+        int target = def.target_value > 0 ? def.target_value : 1;
+        bool unlocked = userAch ? userAch->unlocked : false;
+        
+        double percent = target > 0 
+            ? static_cast<double>(progress) * 100.0 / target 
             : 0.0;
         
-        ss << "{\"id\":" << userAch->id
-           << ",\"name\":\"" << escape(userAch->name) << "\""
-           << ",\"description\":\"" << escape(userAch->description) << "\""
-           << ",\"progress\":" << userAch->progress
-           << ",\"target\":" << userAch->target_value
+        ss << "{\"id\":" << def.id
+           << ",\"name\":\"" << escape(def.name) << "\""
+           << ",\"description\":\"" << escape(def.description) << "\""
+           << ",\"progress\":" << progress
+           << ",\"target\":" << target
            << ",\"percent\":" << percent
-           << ",\"unlocked\":" << (userAch->unlocked ? "true" : "false")
+           << ",\"unlocked\":" << (unlocked ? "true" : "false")
            << "}";
     }
     
