@@ -48,71 +48,85 @@ bool AchievementDAO::writeFile(const std::string& filename, const std::string& c
     return true;
 }
 
+std::vector<Achievement> AchievementDAO::buildDefaultAchievementTemplates() {
+    std::vector<Achievement> templates;
+    
+    auto addTemplate = [&templates](const std::string& name,
+                                    const std::string& description,
+                                    const std::string& icon,
+                                    const std::string& unlockKey,
+                                    int rewardXP,
+                                    const std::string& category,
+                                    int targetValue) {
+        Achievement achievement;
+        achievement.id = 0;  // Will be assigned later
+        achievement.name = name;
+        achievement.description = description;
+        achievement.icon = icon;
+        achievement.unlock_condition = unlockKey;
+        achievement.unlocked = false;
+        achievement.reward_xp = rewardXP;
+        achievement.category = category;
+        achievement.progress = 0;
+        achievement.target_value = targetValue;
+        templates.push_back(achievement);
+    };
+    
+    // === Task Completion Achievements (1→5→10→25→50→100→200) ===
+    addTemplate("First Task", "Complete your first task", "🎯", "task_1", 100, "task", 1);
+    addTemplate("Task Beginner", "Complete 5 tasks", "📝", "task_5", 150, "task", 5);
+    addTemplate("Task Learner", "Complete 10 tasks", "📋", "task_10", 200, "task", 10);
+    addTemplate("Task Achiever", "Complete 25 tasks", "⭐", "task_25", 300, "task", 25);
+    addTemplate("Task Expert", "Complete 50 tasks", "🌟", "task_50", 500, "task", 50);
+    addTemplate("Task Master", "Complete 100 tasks", "💫", "task_100", 800, "task", 100);
+    addTemplate("Task Legend", "Complete 200 tasks", "👑", "task_200", 1500, "task", 200);
+
+    // === Project Completion Achievements (1→5→10→25→50→100→200) ===
+    // Note: These achievements require project completion tracking to be implemented
+    addTemplate("First Project", "Complete your first project", "📁", "project_1", 150, "special", 1);
+    addTemplate("Project Starter", "Complete 5 projects", "📂", "project_5", 250, "special", 5);
+    addTemplate("Project Builder", "Complete 10 projects", "🏗️", "project_10", 400, "special", 10);
+    addTemplate("Project Manager", "Complete 25 projects", "📊", "project_25", 600, "special", 25);
+    addTemplate("Project Director", "Complete 50 projects", "🎯", "project_50", 1000, "special", 50);
+    addTemplate("Project Executive", "Complete 100 projects", "🏆", "project_100", 1500, "special", 100);
+    addTemplate("Project Titan", "Complete 200 projects", "👑", "project_200", 2500, "special", 200);
+
+    // === Streak Achievements (1→5→10→25→50→100→200 days) ===
+    addTemplate("First Day", "Complete tasks for 1 day", "📅", "streak_1", 50, "streak", 1);
+    addTemplate("Getting Started", "Maintain a 5-day streak", "🔥", "streak_5", 150, "streak", 5);
+    addTemplate("Consistency", "Maintain a 10-day streak", "🔥", "streak_10", 300, "streak", 10);
+    addTemplate("Habit Forming", "Maintain a 25-day streak", "💪", "streak_25", 500, "streak", 25);
+    addTemplate("Dedicated", "Maintain a 50-day streak", "⚡", "streak_50", 800, "streak", 50);
+    addTemplate("Unstoppable", "Maintain a 100-day streak", "🌟", "streak_100", 1500, "streak", 100);
+    addTemplate("Legendary Streak", "Maintain a 200-day streak", "👑", "streak_200", 3000, "streak", 200);
+
+    // === Pomodoro Achievements (1→5→10→25→50→100→200 sessions) ===
+    addTemplate("First Pomodoro", "Complete your first Pomodoro session", "🍅", "pomodoro_1", 50, "time", 1);
+    addTemplate("Pomodoro Beginner", "Complete 5 Pomodoro sessions", "🍅", "pomodoro_5", 100, "time", 5);
+    addTemplate("Pomodoro Learner", "Complete 10 Pomodoro sessions", "🍅", "pomodoro_10", 200, "time", 10);
+    addTemplate("Pomodoro Practitioner", "Complete 25 Pomodoro sessions", "⏱️", "pomodoro_25", 350, "time", 25);
+    addTemplate("Pomodoro Expert", "Complete 50 Pomodoro sessions", "⏰", "pomodoro_50", 600, "time", 50);
+    addTemplate("Pomodoro Master", "Complete 100 Pomodoro sessions", "🎯", "pomodoro_100", 1000, "time", 100);
+    addTemplate("Pomodoro Legend", "Complete 200 Pomodoro sessions", "👑", "pomodoro_200", 2000, "time", 200);
+    
+    return templates;
+}
+
 void AchievementDAO::initializeDefaultAchievements() {
     // 如果已经有定义文件并且能加载成功，就不再初始化默认成就
     if (!loadAchievementDefinitions()) {
         const std::string now = getCurrentTimestamp();
-
-        auto addDefinition = [&](const std::string& name,
-                                 const std::string& description,
-                                 const std::string& icon,
-                                 const std::string& unlockKey,
-                                 int rewardXP,
-                                 const std::string& category,
-                                 int targetValue) {
-            Achievement achievement;
+        
+        // Use the shared template builder to avoid duplication
+        std::vector<Achievement> templates = buildDefaultAchievementTemplates();
+        
+        for (auto& achievement : templates) {
             achievement.id = generateAchievementId();
             achievement.created_date = now;
             achievement.updated_date = now;
-            achievement.name = name;
-            achievement.description = description;
-            achievement.icon = icon;
-            achievement.unlock_condition = unlockKey;
-            achievement.unlocked = false;
             achievement.unlocked_date.clear();
-            achievement.reward_xp = rewardXP;
-            achievement.category = category;
-            achievement.progress = 0;
-            achievement.target_value = targetValue;
             achievementDefinitions.push_back(achievement);
-        };
-
-        // === Task Completion Achievements (1→5→10→25→50→100→200) ===
-        addDefinition("First Task", "Complete your first task", "🎯", "task_1", 100, "task", 1);
-        addDefinition("Task Beginner", "Complete 5 tasks", "📝", "task_5", 150, "task", 5);
-        addDefinition("Task Learner", "Complete 10 tasks", "📋", "task_10", 200, "task", 10);
-        addDefinition("Task Achiever", "Complete 25 tasks", "⭐", "task_25", 300, "task", 25);
-        addDefinition("Task Expert", "Complete 50 tasks", "🌟", "task_50", 500, "task", 50);
-        addDefinition("Task Master", "Complete 100 tasks", "💫", "task_100", 800, "task", 100);
-        addDefinition("Task Legend", "Complete 200 tasks", "👑", "task_200", 1500, "task", 200);
-
-        // === Project Completion Achievements (1→5→10→25→50→100→200) ===
-        // Note: These achievements require project completion tracking to be implemented
-        addDefinition("First Project", "Complete your first project", "📁", "project_1", 150, "special", 1);
-        addDefinition("Project Starter", "Complete 5 projects", "📂", "project_5", 250, "special", 5);
-        addDefinition("Project Builder", "Complete 10 projects", "🏗️", "project_10", 400, "special", 10);
-        addDefinition("Project Manager", "Complete 25 projects", "📊", "project_25", 600, "special", 25);
-        addDefinition("Project Director", "Complete 50 projects", "🎯", "project_50", 1000, "special", 50);
-        addDefinition("Project Executive", "Complete 100 projects", "🏆", "project_100", 1500, "special", 100);
-        addDefinition("Project Titan", "Complete 200 projects", "👑", "project_200", 2500, "special", 200);
-
-        // === Streak Achievements (1→5→10→25→50→100→200 days) ===
-        addDefinition("First Day", "Complete tasks for 1 day", "📅", "streak_1", 50, "streak", 1);
-        addDefinition("Getting Started", "Maintain a 5-day streak", "🔥", "streak_5", 150, "streak", 5);
-        addDefinition("Consistency", "Maintain a 10-day streak", "🔥", "streak_10", 300, "streak", 10);
-        addDefinition("Habit Forming", "Maintain a 25-day streak", "💪", "streak_25", 500, "streak", 25);
-        addDefinition("Dedicated", "Maintain a 50-day streak", "⚡", "streak_50", 800, "streak", 50);
-        addDefinition("Unstoppable", "Maintain a 100-day streak", "🌟", "streak_100", 1500, "streak", 100);
-        addDefinition("Legendary Streak", "Maintain a 200-day streak", "👑", "streak_200", 3000, "streak", 200);
-
-        // === Pomodoro Achievements (1→5→10→25→50→100→200 sessions) ===
-        addDefinition("First Pomodoro", "Complete your first Pomodoro session", "🍅", "pomodoro_1", 50, "time", 1);
-        addDefinition("Pomodoro Beginner", "Complete 5 Pomodoro sessions", "🍅", "pomodoro_5", 100, "time", 5);
-        addDefinition("Pomodoro Learner", "Complete 10 Pomodoro sessions", "🍅", "pomodoro_10", 200, "time", 10);
-        addDefinition("Pomodoro Practitioner", "Complete 25 Pomodoro sessions", "⏱️", "pomodoro_25", 350, "time", 25);
-        addDefinition("Pomodoro Expert", "Complete 50 Pomodoro sessions", "⏰", "pomodoro_50", 600, "time", 50);
-        addDefinition("Pomodoro Master", "Complete 100 Pomodoro sessions", "🎯", "pomodoro_100", 1000, "time", 100);
-        addDefinition("Pomodoro Legend", "Complete 200 Pomodoro sessions", "👑", "pomodoro_200", 2000, "time", 200);
+        }
 
         saveAchievementDefinitions();
     }
@@ -497,49 +511,22 @@ std::string AchievementDAO::getVersionFilePath() const {
 std::string AchievementDAO::computeDefinitionVersionHash() const {
     // Create a deterministic hash based on the default achievement definitions.
     // This hash will change whenever the code-defined achievements change.
-    // We use a simple string concatenation and hash approach.
+    // We use the shared template builder to avoid duplication.
+    
+    std::vector<Achievement> templates = buildDefaultAchievementTemplates();
     
     // Build a canonical string representation of all default achievements
     std::ostringstream oss;
-    
-    // These are the same default achievements defined in initializeDefaultAchievements()
-    // We compute the hash based on: name, description, icon, unlock_condition, reward_xp, category, target_value
-    
-    // Task achievements
-    oss << "task_1:First Task:Complete your first task:🎯:100:task:1|";
-    oss << "task_5:Task Beginner:Complete 5 tasks:📝:150:task:5|";
-    oss << "task_10:Task Learner:Complete 10 tasks:📋:200:task:10|";
-    oss << "task_25:Task Achiever:Complete 25 tasks:⭐:300:task:25|";
-    oss << "task_50:Task Expert:Complete 50 tasks:🌟:500:task:50|";
-    oss << "task_100:Task Master:Complete 100 tasks:💫:800:task:100|";
-    oss << "task_200:Task Legend:Complete 200 tasks:👑:1500:task:200|";
-    
-    // Project achievements
-    oss << "project_1:First Project:Complete your first project:📁:150:special:1|";
-    oss << "project_5:Project Starter:Complete 5 projects:📂:250:special:5|";
-    oss << "project_10:Project Builder:Complete 10 projects:🏗️:400:special:10|";
-    oss << "project_25:Project Manager:Complete 25 projects:📊:600:special:25|";
-    oss << "project_50:Project Director:Complete 50 projects:🎯:1000:special:50|";
-    oss << "project_100:Project Executive:Complete 100 projects:🏆:1500:special:100|";
-    oss << "project_200:Project Titan:Complete 200 projects:👑:2500:special:200|";
-    
-    // Streak achievements
-    oss << "streak_1:First Day:Complete tasks for 1 day:📅:50:streak:1|";
-    oss << "streak_5:Getting Started:Maintain a 5-day streak:🔥:150:streak:5|";
-    oss << "streak_10:Consistency:Maintain a 10-day streak:🔥:300:streak:10|";
-    oss << "streak_25:Habit Forming:Maintain a 25-day streak:💪:500:streak:25|";
-    oss << "streak_50:Dedicated:Maintain a 50-day streak:⚡:800:streak:50|";
-    oss << "streak_100:Unstoppable:Maintain a 100-day streak:🌟:1500:streak:100|";
-    oss << "streak_200:Legendary Streak:Maintain a 200-day streak:👑:3000:streak:200|";
-    
-    // Pomodoro achievements
-    oss << "pomodoro_1:First Pomodoro:Complete your first Pomodoro session:🍅:50:time:1|";
-    oss << "pomodoro_5:Pomodoro Beginner:Complete 5 Pomodoro sessions:🍅:100:time:5|";
-    oss << "pomodoro_10:Pomodoro Learner:Complete 10 Pomodoro sessions:🍅:200:time:10|";
-    oss << "pomodoro_25:Pomodoro Practitioner:Complete 25 Pomodoro sessions:⏱️:350:time:25|";
-    oss << "pomodoro_50:Pomodoro Expert:Complete 50 Pomodoro sessions:⏰:600:time:50|";
-    oss << "pomodoro_100:Pomodoro Master:Complete 100 Pomodoro sessions:🎯:1000:time:100|";
-    oss << "pomodoro_200:Pomodoro Legend:Complete 200 Pomodoro sessions:👑:2000:time:200|";
+    for (const auto& ach : templates) {
+        // Include all relevant fields that define an achievement
+        oss << ach.unlock_condition << ":"
+            << ach.name << ":"
+            << ach.description << ":"
+            << ach.icon << ":"
+            << ach.reward_xp << ":"
+            << ach.category << ":"
+            << ach.target_value << "|";
+    }
     
     std::string content = oss.str();
     

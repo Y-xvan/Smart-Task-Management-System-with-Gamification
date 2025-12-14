@@ -71,4 +71,8 @@ private:
     int nextAchievementId = 1;
     
     std::string getVersionFilePath() const;
+    
+    // Helper to generate default achievement definitions (without timestamps/IDs)
+    // Used by both initializeDefaultAchievements() and computeDefinitionVersionHash()
+    static std::vector<Achievement> buildDefaultAchievementTemplates();
 };
