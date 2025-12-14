@@ -61,7 +61,4 @@ public:
 private:
     int generateAchievementId();
     int nextAchievementId = 1;
-    bool needsSchemaUpdate() const;
-    bool needsUserAchievementUpdate() const;
-    bool regenerateUserAchievements(int userId);
 };

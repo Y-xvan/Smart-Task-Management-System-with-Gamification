@@ -6,7 +6,6 @@
 #include <ctime>
 #include <iomanip>
 #include <filesystem>
-#include <unordered_set>
 
 
 using namespace std;
@@ -47,60 +46,9 @@ bool AchievementDAO::writeFile(const std::string& filename, const std::string& c
     return true;
 }
 
-// Constants for schema detection thresholds
-namespace {
-    // Minimum percentage of expected keys that must match to consider schema valid
-    constexpr double SCHEMA_MATCH_THRESHOLD = 0.5;
-    // Minimum percentage of definitions that must match user achievements
-    constexpr double USER_ACHIEVEMENT_MATCH_THRESHOLD = 0.5;
-}
-
-// Helper to check if achievements match the expected new schema
-bool AchievementDAO::needsSchemaUpdate() const {
-    // Expected unlock_condition keys in the new achievement system
-    const std::vector<std::string> expectedKeys = {
-        "task_1", "task_5", "task_10", "task_25", "task_50", "task_100", "task_200",
-        "streak_1", "streak_5", "streak_10", "streak_25", "streak_50", "streak_100", "streak_200",
-        "pomodoro_1", "pomodoro_5", "pomodoro_10", "pomodoro_25", "pomodoro_50", "pomodoro_100", "pomodoro_200"
-    };
-    
-    // If we have achievements, check if they match the expected keys
-    if (achievementDefinitions.empty()) {
-        return true; // Need to create achievements
-    }
-    
-    // Build a set of current unlock_conditions for efficient lookup
-    std::unordered_set<std::string> currentKeys;
-    for (const auto& def : achievementDefinitions) {
-        currentKeys.insert(def.unlock_condition);
-    }
-    
-    // Count how many expected keys exist in current definitions
-    int matchCount = 0;
-    for (const auto& key : expectedKeys) {
-        if (currentKeys.count(key) > 0) {
-            matchCount++;
-        }
-    }
-    
-    // If less than threshold of expected keys are found, it's likely old schema
-    // (Old schema had achievements like "first_task", "seven_day_streak" or Chinese names)
-    const int threshold = static_cast<int>(expectedKeys.size() * SCHEMA_MATCH_THRESHOLD);
-    return matchCount < threshold;
-}
-
 void AchievementDAO::initializeDefaultAchievements() {
-    // Try to load existing definitions first
-    bool loaded = loadAchievementDefinitions();
-    
-    // Check if we need to regenerate due to schema changes
-    bool needsUpdate = !loaded || needsSchemaUpdate();
-    
-    if (needsUpdate) {
-        // Clear old definitions and regenerate
-        achievementDefinitions.clear();
-        nextAchievementId = 1;
-        
+    // 如果已经有定义文件并且能加载成功，就不再初始化默认成就
+    if (!loadAchievementDefinitions()) {
         const std::string now = getCurrentTimestamp();
 
         auto addDefinition = [&](const std::string& name,
@@ -317,7 +265,28 @@ bool AchievementDAO::loadUserAchievements(int userId) {
     ifstream file(getUserAchievementFilePath(userId));
     if (!file.is_open()) {
         // 如果用户文件不存在，基于成就定义生成初始成就数据
-        return regenerateUserAchievements(userId);
+        if (achievementDefinitions.empty()) {
+            // 尝试先加载定义，如果仍然为空则初始化默认定义
+            loadAchievementDefinitions();
+            if (achievementDefinitions.empty()) {
+                initializeDefaultAchievements();
+            }
+        }
+
+        const std::string now = getCurrentTimestamp();
+        userAchievements.clear();
+        for (const auto& definition : achievementDefinitions) {
+            Achievement userEntry = definition;
+            userEntry.id = generateAchievementId();
+            userEntry.created_date = now;
+            userEntry.updated_date = now;
+            userEntry.unlocked = false;
+            userEntry.unlocked_date.clear();
+            userEntry.progress = 0;
+            userAchievements.push_back(userEntry);
+        }
+
+        return saveUserAchievements(userId);
     }
     
     userAchievements.clear();
@@ -366,65 +335,7 @@ bool AchievementDAO::loadUserAchievements(int userId) {
     }
     
     file.close();
-    
-    // Check if user achievements match the current definitions
-    // If not, regenerate them based on the current definitions
-    if (needsUserAchievementUpdate()) {
-        return regenerateUserAchievements(userId);
-    }
-    
     return true;
-}
-
-bool AchievementDAO::needsUserAchievementUpdate() const {
-    // If user achievements don't match the current definitions, regenerate them
-    if (userAchievements.empty() && !achievementDefinitions.empty()) {
-        return true;
-    }
-    
-    // Build a set of user achievement unlock_conditions for efficient lookup
-    std::unordered_set<std::string> userKeys;
-    for (const auto& userAch : userAchievements) {
-        userKeys.insert(userAch.unlock_condition);
-    }
-    
-    // Count how many current definitions are represented in user achievements
-    int matchCount = 0;
-    for (const auto& def : achievementDefinitions) {
-        if (userKeys.count(def.unlock_condition) > 0) {
-            matchCount++;
-        }
-    }
-    
-    // If less than threshold of the current definitions are represented in user achievements,
-    // the user achievements are likely outdated
-    const int threshold = static_cast<int>(achievementDefinitions.size() * USER_ACHIEVEMENT_MATCH_THRESHOLD);
-    return matchCount < threshold;
-}
-
-bool AchievementDAO::regenerateUserAchievements(int userId) {
-    if (achievementDefinitions.empty()) {
-        // 尝试先加载定义，如果仍然为空则初始化默认定义
-        loadAchievementDefinitions();
-        if (achievementDefinitions.empty()) {
-            initializeDefaultAchievements();
-        }
-    }
-
-    const std::string now = getCurrentTimestamp();
-    userAchievements.clear();
-    for (const auto& definition : achievementDefinitions) {
-        Achievement userEntry = definition;
-        userEntry.id = generateAchievementId();
-        userEntry.created_date = now;
-        userEntry.updated_date = now;
-        userEntry.unlocked = false;
-        userEntry.unlocked_date.clear();
-        userEntry.progress = 0;
-        userAchievements.push_back(userEntry);
-    }
-
-    return saveUserAchievements(userId);
 }
 
 bool AchievementDAO::saveUserAchievements(int userId) {
