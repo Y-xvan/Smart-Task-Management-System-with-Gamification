@@ -1116,6 +1116,17 @@ body {
   overflow: hidden;
 }
 
+/* Abandon button styling */
+.btn-abandon {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: #fff !important;
+}
+
+.btn-abandon:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+}
+
 .btn-gamified::after {
   content: '';
   position: absolute;
@@ -1403,8 +1414,247 @@ button:active {
   color: #10b981;
 }
 
+/* Field hints for form explanations */
+.field-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
 /* Stats box container */
 .stat-box-container {
   margin-top: 16px;
   min-height: 40px;
+}
+
+/* ============================================= */
+/* WELCOME ANIMATION OVERLAY */
+/* ============================================= */
+.welcome-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #0d1117 0%, #1a1f2e 50%, #0d1117 100%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: welcomeFadeIn 0.5s ease-out;
+}
+
+.welcome-overlay.fade-out {
+  animation: welcomeFadeOut 0.8s ease-in-out forwards;
+}
+
+.welcome-content {
+  text-align: center;
+  animation: welcomeSlideUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.welcome-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: welcomeRocketBounce 1.5s ease-in-out infinite;
+}
+
+.welcome-title {
+  font-size: 48px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #7c3aed, #06b6d4, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 16px 0;
+  animation: welcomeGlow 2s ease-in-out infinite;
+}
+
+.welcome-subtitle {
+  font-size: 20px;
+  color: var(--muted);
+  margin: 0 0 40px 0;
+}
+
+.welcome-loader {
+  width: 300px;
+  height: 6px;
+  background: #1f2937;
+  border-radius: 3px;
+  margin: 0 auto 16px;
+  overflow: hidden;
+}
+
+.welcome-loader-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #06b6d4, #fbbf24);
+  border-radius: 3px;
+  animation: welcomeLoading 2s ease-out forwards;
+}
+
+.welcome-hint {
+  font-size: 14px;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* ============================================= */
+/* EXIT ANIMATION OVERLAY */
+/* ============================================= */
+.exit-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #0d1117 0%, #1a1f2e 50%, #0d1117 100%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: exitFadeIn 0.5s ease-out;
+}
+
+.exit-content {
+  text-align: center;
+  animation: exitSlideDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.exit-icon {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: exitWave 1s ease-in-out infinite;
+}
+
+.exit-title {
+  font-size: 36px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 16px 0;
+}
+
+.exit-subtitle {
+  font-size: 18px;
+  color: var(--muted);
+  margin: 0 0 30px 0;
+}
+
+.exit-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.exit-stats span {
+  background: rgba(124, 58, 237, 0.2);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  color: var(--text);
+  animation: exitStatsFade 0.5s ease-out backwards;
+}
+
+.exit-stats span:nth-child(1) { animation-delay: 0.2s; }
+.exit-stats span:nth-child(2) { animation-delay: 0.4s; }
+.exit-stats span:nth-child(3) { animation-delay: 0.6s; }
+
+/* Exit Button in Navbar */
+.exit-btn {
+  margin-left: auto;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.exit-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+
+/* ============================================= */
+/* WELCOME/EXIT ANIMATIONS */
+/* ============================================= */
+@keyframes welcomeFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes welcomeFadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes welcomeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes welcomeRocketBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-15px) rotate(-5deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-10px) rotate(5deg); }
+}
+
+@keyframes welcomeGlow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+
+@keyframes welcomeLoading {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+@keyframes exitFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes exitSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes exitWave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(20deg); }
+  75% { transform: rotate(-20deg); }
+}
+
+@keyframes exitStatsFade {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }

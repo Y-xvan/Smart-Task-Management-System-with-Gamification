@@ -24,18 +24,47 @@ Item {
             
             Text { text: "🏆 Achievements"; color: "white"; font.bold: true; font.pixelSize: 20 }
             
-            // 这里可以做成 ListView 绑定 AchievementModel，暂时静态模拟
+            // Dynamic achievements display - shows locked by default until earned
             Repeater {
-                model: 3 
+                model: ListModel {
+                    ListElement { 
+                        achievementName: "First Blood"
+                        achievementDesc: "Complete your first task"
+                        checkProperty: "totalTasks"
+                        threshold: 1
+                    }
+                    ListElement { 
+                        achievementName: "Task Master"
+                        achievementDesc: "Complete 10 tasks"
+                        checkProperty: "totalTasks"
+                        threshold: 10
+                    }
+                    ListElement { 
+                        achievementName: "Pomodoro Pro"
+                        achievementDesc: "Complete 5 pomodoros"
+                        checkProperty: "totalPomodoros"
+                        threshold: 5
+                    }
+                }
                 Rectangle {
                     width: parent.width - 40; height: 70
                     color: "#1e1e1e"; radius: 8
+                    
+                    property bool isUnlocked: {
+                        if (model.checkProperty === "totalTasks") {
+                            return gameController.totalTasks >= model.threshold
+                        } else if (model.checkProperty === "totalPomodoros") {
+                            return gameController.totalPomodoros >= model.threshold
+                        }
+                        return false
+                    }
+                    
                     Row {
                         anchors.centerIn: parent; spacing: 15
-                        Text { text: index === 0 ? "✅" : "🔒"; font.pixelSize: 24 }
+                        Text { text: isUnlocked ? "✅" : "🔒"; font.pixelSize: 24 }
                         Column {
-                            Text { text: index === 0 ? "First Blood" : "Locked Achievement"; color: "white"; font.bold: true }
-                            Text { text: index === 0 ? "Complete your first task" : "Keep playing..."; color: "#888"; font.pixelSize: 12 }
+                            Text { text: model.achievementName; color: "white"; font.bold: true }
+                            Text { text: model.achievementDesc; color: "#888"; font.pixelSize: 12 }
                         }
                     }
                 }

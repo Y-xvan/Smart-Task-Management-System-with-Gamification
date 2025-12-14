@@ -7,12 +7,40 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <!-- Welcome Animation Overlay -->
+  <div id="welcome-overlay" class="welcome-overlay">
+    <div class="welcome-content">
+      <div class="welcome-icon">🚀</div>
+      <h1 class="welcome-title">Welcome to SmartTask</h1>
+      <p class="welcome-subtitle">Your gamified productivity companion</p>
+      <div class="welcome-loader">
+        <div class="welcome-loader-bar"></div>
+      </div>
+      <p class="welcome-hint">Loading your adventure...</p>
+    </div>
+  </div>
+
+  <!-- Exit Confirmation Overlay -->
+  <div id="exit-overlay" class="exit-overlay" style="display: none;">
+    <div class="exit-content">
+      <div class="exit-icon">👋</div>
+      <h2 class="exit-title">See you later, hero!</h2>
+      <p class="exit-subtitle">Your progress has been saved. Keep up the great work!</p>
+      <div class="exit-stats">
+        <span>🏆 Achievement Progress Saved</span>
+        <span>🍅 Pomodoro Stats Recorded</span>
+        <span>⭐ XP Preserved</span>
+      </div>
+    </div>
+  </div>
+
   <nav class="topnav">
     <a data-target="work">Tasks & Projects</a>
     <a data-target="xp">XP & Achievements</a>
     <a data-target="reminders">Reminders</a>
     <a data-target="pomo">Pomodoro</a>
     <a data-target="stats">Stats</a>
+    <button id="exit-btn" class="exit-btn" title="Exit Application (Ctrl+C)">🚪 Exit</button>
   </nav>
 
   <header class="hero">
@@ -56,7 +84,10 @@
             </label>
             <input name="name" id="ach-name-input" placeholder="New name (optional)" />
             <input name="description" id="ach-desc-input" placeholder="New description (optional)" />
-            <input name="target" id="ach-target-input" type="number" min="1" placeholder="Target value" />
+            <label class="label">Target Value
+              <input name="target" id="ach-target-input" type="number" min="1" placeholder="Target value" />
+              <span class="field-hint">The number of actions required to unlock this achievement (e.g., 10 tasks completed)</span>
+            </label>
             <button type="submit">Update Achievement</button>
           </form>
         </div>
@@ -67,8 +98,14 @@
           <form id="achievement-create-form" class="form inline">
             <input name="name" placeholder="Achievement name *" required />
             <input name="description" placeholder="Description" />
-            <input name="target" type="number" min="1" value="1" placeholder="Target value *" required />
-            <input name="rewardXP" type="number" min="0" value="100" placeholder="Reward XP" />
+            <label class="label">Target Value
+              <input name="target" type="number" min="1" value="1" placeholder="Target value *" required />
+              <span class="field-hint">The number of actions needed to unlock this achievement (e.g., complete 5 tasks)</span>
+            </label>
+            <label class="label">Reward XP
+              <input name="rewardXP" type="number" min="0" value="100" placeholder="Reward XP" />
+              <span class="field-hint">Experience points awarded when this achievement is unlocked</span>
+            </label>
             <button type="submit">Create Achievement</button>
           </form>
         </div>
@@ -193,7 +230,7 @@
         <button data-action="pomo-long">🛋️ Long Break</button>
         <button id="pomo-pause-btn" data-action="pomo-pause" style="display:none;">⏸️ Pause</button>
         <button id="pomo-resume-btn" data-action="pomo-resume" style="display:none;">▶️ Resume</button>
-        <button data-action="pomo-stop">⏹️ Stop</button>
+        <button id="pomo-abandon-btn" data-action="pomo-abandon" class="btn-abandon">🚫 Abandon Session</button>
       </div>
       <div id="pomo-status" class="muted micro"></div>
       <div class="pomo-stats">
