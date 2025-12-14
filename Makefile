@@ -87,6 +87,7 @@ clean:
 	@echo "Cleaning build files..."
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
 	rm -f *.db *.db-shm *.db-wal
+	rm -rf data/
 	@echo "Clean complete!"
 
 # Run
