@@ -85,13 +85,14 @@ void AchievementDAO::initializeDefaultAchievements() {
         addDefinition("Task Legend", "Complete 200 tasks", "👑", "task_200", 1500, "task", 200);
 
         // === Project Completion Achievements (1→5→10→25→50→100→200) ===
-        addDefinition("First Project", "Complete your first project", "📁", "project_1", 150, "task", 1);
-        addDefinition("Project Starter", "Complete 5 projects", "📂", "project_5", 250, "task", 5);
-        addDefinition("Project Builder", "Complete 10 projects", "🏗️", "project_10", 400, "task", 10);
-        addDefinition("Project Manager", "Complete 25 projects", "📊", "project_25", 600, "task", 25);
-        addDefinition("Project Director", "Complete 50 projects", "🎯", "project_50", 1000, "task", 50);
-        addDefinition("Project Executive", "Complete 100 projects", "🏆", "project_100", 1500, "task", 100);
-        addDefinition("Project Titan", "Complete 200 projects", "👑", "project_200", 2500, "task", 200);
+        // Note: These achievements require project completion tracking to be implemented
+        addDefinition("First Project", "Complete your first project", "📁", "project_1", 150, "special", 1);
+        addDefinition("Project Starter", "Complete 5 projects", "📂", "project_5", 250, "special", 5);
+        addDefinition("Project Builder", "Complete 10 projects", "🏗️", "project_10", 400, "special", 10);
+        addDefinition("Project Manager", "Complete 25 projects", "📊", "project_25", 600, "special", 25);
+        addDefinition("Project Director", "Complete 50 projects", "🎯", "project_50", 1000, "special", 50);
+        addDefinition("Project Executive", "Complete 100 projects", "🏆", "project_100", 1500, "special", 100);
+        addDefinition("Project Titan", "Complete 200 projects", "👑", "project_200", 2500, "special", 200);
 
         // === Streak Achievements (1→5→10→25→50→100→200 days) ===
         addDefinition("First Day", "Complete tasks for 1 day", "📅", "streak_1", 50, "streak", 1);

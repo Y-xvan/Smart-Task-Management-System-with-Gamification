@@ -101,8 +101,10 @@ void AchievementManager::checkAllAchievements() {
         checkProgressAchievement(achId, totalPomodoros);
     }
     
-    // Note: Project achievements (project_1, project_5, etc.) need a getCompletedProjectCount() method
-    // which should be implemented when project completion tracking is added
+    // Project achievements (project_1, project_5, etc.) are currently defined but require
+    // a getCompletedProjectCount() method to be implemented in StatisticsAnalyzer.
+    // The achievements are marked with category "special" and will be available for
+    // manual tracking or future automatic tracking when project completion is implemented.
     
     std::cout << "=== 成就检查完成 ===\n\n";
 }

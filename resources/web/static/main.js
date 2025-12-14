@@ -11,6 +11,7 @@ let pomoMode = null;
 let pomoPaused = false;
 let pomoRemainingMs = 0;
 let pomoTotalMs = 0;
+let pomoCompletionPending = false; // Flag to prevent duplicate XP awards
 let reminderCheckInterval = null;
 let remindersEnabled = true;
 let pendingReminderQueue = [];
@@ -1151,6 +1152,7 @@ function startPomoTimer(minutes, mode) {
   stopPomoTimer();
   pomoMode = mode;
   pomoPaused = false;
+  pomoCompletionPending = false; // Reset completion flag
   pomoTotalMs = minutes * 60 * 1000;
   pomoEndTime = Date.now() + pomoTotalMs;
   
@@ -1164,7 +1166,7 @@ function startPomoTimer(minutes, mode) {
   
   updatePomoPauseButtons(true);
   
-  pomoTimer = setInterval(async () => {
+  pomoTimer = setInterval(() => {
     const remaining = Math.max(0, pomoEndTime - Date.now());
     const mins = Math.floor(remaining / 60000);
     const secs = Math.floor((remaining % 60000) / 1000);
@@ -1174,35 +1176,41 @@ function startPomoTimer(minutes, mode) {
     const progress = ((pomoTotalMs - remaining) / pomoTotalMs) * 100;
     if (progressBar) progressBar.style.width = `${progress}%`;
     
-    if (remaining <= 0) {
-      stopPomoTimer();
-      if (timerEl) timerEl.textContent = "00:00";
-      if (modeEl) modeEl.textContent = "✅ " + mode + " Complete!";
-      if (statusEl) statusEl.textContent = mode + " completed!";
-      
-      // Award XP for completed work session
-      if (mode === "Work Session") {
-        try {
-          await post("/api/pomodoro/complete");
-          showXPCelebration(5, 'Pomodoro completed!');
-        } catch (e) {
-          console.warn("Failed to record pomodoro completion:", e);
-        }
-      }
-      
-      // Play notification sound or show alert
-      try {
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("Pomodoro", { body: mode + " completed!" });
-        } else {
-          alert("⏰ " + mode + " completed!");
-        }
-      } catch (e) {
-        // Fallback to alert if notifications fail
-        alert("⏰ " + mode + " completed!");
-      }
+    if (remaining <= 0 && !pomoCompletionPending) {
+      pomoCompletionPending = true; // Prevent duplicate handling
+      handlePomodoroCompletion(mode, timerEl, modeEl, statusEl);
     }
   }, 1000);
+}
+
+// Separate async function to handle completion
+async function handlePomodoroCompletion(mode, timerEl, modeEl, statusEl) {
+  stopPomoTimer();
+  if (timerEl) timerEl.textContent = "00:00";
+  if (modeEl) modeEl.textContent = "✅ " + mode + " Complete!";
+  if (statusEl) statusEl.textContent = mode + " completed!";
+  
+  // Award XP for completed work session
+  if (mode === "Work Session") {
+    try {
+      await post("/api/pomodoro/complete");
+      showXPCelebration(5, 'Pomodoro completed!');
+    } catch (e) {
+      console.warn("Failed to record pomodoro completion:", e);
+    }
+  }
+  
+  // Play notification sound or show alert
+  try {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Pomodoro", { body: mode + " completed!" });
+    } else {
+      alert("⏰ " + mode + " completed!");
+    }
+  } catch (e) {
+    // Fallback to alert if notifications fail
+    alert("⏰ " + mode + " completed!");
+  }
 }
 
 function pausePomoTimer() {
@@ -1226,6 +1234,7 @@ function resumePomoTimer() {
   if (!pomoPaused || pomoRemainingMs <= 0) return;
   
   pomoPaused = false;
+  pomoCompletionPending = false; // Reset completion flag
   pomoEndTime = Date.now() + pomoRemainingMs;
   
   const timerEl = document.getElementById("pomo-timer");
@@ -1238,7 +1247,7 @@ function resumePomoTimer() {
   
   updatePomoPauseButtons(true);
   
-  pomoTimer = setInterval(async () => {
+  pomoTimer = setInterval(() => {
     const remaining = Math.max(0, pomoEndTime - Date.now());
     const mins = Math.floor(remaining / 60000);
     const secs = Math.floor((remaining % 60000) / 1000);
@@ -1248,31 +1257,9 @@ function resumePomoTimer() {
     const progress = ((pomoTotalMs - remaining) / pomoTotalMs) * 100;
     if (progressBar) progressBar.style.width = `${progress}%`;
     
-    if (remaining <= 0) {
-      stopPomoTimer();
-      if (timerEl) timerEl.textContent = "00:00";
-      if (modeEl) modeEl.textContent = "✅ " + pomoMode + " Complete!";
-      if (statusEl) statusEl.textContent = pomoMode + " completed!";
-      
-      // Award XP for completed work session
-      if (pomoMode === "Work Session") {
-        try {
-          await post("/api/pomodoro/complete");
-          showXPCelebration(5, 'Pomodoro completed!');
-        } catch (e) {
-          console.warn("Failed to record pomodoro completion:", e);
-        }
-      }
-      
-      try {
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("Pomodoro", { body: pomoMode + " completed!" });
-        } else {
-          alert("⏰ " + pomoMode + " completed!");
-        }
-      } catch (e) {
-        alert("⏰ " + pomoMode + " completed!");
-      }
+    if (remaining <= 0 && !pomoCompletionPending) {
+      pomoCompletionPending = true; // Prevent duplicate handling
+      handlePomodoroCompletion(pomoMode, timerEl, modeEl, statusEl);
     }
   }, 1000);
 }
