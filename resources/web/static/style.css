@@ -2412,3 +2412,250 @@ button:disabled {
     border: 1px solid #ccc;
   }
 }
+
+/* ============================================= */
+/* GROUPED ACHIEVEMENT SYSTEM */
+/* ============================================= */
+
+/* Achievement Category Groups */
+.ach-category-group {
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.6), rgba(11, 18, 32, 0.8));
+  border-radius: 20px;
+  border: 1px solid rgba(31, 41, 55, 0.6);
+  overflow: hidden;
+}
+
+.ach-category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.1));
+  border-bottom: 1px solid rgba(31, 41, 55, 0.6);
+}
+
+.ach-category-icon {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.ach-category-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+
+.ach-category-progress {
+  font-size: 14px;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.ach-category-items {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  padding: 16px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+/* Achievement Item with Badge */
+.ach-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 140px;
+  max-width: 180px;
+  background: linear-gradient(135deg, #0b1220, #0f172a);
+  border: 1px solid rgba(31, 41, 55, 0.8);
+  border-radius: 16px;
+  padding: 16px 12px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.ach-item .ach-content {
+  width: 100%;
+  text-align: center;
+}
+
+.ach-item .title {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.ach-item .percent {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Badge wrapper and badge styling */
+.ach-badge-wrapper {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.ach-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font-size: 28px;
+  background: linear-gradient(135deg, #1f2937, #111827);
+  border: 3px solid rgba(31, 41, 55, 0.8);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Completed achievement badge - glowing gold */
+.ach-badge-unlocked {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+  border-color: #fbbf24;
+  box-shadow: 
+    0 0 20px rgba(251, 191, 36, 0.5),
+    0 0 40px rgba(251, 191, 36, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  animation: badgeGlow 2s ease-in-out infinite;
+}
+
+@keyframes badgeGlow {
+  0%, 100% { 
+    box-shadow: 
+      0 0 20px rgba(251, 191, 36, 0.5),
+      0 0 40px rgba(251, 191, 36, 0.3),
+      inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  }
+  50% { 
+    box-shadow: 
+      0 0 30px rgba(251, 191, 36, 0.7),
+      0 0 60px rgba(251, 191, 36, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  }
+}
+
+/* Completed achievement styling */
+.ach-item.ach-completed {
+  border-color: rgba(251, 191, 36, 0.5);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(245, 158, 11, 0.05));
+}
+
+.ach-item.ach-completed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(251, 191, 36, 0.15), transparent 60%);
+  pointer-events: none;
+  border-radius: 16px;
+}
+
+/* Current challenge styling - highlighted purple */
+.ach-item.ach-current {
+  border-color: rgba(124, 58, 237, 0.6);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(139, 92, 246, 0.08));
+  transform: scale(1.02);
+}
+
+.ach-item.ach-current .ach-badge {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  border-color: #a78bfa;
+  box-shadow: 
+    0 0 15px rgba(124, 58, 237, 0.5),
+    0 0 30px rgba(124, 58, 237, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  animation: currentBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes currentBadgePulse {
+  0%, 100% { 
+    box-shadow: 
+      0 0 15px rgba(124, 58, 237, 0.5),
+      0 0 30px rgba(124, 58, 237, 0.3),
+      inset 0 2px 4px rgba(255, 255, 255, 0.2);
+  }
+  50% { 
+    box-shadow: 
+      0 0 25px rgba(124, 58, 237, 0.7),
+      0 0 50px rgba(124, 58, 237, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Locked/not started achievements - dimmed */
+.ach-item.ach-locked {
+  opacity: 0.4;
+  filter: grayscale(60%);
+}
+
+.ach-item.ach-locked .ach-badge {
+  background: linear-gradient(135deg, #1f2937, #111827);
+  border-color: rgba(31, 41, 55, 0.5);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.ach-item.ach-locked:hover {
+  opacity: 0.7;
+  filter: grayscale(30%);
+}
+
+/* Hover effects for achievement items */
+.ach-item:hover:not(.ach-locked) {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+.ach-item.ach-current:hover {
+  transform: translateY(-4px) scale(1.05);
+}
+
+/* Override old ach-list grid layout */
+.ach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Achievement inline display - show current challenges */
+.ach-inline .ach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ach-category-items {
+    gap: 10px;
+    padding: 12px;
+  }
+  
+  .ach-item {
+    min-width: 120px;
+    max-width: 150px;
+    padding: 12px 10px;
+  }
+  
+  .ach-badge {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+  }
+  
+  .ach-item .title {
+    font-size: 11px;
+  }
+}

@@ -446,6 +446,72 @@ function groupProjectsByColor(projects) {
   return groups;
 }
 
+// Group achievements by category for better organization
+function groupAchievementsByCategory(achievements) {
+  const groups = {};
+  const categoryOrder = ['task', 'streak', 'time', 'special', 'custom'];
+  
+  achievements.forEach(a => {
+    const category = a.category || 'custom';
+    if (!groups[category]) groups[category] = [];
+    groups[category].push(a);
+  });
+  
+  // Sort achievements within each category by target value (progression order)
+  Object.keys(groups).forEach(cat => {
+    groups[cat].sort((a, b) => a.target - b.target);
+  });
+  
+  // Return ordered groups
+  const orderedGroups = {};
+  categoryOrder.forEach(cat => {
+    if (groups[cat]) orderedGroups[cat] = groups[cat];
+  });
+  // Add any remaining categories not in the order list
+  Object.keys(groups).forEach(cat => {
+    if (!orderedGroups[cat]) orderedGroups[cat] = groups[cat];
+  });
+  
+  return orderedGroups;
+}
+
+// Get display name for achievement category
+function getCategoryName(category) {
+  const categoryNames = {
+    'task': '📋 Task Achievements',
+    'streak': '🔥 Streak Achievements',
+    'time': '⏰ Pomodoro Achievements',
+    'special': '📁 Project Achievements',
+    'custom': '⭐ Custom Achievements'
+  };
+  return categoryNames[category] || `🏅 ${category}`;
+}
+
+// Get icon for achievement category
+function getCategoryIcon(category) {
+  const categoryIcons = {
+    'task': '✅',
+    'streak': '🔥',
+    'time': '🍅',
+    'special': '📁',
+    'custom': '⭐'
+  };
+  return categoryIcons[category] || '🏆';
+}
+
+// Find the current challenge for a list of achievements
+// Returns the first non-completed achievement with progress, or the first non-completed if none have progress
+function findCurrentChallenge(achievements) {
+  const nonCompleted = achievements.filter(a => !a.unlocked);
+  if (nonCompleted.length === 0) return null;
+  
+  const inProgress = nonCompleted.filter(a => a.progress > 0);
+  if (inProgress.length > 0) {
+    return inProgress.reduce((min, a) => a.target < min.target ? a : min);
+  }
+  return nonCompleted.reduce((min, a) => a.target < min.target ? a : min);
+}
+
 // Get color name from hex
 function getColorName(hex) {
   const colorMap = {
@@ -891,20 +957,53 @@ async function loadXPAndAchievements() {
       achCount.textContent = `${unlockedCount}/${ach.length} unlocked`;
     }
     if (achList) {
-      achList.innerHTML = ach
-        .map(
-          (a) => `
-            <div class="ach-item ${a.unlocked ? 'unlocked' : ''}" data-ach-id="${a.id}" style="${a.unlocked ? 'border-color: #fbbf24; background: rgba(251, 191, 36, 0.1)' : ''}">
-              <div class="title">${a.unlocked ? '🏆' : '🔒'} ${a.name || ("Achievement #"+a.id)}</div>
-              <div class="percent" style="${a.unlocked ? 'color: #fbbf24' : ''}">${(a.percent || 0).toFixed(1)}%</div>
-              <div class="xp-track mini" style="margin: 8px 0">
-                <div class="xp-fill" style="width: ${a.percent || 0}%; background: ${a.unlocked ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 'linear-gradient(135deg, #7c3aed, #06b6d4)'}"></div>
+      // Group achievements by category
+      const grouped = groupAchievementsByCategory(ach);
+      
+      // Generate HTML for grouped achievements
+      achList.innerHTML = Object.entries(grouped)
+        .map(([category, achievements]) => {
+          // Find the current challenge for this category
+          const currentChallenge = findCurrentChallenge(achievements);
+          const currentChallengeId = currentChallenge ? currentChallenge.id : null;
+          
+          return `
+            <div class="ach-category-group">
+              <div class="ach-category-header">
+                <span class="ach-category-icon">${getCategoryIcon(category)}</span>
+                <span class="ach-category-title">${getCategoryName(category)}</span>
+                <span class="ach-category-progress">${achievements.filter(a => a.unlocked).length}/${achievements.length}</span>
               </div>
-              <div class="muted micro">${a.progress}/${a.target} progress · ${a.unlocked ? "✅ Unlocked!" : "⏳ In progress"}</div>
-              <div class="muted micro">${a.description || "Complete to unlock!"}</div>
+              <div class="ach-category-items">
+                ${achievements.map(a => {
+                  const isCurrentChallenge = a.id === currentChallengeId;
+                  const isNotStarted = !a.unlocked && a.progress === 0 && !isCurrentChallenge;
+                  let stateClass = '';
+                  if (a.unlocked) stateClass = 'ach-completed';
+                  else if (isCurrentChallenge) stateClass = 'ach-current';
+                  else if (isNotStarted) stateClass = 'ach-locked';
+                  
+                  return `
+                    <div class="ach-item ${a.unlocked ? 'unlocked' : ''} ${stateClass}" data-ach-id="${a.id}">
+                      <div class="ach-badge-wrapper">
+                        <span class="ach-badge ${a.unlocked ? 'ach-badge-unlocked' : ''}">${a.icon || getCategoryIcon(a.category)}</span>
+                      </div>
+                      <div class="ach-content">
+                        <div class="title">${a.name || ("Achievement #"+a.id)}</div>
+                        <div class="percent" style="${a.unlocked ? 'color: #fbbf24' : ''}">${(a.percent || 0).toFixed(1)}%</div>
+                        <div class="xp-track mini" style="margin: 8px 0">
+                          <div class="xp-fill" style="width: ${a.percent || 0}%; background: ${a.unlocked ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 'linear-gradient(135deg, #7c3aed, #06b6d4)'}"></div>
+                        </div>
+                        <div class="muted micro">${a.progress}/${a.target} · ${a.unlocked ? "✅ Unlocked!" : isCurrentChallenge ? "🎯 Current Challenge" : "⏳ Not started"}</div>
+                        <div class="muted micro">${a.description || "Complete to unlock!"}</div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
             </div>
-          `
-        )
+          `;
+        })
         .join("");
     }
     
@@ -917,11 +1016,22 @@ async function loadXPAndAchievements() {
     
     const achInline = document.getElementById("achievements-inline");
     if (achInline) {
-      achInline.innerHTML = ach
+      // Show current challenges from each category
+      const grouped = groupAchievementsByCategory(ach);
+      const currentChallenges = [];
+      
+      Object.entries(grouped).forEach(([category, achievements]) => {
+        const current = findCurrentChallenge(achievements);
+        if (current) {
+          currentChallenges.push(current);
+        }
+      });
+      
+      achInline.innerHTML = currentChallenges
         .slice(0, 3)
         .map(
           (a) =>
-            `<span class="ach-chip" style="${a.unlocked ? 'background: rgba(251, 191, 36, 0.2); border-color: #fbbf24' : ''}">${a.unlocked ? '🏆' : '🔒'} ${a.name || ("#"+a.id)} · ${(a.percent || 0).toFixed(0)}%</span>`
+            `<span class="ach-chip" style="background: rgba(124, 58, 237, 0.2); border-color: rgba(124, 58, 237, 0.5)">${a.icon || getCategoryIcon(a.category)} ${a.name || ("#"+a.id)} · ${(a.percent || 0).toFixed(0)}%</span>`
         )
         .join("");
     }
