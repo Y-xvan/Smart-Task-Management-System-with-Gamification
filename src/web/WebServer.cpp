@@ -642,6 +642,8 @@ std::string WebServer::jsonAchievements() {
         ss << "{\"id\":" << def.id
            << ",\"name\":\"" << escape(def.name) << "\""
            << ",\"description\":\"" << escape(def.description) << "\""
+           << ",\"icon\":\"" << escape(def.icon) << "\""
+           << ",\"category\":\"" << escape(def.category) << "\""
            << ",\"progress\":" << progress
            << ",\"target\":" << target
            << ",\"percent\":" << percent
