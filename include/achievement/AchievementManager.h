@@ -99,4 +99,11 @@ public:
                                      const std::string& name,
                                      const std::string& description,
                                      int targetValue);
+    int createAchievementDefinition(const std::string& name,
+                                    const std::string& description,
+                                    const std::string& unlockCondition,
+                                    int targetValue,
+                                    int rewardXP = 100,
+                                    const std::string& category = "custom",
+                                    const std::string& icon = "🏆");
 };

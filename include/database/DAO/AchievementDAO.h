@@ -44,6 +44,15 @@ public:
                                      const std::string& description,
                                      int targetValue = -1);
 
+    // 创建新成就定义
+    int createAchievementDefinition(const std::string& name,
+                                    const std::string& description,
+                                    const std::string& unlockCondition,
+                                    int targetValue,
+                                    int rewardXP = 100,
+                                    const std::string& category = "custom",
+                                    const std::string& icon = "🏆");
+
     void initializeDefaultAchievements();
     bool userAchievementFileExists(int userId) const;
 

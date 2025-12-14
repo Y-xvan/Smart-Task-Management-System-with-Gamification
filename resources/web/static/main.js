@@ -8,6 +8,9 @@ let cachedHeatmapData = [];
 let pomoTimer = null;
 let pomoEndTime = null;
 let pomoMode = null;
+let pomoPaused = false;
+let pomoRemainingMs = 0;
+let pomoTotalMs = 0;
 let reminderCheckInterval = null;
 let remindersEnabled = true;
 let pendingReminderQueue = [];
@@ -699,6 +702,126 @@ async function loadStatsSummary() {
   }
 }
 
+function displayFormattedStats(kind, res) {
+  const statBox = document.getElementById("stat-box");
+  if (!statBox) return;
+
+  // Parse the report string from the backend
+  const reportText = res.report || res.heatmap || '';
+  
+  if (kind === 'summary') {
+    // Format summary stats
+    const summaryHtml = `
+      <div class="stats-detail-grid">
+        <div class="stats-detail-card">
+          <div class="stats-detail-icon">✅</div>
+          <div class="stats-detail-content">
+            <div class="stats-detail-value">${res.tasksCompleted || 0}</div>
+            <div class="stats-detail-label">Tasks Completed</div>
+          </div>
+        </div>
+        <div class="stats-detail-card">
+          <div class="stats-detail-icon">📊</div>
+          <div class="stats-detail-content">
+            <div class="stats-detail-value">${((res.completionRate || 0) * 100).toFixed(1)}%</div>
+            <div class="stats-detail-label">Completion Rate</div>
+          </div>
+        </div>
+        <div class="stats-detail-card">
+          <div class="stats-detail-icon">🔥</div>
+          <div class="stats-detail-content">
+            <div class="stats-detail-value">${res.streak || 0}</div>
+            <div class="stats-detail-label">Current Streak</div>
+          </div>
+        </div>
+        <div class="stats-detail-card">
+          <div class="stats-detail-icon">🏆</div>
+          <div class="stats-detail-content">
+            <div class="stats-detail-value">${res.longestStreak || 0}</div>
+            <div class="stats-detail-label">Longest Streak</div>
+          </div>
+        </div>
+        <div class="stats-detail-card">
+          <div class="stats-detail-icon">🍅</div>
+          <div class="stats-detail-content">
+            <div class="stats-detail-value">${res.pomodoros || 0}</div>
+            <div class="stats-detail-label">Total Pomodoros</div>
+          </div>
+        </div>
+        <div class="stats-detail-card">
+          <div class="stats-detail-icon">⏰</div>
+          <div class="stats-detail-content">
+            <div class="stats-detail-value">${res.pomodorosToday || 0}</div>
+            <div class="stats-detail-label">Pomodoros Today</div>
+          </div>
+        </div>
+      </div>
+    `;
+    statBox.innerHTML = summaryHtml;
+  } else if (kind === 'daily' || kind === 'weekly' || kind === 'monthly') {
+    // Parse the report text and format it nicely
+    const formattedReport = formatReportText(reportText, kind);
+    statBox.innerHTML = formattedReport;
+  } else {
+    statBox.textContent = reportText || JSON.stringify(res, null, 2);
+  }
+}
+
+function formatReportText(reportText, kind) {
+  if (!reportText) {
+    return `<div class="stats-empty">No ${kind} data available</div>`;
+  }
+  
+  // Parse the text-based report into sections
+  const lines = reportText.split('\\n').filter(line => line.trim());
+  
+  const titleMap = {
+    daily: '📅 Daily Report',
+    weekly: '📆 Weekly Report',
+    monthly: '📊 Monthly Report'
+  };
+  
+  let html = `
+    <div class="stats-report">
+      <div class="stats-report-header">
+        <h3>${titleMap[kind] || 'Report'}</h3>
+      </div>
+      <div class="stats-report-content">
+  `;
+  
+  lines.forEach(line => {
+    const trimmedLine = line.trim();
+    if (!trimmedLine) return;
+    
+    // Check for section headers (lines with === or ---)
+    if (trimmedLine.includes('===') || trimmedLine.includes('---')) {
+      html += `<div class="stats-report-divider"></div>`;
+    } 
+    // Check for key-value pairs (contains : or =)
+    else if (trimmedLine.includes(':')) {
+      const [key, ...valueParts] = trimmedLine.split(':');
+      const value = valueParts.join(':').trim();
+      html += `
+        <div class="stats-report-item">
+          <span class="stats-report-key">${escapeHtml(key.trim())}</span>
+          <span class="stats-report-value">${escapeHtml(value)}</span>
+        </div>
+      `;
+    }
+    // Regular text lines
+    else {
+      html += `<div class="stats-report-text">${escapeHtml(trimmedLine)}</div>`;
+    }
+  });
+  
+  html += `
+      </div>
+    </div>
+  `;
+  
+  return html;
+}
+
 async function loadXPAndAchievements() {
   try {
     const [xp, ach] = await Promise.all([
@@ -741,8 +864,6 @@ async function loadXPAndAchievements() {
     if (titleEl) titleEl.textContent = `Title: ${xp.title}`;
     const inlineText = document.getElementById("xp-inline-text");
     if (inlineText) inlineText.textContent = levelText + " · " + progressText;
-    document.getElementById("xp-box").textContent =
-      `${levelText}\nXP: ${progressText}`;
 
     const achList = document.getElementById("achievements-list");
     const achCount = document.getElementById("ach-count");
@@ -785,11 +906,8 @@ async function loadXPAndAchievements() {
         )
         .join("");
     }
-    document.getElementById("ach-box").textContent = ach
-      .map((a) => `${a.unlocked ? '🏆' : '🔒'} ${a.name || ("#"+a.id)}: ${(a.percent || 0).toFixed(1)}% (${a.progress}/${a.target})`)
-      .join("\n");
   } catch (e) {
-    document.getElementById("xp-box").textContent = "XP load failed";
+    console.error("XP/Achievements load failed:", e);
   }
 }
 
@@ -872,6 +990,28 @@ document.getElementById("achievement-form").addEventListener("submit", async (e)
     alert("Achievement updated successfully!");
   } catch (err) {
     alert("Failed to update achievement: " + err.message);
+  }
+});
+
+document.getElementById("achievement-create-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = cleanEmptyFields(Object.fromEntries(new FormData(e.target).entries()));
+  if (!data.name) {
+    alert("Please enter an achievement name");
+    return;
+  }
+  if (!data.target || parseInt(data.target, 10) < 1) {
+    alert("Please enter a valid target value (minimum 1)");
+    return;
+  }
+  const qs = new URLSearchParams(data).toString();
+  try {
+    await post("/api/achievements/create?" + qs);
+    await loadXPAndAchievements();
+    e.target.reset();
+    alert("Achievement created successfully!");
+  } catch (err) {
+    alert("Failed to create achievement: " + err.message);
   }
 });
 
@@ -979,6 +1119,10 @@ document.body.addEventListener("click", async (e) => {
     } else if (action === "pomo-long") {
       await post("/api/pomodoro/longbreak");
       startPomoTimer(15, "Long Break");
+    } else if (action === "pomo-pause") {
+      pausePomoTimer();
+    } else if (action === "pomo-resume") {
+      resumePomoTimer();
     } else if (action === "pomo-stop") {
       await post("/api/pomodoro/stop");
       stopPomoTimer();
@@ -987,10 +1131,10 @@ document.body.addEventListener("click", async (e) => {
       if (kind === 'heatmap') {
         // Load visual heatmap
         await loadHeatmap();
-        document.getElementById("stat-box").textContent = "Visual heatmap loaded above. Hover over cells to see details.";
+        document.getElementById("stat-box").innerHTML = '<div class="stat-message">Visual heatmap loaded above. Hover over cells to see details.</div>';
       } else {
         const res = await fetchJSON(`/api/stats/${kind}`);
-        document.getElementById("stat-box").textContent = res.report || res.heatmap || JSON.stringify(res, null, 2);
+        displayFormattedStats(kind, res);
       }
     }
     await load();
@@ -1003,7 +1147,9 @@ document.body.addEventListener("click", async (e) => {
 function startPomoTimer(minutes, mode) {
   stopPomoTimer();
   pomoMode = mode;
-  pomoEndTime = Date.now() + minutes * 60 * 1000;
+  pomoPaused = false;
+  pomoTotalMs = minutes * 60 * 1000;
+  pomoEndTime = Date.now() + pomoTotalMs;
   
   const timerEl = document.getElementById("pomo-timer");
   const modeEl = document.getElementById("pomo-mode");
@@ -1013,7 +1159,7 @@ function startPomoTimer(minutes, mode) {
   if (modeEl) modeEl.textContent = mode;
   if (statusEl) statusEl.textContent = `${mode} started - ${minutes} minutes`;
   
-  const totalMs = minutes * 60 * 1000;
+  updatePomoPauseButtons(true);
   
   pomoTimer = setInterval(() => {
     const remaining = Math.max(0, pomoEndTime - Date.now());
@@ -1022,7 +1168,7 @@ function startPomoTimer(minutes, mode) {
     
     if (timerEl) timerEl.textContent = `${pad(mins)}:${pad(secs)}`;
     
-    const progress = ((totalMs - remaining) / totalMs) * 100;
+    const progress = ((pomoTotalMs - remaining) / pomoTotalMs) * 100;
     if (progressBar) progressBar.style.width = `${progress}%`;
     
     if (remaining <= 0) {
@@ -1045,11 +1191,83 @@ function startPomoTimer(minutes, mode) {
   }, 1000);
 }
 
+function pausePomoTimer() {
+  if (!pomoTimer || pomoPaused) return;
+  
+  clearInterval(pomoTimer);
+  pomoTimer = null;
+  pomoPaused = true;
+  pomoRemainingMs = Math.max(0, pomoEndTime - Date.now());
+  
+  const modeEl = document.getElementById("pomo-mode");
+  const statusEl = document.getElementById("pomo-status");
+  
+  if (modeEl) modeEl.textContent = "⏸️ " + pomoMode + " (Paused)";
+  if (statusEl) statusEl.textContent = `${pomoMode} paused`;
+  
+  updatePomoPauseButtons(false);
+}
+
+function resumePomoTimer() {
+  if (!pomoPaused || pomoRemainingMs <= 0) return;
+  
+  pomoPaused = false;
+  pomoEndTime = Date.now() + pomoRemainingMs;
+  
+  const timerEl = document.getElementById("pomo-timer");
+  const modeEl = document.getElementById("pomo-mode");
+  const progressBar = document.getElementById("pomo-progress-bar");
+  const statusEl = document.getElementById("pomo-status");
+  
+  if (modeEl) modeEl.textContent = pomoMode;
+  if (statusEl) statusEl.textContent = `${pomoMode} resumed`;
+  
+  updatePomoPauseButtons(true);
+  
+  pomoTimer = setInterval(() => {
+    const remaining = Math.max(0, pomoEndTime - Date.now());
+    const mins = Math.floor(remaining / 60000);
+    const secs = Math.floor((remaining % 60000) / 1000);
+    
+    if (timerEl) timerEl.textContent = `${pad(mins)}:${pad(secs)}`;
+    
+    const progress = ((pomoTotalMs - remaining) / pomoTotalMs) * 100;
+    if (progressBar) progressBar.style.width = `${progress}%`;
+    
+    if (remaining <= 0) {
+      stopPomoTimer();
+      if (timerEl) timerEl.textContent = "00:00";
+      if (modeEl) modeEl.textContent = "✅ " + pomoMode + " Complete!";
+      if (statusEl) statusEl.textContent = pomoMode + " completed!";
+      try {
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Pomodoro", { body: pomoMode + " completed!" });
+        } else {
+          alert("⏰ " + pomoMode + " completed!");
+        }
+      } catch (e) {
+        alert("⏰ " + pomoMode + " completed!");
+      }
+    }
+  }, 1000);
+}
+
+function updatePomoPauseButtons(showPause) {
+  const pauseBtn = document.getElementById("pomo-pause-btn");
+  const resumeBtn = document.getElementById("pomo-resume-btn");
+  
+  if (pauseBtn) pauseBtn.style.display = showPause ? "inline-block" : "none";
+  if (resumeBtn) resumeBtn.style.display = showPause ? "none" : "inline-block";
+}
+
 function stopPomoTimer() {
   if (pomoTimer) {
     clearInterval(pomoTimer);
     pomoTimer = null;
   }
+  pomoPaused = false;
+  pomoRemainingMs = 0;
+  
   const timerEl = document.getElementById("pomo-timer");
   const modeEl = document.getElementById("pomo-mode");
   const progressBar = document.getElementById("pomo-progress-bar");
@@ -1059,6 +1277,13 @@ function stopPomoTimer() {
   if (modeEl) modeEl.textContent = "Ready to start";
   if (progressBar) progressBar.style.width = "0%";
   if (statusEl) statusEl.textContent = "Pomodoro stopped.";
+  
+  updatePomoPauseButtons(false);
+  // Hide both buttons when stopped
+  const pauseBtn = document.getElementById("pomo-pause-btn");
+  const resumeBtn = document.getElementById("pomo-resume-btn");
+  if (pauseBtn) pauseBtn.style.display = "none";
+  if (resumeBtn) resumeBtn.style.display = "none";
 }
 
 function setupNavigation() {

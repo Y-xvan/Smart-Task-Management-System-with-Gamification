@@ -60,6 +60,18 @@
             <button type="submit">Update Achievement</button>
           </form>
         </div>
+        <div class="ach-create-section">
+          <div class="card-head small-gap">
+            <h4>Create New Achievement</h4>
+          </div>
+          <form id="achievement-create-form" class="form inline">
+            <input name="name" placeholder="Achievement name *" required />
+            <input name="description" placeholder="Description" />
+            <input name="target" type="number" min="1" value="1" placeholder="Target value *" required />
+            <input name="rewardXP" type="number" min="0" value="100" placeholder="Reward XP" />
+            <button type="submit">Create Achievement</button>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -179,6 +191,8 @@
         <button data-action="pomo-work">🍅 Start Work</button>
         <button data-action="pomo-break">☕ Short Break</button>
         <button data-action="pomo-long">🛋️ Long Break</button>
+        <button id="pomo-pause-btn" data-action="pomo-pause" style="display:none;">⏸️ Pause</button>
+        <button id="pomo-resume-btn" data-action="pomo-resume" style="display:none;">▶️ Resume</button>
         <button data-action="pomo-stop">⏹️ Stop</button>
       </div>
       <div id="pomo-status" class="muted micro"></div>
@@ -192,8 +206,6 @@
           <span id="pomo-total-cycles" class="stat-value">0</span>
         </div>
       </div>
-      <pre id="xp-box" class="pre"></pre>
-      <pre id="ach-box" class="pre"></pre>
     </section>
 
     <section class="card wide" id="stats" data-view="stats">
@@ -237,7 +249,7 @@
         <button data-stat="monthly">📊 Monthly</button>
         <button data-stat="heatmap">🔥 Heatmap</button>
       </div>
-      <pre id="stat-box" class="pre"></pre>
+      <div id="stat-box" class="stat-box-container"></div>
     </section>
   </main>
 

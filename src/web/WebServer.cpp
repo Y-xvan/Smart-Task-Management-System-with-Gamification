@@ -397,6 +397,35 @@ std::string WebServer::handleRequest(const std::string& method,
         if (path == "/api/achievements" && method == "GET") {
             return jsonAchievements();
         }
+        if (path.rfind("/api/achievements/create", 0) == 0 && method == "POST") {
+            if (!q.count("name") || q.at("name").empty()) {
+                status = 400;
+                return errorJson("missing name");
+            }
+            int target = 1;
+            tryGetInt(q, "target", target);
+            int rewardXP = 100;
+            tryGetInt(q, "rewardXP", rewardXP);
+            
+            std::string unlockCondition = q.count("unlockCondition") ? q.at("unlockCondition") : "custom_" + std::to_string(std::time(nullptr));
+            std::string category = q.count("category") ? q.at("category") : "custom";
+            std::string icon = q.count("icon") ? q.at("icon") : "🏆";
+            
+            int id = achieve->createAchievementDefinition(
+                q.at("name"),
+                q.count("description") ? q.at("description") : "",
+                unlockCondition,
+                target,
+                rewardXP,
+                category,
+                icon
+            );
+            
+            if (id > 0) {
+                return okJson("created:" + std::to_string(id));
+            }
+            return errorJson("create failed");
+        }
         if (path.rfind("/api/achievements/update", 0) == 0 && method == "POST") {
             int id;
             if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
@@ -575,12 +604,31 @@ std::string WebServer::jsonAchievements() {
     // Achievement keys are defined in AchievementDAO::initializeDefaultAchievements
     // These are the core achievement types and are unlikely to change frequently.
     // If new achievements are added, they should be added here as well.
-    const std::vector<std::string> achievementKeys = {
+    std::vector<std::string> achievementKeys = {
         "first_task",
         "seven_day_streak", 
         "time_management_master",
         "pomodoro_master"
     };
+    
+    // Also try to get achievements by ID (for custom achievements)
+    // We'll iterate through IDs 1-100 to find custom achievements
+    for (int i = 1; i <= 100; ++i) {
+        auto* def = achieve->getDefinitionById(i);
+        if (def && def->category == "custom") {
+            // Check if this key is not already in the list
+            bool found = false;
+            for (const auto& key : achievementKeys) {
+                if (key == def->unlock_condition) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                achievementKeys.push_back(def->unlock_condition);
+            }
+        }
+    }
     
     stringstream ss;
     ss << "[";

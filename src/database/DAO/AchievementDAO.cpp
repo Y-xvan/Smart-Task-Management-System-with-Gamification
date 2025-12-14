@@ -185,6 +185,38 @@ bool AchievementDAO::updateAchievementDefinition(int id,
     return false;
 }
 
+int AchievementDAO::createAchievementDefinition(const std::string& name,
+                                                const std::string& description,
+                                                const std::string& unlockCondition,
+                                                int targetValue,
+                                                int rewardXP,
+                                                const std::string& category,
+                                                const std::string& icon) {
+    const std::string now = getCurrentTimestamp();
+    
+    Achievement achievement;
+    achievement.id = generateAchievementId();
+    achievement.created_date = now;
+    achievement.updated_date = now;
+    achievement.name = name;
+    achievement.description = description;
+    achievement.icon = icon;
+    achievement.unlock_condition = unlockCondition;
+    achievement.unlocked = false;
+    achievement.unlocked_date.clear();
+    achievement.reward_xp = rewardXP;
+    achievement.category = category;
+    achievement.progress = 0;
+    achievement.target_value = targetValue;
+    
+    achievementDefinitions.push_back(achievement);
+    
+    if (saveAchievementDefinitions()) {
+        return achievement.id;
+    }
+    return -1;
+}
+
 vector<Achievement> AchievementDAO::getAllAchievementDefinitions() const {
     return achievementDefinitions;
 }
