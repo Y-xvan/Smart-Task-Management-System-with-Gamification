@@ -69,6 +69,14 @@
 - **No external dependencies** for the backend
 - **Real-time updates** and live data
 
+### 📱 Native Qt/QML GUI (Optional)
+- **Mobile-style RPG interface** with gamified design
+- **Dark theme** with HUD-style status bar
+- **XP bar and level display** with real-time updates
+- **Streak tracking** with flame indicator
+- **Tab-based navigation**: Quests, Projects, Focus, Stats, Alerts
+- **Achievement badges** with unlock animations
+
 ---
 
 ## 🖥️ Screenshots
@@ -90,6 +98,7 @@ The web interface features:
 | **Database** | SQLite3 |
 | **Web Server** | Built-in HTTP server (std::thread + sockets) |
 | **Frontend** | HTML5, CSS3, Vanilla JavaScript |
+| **Native GUI** | Qt 6, QML (optional) |
 | **Build System** | Make |
 
 ---
@@ -100,16 +109,23 @@ The web interface features:
 - **SQLite3** library
 - **Make** build system
 - **pthread** library (Linux/macOS)
+- **Qt 6** with QML (optional, for native GUI)
 
 ### Linux (Ubuntu/Debian)
 ```bash
 sudo apt-get update
 sudo apt-get install build-essential libsqlite3-dev
+
+# Optional: For Qt/QML GUI
+sudo apt-get install qt6-base-dev qt6-declarative-dev
 ```
 
 ### macOS
 ```bash
 brew install sqlite3
+
+# Optional: For Qt/QML GUI
+brew install qt
 ```
 
 ### Windows
@@ -155,7 +171,8 @@ The web interface will automatically open in your default browser at `http://127
 ```
 Smart-Task-Management-System-with-Gamification/
 ├── src/                          # Source code
-│   ├── main.cpp                  # Main entry point
+│   ├── main.cpp                  # Main entry point (Web UI)
+│   ├── main_gui.cpp              # Qt/QML GUI entry point
 │   ├── task/                     # Task management
 │   ├── project/                  # Project management
 │   ├── reminder/                 # Reminder system
@@ -170,14 +187,27 @@ Smart-Task-Management-System-with-Gamification/
 │   └── web/                      # Web server
 ├── include/                      # Header files
 ├── resources/
-│   └── web/                      # Web frontend
-│       ├── index.html            # SPA entry point
-│       └── static/
-│           ├── style.css         # Styles
-│           └── main.js           # JavaScript
+│   ├── web/                      # Web frontend
+│   │   ├── index.html            # SPA entry point
+│   │   └── static/
+│   │       ├── style.css         # Styles
+│   │       └── main.js           # JavaScript
+│   ├── qml/                      # Qt/QML UI components
+│   │   ├── MainView.qml          # Main window with HUD
+│   │   ├── QuestView.qml         # Tasks list view
+│   │   ├── QuestCard.qml         # Task card component
+│   │   ├── ProjectView.qml       # Projects view
+│   │   ├── ProjectCard.qml       # Project card component
+│   │   ├── FocusView.qml         # Pomodoro timer view
+│   │   ├── StatsView.qml         # Statistics & achievements
+│   │   ├── ReminderView.qml      # Reminders view
+│   │   ├── NewTaskDialog.qml     # New task dialog
+│   │   └── AppLauncher.qml       # App launcher
+│   └── qml.src                   # QML resource file
 ├── sqlite/                       # SQLite library (Windows)
 ├── common/                       # Common utilities
 ├── Makefile                      # Build configuration
+├── build.ps1                     # Windows build script
 └── README.md                     # This file
 ```
 
