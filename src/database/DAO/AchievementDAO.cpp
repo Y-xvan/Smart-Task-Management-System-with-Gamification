@@ -6,6 +6,7 @@
 #include <ctime>
 #include <iomanip>
 #include <filesystem>
+#include <unordered_set>
 
 
 using namespace std;
@@ -46,6 +47,14 @@ bool AchievementDAO::writeFile(const std::string& filename, const std::string& c
     return true;
 }
 
+// Constants for schema detection thresholds
+namespace {
+    // Minimum percentage of expected keys that must match to consider schema valid
+    constexpr double SCHEMA_MATCH_THRESHOLD = 0.5;
+    // Minimum percentage of definitions that must match user achievements
+    constexpr double USER_ACHIEVEMENT_MATCH_THRESHOLD = 0.5;
+}
+
 // Helper to check if achievements match the expected new schema
 bool AchievementDAO::needsSchemaUpdate() const {
     // Expected unlock_condition keys in the new achievement system
@@ -60,20 +69,24 @@ bool AchievementDAO::needsSchemaUpdate() const {
         return true; // Need to create achievements
     }
     
-    // Check for at least a few expected keys to detect old schema
-    int matchCount = 0;
+    // Build a set of current unlock_conditions for efficient lookup
+    std::unordered_set<std::string> currentKeys;
     for (const auto& def : achievementDefinitions) {
-        for (const auto& key : expectedKeys) {
-            if (def.unlock_condition == key) {
-                matchCount++;
-                break;
-            }
+        currentKeys.insert(def.unlock_condition);
+    }
+    
+    // Count how many expected keys exist in current definitions
+    int matchCount = 0;
+    for (const auto& key : expectedKeys) {
+        if (currentKeys.count(key) > 0) {
+            matchCount++;
         }
     }
     
-    // If less than 10 of the expected keys are found, it's likely old schema
+    // If less than threshold of expected keys are found, it's likely old schema
     // (Old schema had achievements like "first_task", "seven_day_streak" or Chinese names)
-    return matchCount < 10;
+    const int threshold = static_cast<int>(expectedKeys.size() * SCHEMA_MATCH_THRESHOLD);
+    return matchCount < threshold;
 }
 
 void AchievementDAO::initializeDefaultAchievements() {
@@ -369,20 +382,23 @@ bool AchievementDAO::needsUserAchievementUpdate() const {
         return true;
     }
     
-    // Check if user achievements have the expected keys from current definitions
+    // Build a set of user achievement unlock_conditions for efficient lookup
+    std::unordered_set<std::string> userKeys;
+    for (const auto& userAch : userAchievements) {
+        userKeys.insert(userAch.unlock_condition);
+    }
+    
+    // Count how many current definitions are represented in user achievements
     int matchCount = 0;
     for (const auto& def : achievementDefinitions) {
-        for (const auto& userAch : userAchievements) {
-            if (userAch.unlock_condition == def.unlock_condition) {
-                matchCount++;
-                break;
-            }
+        if (userKeys.count(def.unlock_condition) > 0) {
+            matchCount++;
         }
     }
     
-    // If less than 50% of the current definitions are represented in user achievements,
+    // If less than threshold of the current definitions are represented in user achievements,
     // the user achievements are likely outdated
-    int threshold = achievementDefinitions.size() / 2;
+    const int threshold = static_cast<int>(achievementDefinitions.size() * USER_ACHIEVEMENT_MATCH_THRESHOLD);
     return matchCount < threshold;
 }
 
