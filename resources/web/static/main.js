@@ -773,7 +773,8 @@ function formatReportText(reportText, kind) {
   }
   
   // Parse the text-based report into sections
-  const lines = reportText.split('\\n').filter(line => line.trim());
+  // Handle both escaped newlines (from JSON) and actual newlines
+  const lines = reportText.split(/\\n|\n/).filter(line => line.trim());
   
   const titleMap = {
     daily: '📅 Daily Report',

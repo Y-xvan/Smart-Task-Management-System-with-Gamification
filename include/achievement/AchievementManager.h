@@ -93,8 +93,9 @@ public:
     void setCurrentUserId(int userId);
     int getCurrentUserId() const;
 
-    // 供 Web/UI 编辑使用
+    // For Web/UI editing
     const Achievement* getDefinitionById(int id) const;
+    const std::vector<Achievement>& getAllDefinitions() const;
     bool updateAchievementDefinition(int id,
                                      const std::string& name,
                                      const std::string& description,

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <cctype>
 #include "HeatmapVisualizer/HeatmapVisualizer.h"
 #include <filesystem>
 #include <unordered_map>
@@ -407,7 +408,15 @@ std::string WebServer::handleRequest(const std::string& method,
             int rewardXP = 100;
             tryGetInt(q, "rewardXP", rewardXP);
             
-            std::string unlockCondition = q.count("unlockCondition") ? q.at("unlockCondition") : "custom_" + std::to_string(std::time(nullptr));
+            // Generate a unique unlock condition key based on name + timestamp
+            std::string baseName = q.at("name");
+            std::string sanitizedName;
+            for (char c : baseName) {
+                if (std::isalnum(c)) sanitizedName += std::tolower(c);
+                else if (c == ' ') sanitizedName += '_';
+            }
+            std::string unlockCondition = q.count("unlockCondition") ? q.at("unlockCondition") : 
+                "custom_" + sanitizedName + "_" + std::to_string(std::time(nullptr) % 100000);
             std::string category = q.count("category") ? q.at("category") : "custom";
             std::string icon = q.count("icon") ? q.at("icon") : "🏆";
             
@@ -601,33 +610,11 @@ std::string WebServer::jsonAchievements() {
     // Ensure user achievements are loaded
     achieve->checkAllAchievements();
     
-    // Achievement keys are defined in AchievementDAO::initializeDefaultAchievements
-    // These are the core achievement types and are unlikely to change frequently.
-    // If new achievements are added, they should be added here as well.
-    std::vector<std::string> achievementKeys = {
-        "first_task",
-        "seven_day_streak", 
-        "time_management_master",
-        "pomodoro_master"
-    };
-    
-    // Also try to get achievements by ID (for custom achievements)
-    // We'll iterate through IDs 1-100 to find custom achievements
-    for (int i = 1; i <= 100; ++i) {
-        auto* def = achieve->getDefinitionById(i);
-        if (def && def->category == "custom") {
-            // Check if this key is not already in the list
-            bool found = false;
-            for (const auto& key : achievementKeys) {
-                if (key == def->unlock_condition) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                achievementKeys.push_back(def->unlock_condition);
-            }
-        }
+    // Get all achievement definitions and collect their keys
+    std::vector<std::string> achievementKeys;
+    const auto& definitions = achieve->getAllDefinitions();
+    for (const auto& def : definitions) {
+        achievementKeys.push_back(def.unlock_condition);
     }
     
     stringstream ss;

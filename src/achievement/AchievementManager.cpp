@@ -574,6 +574,10 @@ const Achievement* AchievementManager::getDefinitionById(int id) const {
     return nullptr;
 }
 
+const std::vector<Achievement>& AchievementManager::getAllDefinitions() const {
+    return achievementDefinitions;
+}
+
 bool AchievementManager::updateAchievementDefinition(int id,
                                                      const std::string& name,
                                                      const std::string& description,
