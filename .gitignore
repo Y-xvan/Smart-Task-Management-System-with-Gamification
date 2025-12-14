@@ -7,6 +7,11 @@ bin/
 *.db-shm
 *.db-wal
 
+# Achievement data files (user-specific, regenerated from code)
+data/achievement_definitions.csv
+data/user_achievements_*.csv
+data/achievement_version.txt
+
 # macOS
 .DS_Store
 

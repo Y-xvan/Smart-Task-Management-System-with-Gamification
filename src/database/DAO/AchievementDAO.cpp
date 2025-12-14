@@ -12,6 +12,7 @@ using namespace std;
 
 AchievementDAO::AchievementDAO() : dataFilePath("./data/") {
     std::filesystem::create_directories(dataFilePath);
+    resetAllDataIfVersionChanged();
     initializeDefaultAchievements();
 }
 
@@ -21,6 +22,7 @@ AchievementDAO::AchievementDAO(const std::string& basePath) : dataFilePath(baseP
     }
 
     std::filesystem::create_directories(dataFilePath);
+    resetAllDataIfVersionChanged();
     initializeDefaultAchievements();
 }
 
@@ -486,4 +488,147 @@ std::string AchievementDAO::getCurrentTimestamp() {
 
 int AchievementDAO::generateAchievementId() {
     return nextAchievementId++;
+}
+
+std::string AchievementDAO::getVersionFilePath() const {
+    return dataFilePath + "achievement_version.txt";
+}
+
+std::string AchievementDAO::computeDefinitionVersionHash() const {
+    // Create a deterministic hash based on the default achievement definitions.
+    // This hash will change whenever the code-defined achievements change.
+    // We use a simple string concatenation and hash approach.
+    
+    // Build a canonical string representation of all default achievements
+    std::ostringstream oss;
+    
+    // These are the same default achievements defined in initializeDefaultAchievements()
+    // We compute the hash based on: name, description, icon, unlock_condition, reward_xp, category, target_value
+    
+    // Task achievements
+    oss << "task_1:First Task:Complete your first task:🎯:100:task:1|";
+    oss << "task_5:Task Beginner:Complete 5 tasks:📝:150:task:5|";
+    oss << "task_10:Task Learner:Complete 10 tasks:📋:200:task:10|";
+    oss << "task_25:Task Achiever:Complete 25 tasks:⭐:300:task:25|";
+    oss << "task_50:Task Expert:Complete 50 tasks:🌟:500:task:50|";
+    oss << "task_100:Task Master:Complete 100 tasks:💫:800:task:100|";
+    oss << "task_200:Task Legend:Complete 200 tasks:👑:1500:task:200|";
+    
+    // Project achievements
+    oss << "project_1:First Project:Complete your first project:📁:150:special:1|";
+    oss << "project_5:Project Starter:Complete 5 projects:📂:250:special:5|";
+    oss << "project_10:Project Builder:Complete 10 projects:🏗️:400:special:10|";
+    oss << "project_25:Project Manager:Complete 25 projects:📊:600:special:25|";
+    oss << "project_50:Project Director:Complete 50 projects:🎯:1000:special:50|";
+    oss << "project_100:Project Executive:Complete 100 projects:🏆:1500:special:100|";
+    oss << "project_200:Project Titan:Complete 200 projects:👑:2500:special:200|";
+    
+    // Streak achievements
+    oss << "streak_1:First Day:Complete tasks for 1 day:📅:50:streak:1|";
+    oss << "streak_5:Getting Started:Maintain a 5-day streak:🔥:150:streak:5|";
+    oss << "streak_10:Consistency:Maintain a 10-day streak:🔥:300:streak:10|";
+    oss << "streak_25:Habit Forming:Maintain a 25-day streak:💪:500:streak:25|";
+    oss << "streak_50:Dedicated:Maintain a 50-day streak:⚡:800:streak:50|";
+    oss << "streak_100:Unstoppable:Maintain a 100-day streak:🌟:1500:streak:100|";
+    oss << "streak_200:Legendary Streak:Maintain a 200-day streak:👑:3000:streak:200|";
+    
+    // Pomodoro achievements
+    oss << "pomodoro_1:First Pomodoro:Complete your first Pomodoro session:🍅:50:time:1|";
+    oss << "pomodoro_5:Pomodoro Beginner:Complete 5 Pomodoro sessions:🍅:100:time:5|";
+    oss << "pomodoro_10:Pomodoro Learner:Complete 10 Pomodoro sessions:🍅:200:time:10|";
+    oss << "pomodoro_25:Pomodoro Practitioner:Complete 25 Pomodoro sessions:⏱️:350:time:25|";
+    oss << "pomodoro_50:Pomodoro Expert:Complete 50 Pomodoro sessions:⏰:600:time:50|";
+    oss << "pomodoro_100:Pomodoro Master:Complete 100 Pomodoro sessions:🎯:1000:time:100|";
+    oss << "pomodoro_200:Pomodoro Legend:Complete 200 Pomodoro sessions:👑:2000:time:200|";
+    
+    std::string content = oss.str();
+    
+    // Simple hash function (djb2)
+    unsigned long hash = 5381;
+    for (char c : content) {
+        hash = ((hash << 5) + hash) + static_cast<unsigned char>(c);
+    }
+    
+    std::ostringstream hashStr;
+    hashStr << std::hex << hash;
+    return hashStr.str();
+}
+
+std::string AchievementDAO::loadStoredVersionHash() const {
+    std::ifstream file(getVersionFilePath());
+    if (!file.is_open()) {
+        return "";  // No version file exists
+    }
+    
+    std::string storedHash;
+    std::getline(file, storedHash);
+    file.close();
+    return storedHash;
+}
+
+bool AchievementDAO::saveVersionHash(const std::string& hash) {
+    std::ofstream file(getVersionFilePath(), std::ios::trunc);
+    if (!file.is_open()) {
+        return false;
+    }
+    file << hash;
+    file.close();
+    return true;
+}
+
+bool AchievementDAO::isVersionChanged() const {
+    std::string currentHash = computeDefinitionVersionHash();
+    std::string storedHash = loadStoredVersionHash();
+    
+    // If no stored hash, this is a fresh install - not a version change
+    if (storedHash.empty()) {
+        return false;
+    }
+    
+    return currentHash != storedHash;
+}
+
+void AchievementDAO::resetAllDataIfVersionChanged() {
+    if (!isVersionChanged()) {
+        // Version is the same, just update the hash file if needed
+        std::string currentHash = computeDefinitionVersionHash();
+        std::string storedHash = loadStoredVersionHash();
+        if (storedHash.empty()) {
+            // First run, save the current version hash
+            saveVersionHash(currentHash);
+        }
+        return;
+    }
+    
+    std::cout << "检测到成就系统版本变化，正在重置成就数据...\n";
+    
+    // Delete old data files
+    std::string defPath = getDefinitionFilePath();
+    
+    // Remove achievement definitions file
+    std::filesystem::remove(defPath);
+    
+    // Remove all user achievement files (user_achievements_*.csv)
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator(dataFilePath)) {
+            std::string filename = entry.path().filename().string();
+            if (filename.find("user_achievements_") == 0 && 
+                filename.rfind(".csv") == filename.size() - 4) {
+                std::filesystem::remove(entry.path());
+            }
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "清理用户成就文件时出错: " << e.what() << "\n";
+    }
+    
+    // Clear in-memory data
+    achievementDefinitions.clear();
+    userAchievements.clear();
+    nextAchievementId = 1;
+    
+    // Save the new version hash
+    std::string currentHash = computeDefinitionVersionHash();
+    saveVersionHash(currentHash);
+    
+    std::cout << "成就数据已重置为新版本\n";
 }
