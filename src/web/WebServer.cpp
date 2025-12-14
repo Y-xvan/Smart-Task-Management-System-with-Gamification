@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <cctype>
 #include "HeatmapVisualizer/HeatmapVisualizer.h"
 #include <filesystem>
 #include <unordered_map>
@@ -397,6 +398,43 @@ std::string WebServer::handleRequest(const std::string& method,
         if (path == "/api/achievements" && method == "GET") {
             return jsonAchievements();
         }
+        if (path.rfind("/api/achievements/create", 0) == 0 && method == "POST") {
+            if (!q.count("name") || q.at("name").empty()) {
+                status = 400;
+                return errorJson("missing name");
+            }
+            int target = 1;
+            tryGetInt(q, "target", target);
+            int rewardXP = 100;
+            tryGetInt(q, "rewardXP", rewardXP);
+            
+            // Generate a unique unlock condition key based on name + timestamp
+            std::string baseName = q.at("name");
+            std::string sanitizedName;
+            for (char c : baseName) {
+                if (std::isalnum(c)) sanitizedName += std::tolower(c);
+                else if (c == ' ') sanitizedName += '_';
+            }
+            std::string unlockCondition = q.count("unlockCondition") ? q.at("unlockCondition") : 
+                "custom_" + sanitizedName + "_" + std::to_string(std::time(nullptr) % 100000);
+            std::string category = q.count("category") ? q.at("category") : "custom";
+            std::string icon = q.count("icon") ? q.at("icon") : "🏆";
+            
+            int id = achieve->createAchievementDefinition(
+                q.at("name"),
+                q.count("description") ? q.at("description") : "",
+                unlockCondition,
+                target,
+                rewardXP,
+                category,
+                icon
+            );
+            
+            if (id > 0) {
+                return okJson("created:" + std::to_string(id));
+            }
+            return errorJson("create failed");
+        }
         if (path.rfind("/api/achievements/update", 0) == 0 && method == "POST") {
             int id;
             if (!tryGetInt(q, "id", id)) { status = 400; return errorJson("missing or invalid id"); }
@@ -572,15 +610,12 @@ std::string WebServer::jsonAchievements() {
     // Ensure user achievements are loaded
     achieve->checkAllAchievements();
     
-    // Achievement keys are defined in AchievementDAO::initializeDefaultAchievements
-    // These are the core achievement types and are unlikely to change frequently.
-    // If new achievements are added, they should be added here as well.
-    const std::vector<std::string> achievementKeys = {
-        "first_task",
-        "seven_day_streak", 
-        "time_management_master",
-        "pomodoro_master"
-    };
+    // Get all achievement definitions and collect their keys
+    std::vector<std::string> achievementKeys;
+    const auto& definitions = achieve->getAllDefinitions();
+    for (const auto& def : definitions) {
+        achievementKeys.push_back(def.unlock_condition);
+    }
     
     stringstream ss;
     ss << "[";

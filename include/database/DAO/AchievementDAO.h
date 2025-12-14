@@ -38,11 +38,20 @@ public:
     int getTotalXP(int userId) const;
     std::vector<Achievement> getRecentlyUnlockedAchievements(int userId, int count = 5) const;
 
-    // 允许编辑成就定义（名称、描述、目标值）
+    // Update achievement definition (name, description, target value)
     bool updateAchievementDefinition(int id,
                                      const std::string& name,
                                      const std::string& description,
                                      int targetValue = -1);
+
+    // Create a new achievement definition
+    int createAchievementDefinition(const std::string& name,
+                                    const std::string& description,
+                                    const std::string& unlockCondition,
+                                    int targetValue,
+                                    int rewardXP = 100,
+                                    const std::string& category = "custom",
+                                    const std::string& icon = "🏆");
 
     void initializeDefaultAchievements();
     bool userAchievementFileExists(int userId) const;

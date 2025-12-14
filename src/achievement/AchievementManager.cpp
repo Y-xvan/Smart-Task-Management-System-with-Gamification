@@ -574,6 +574,10 @@ const Achievement* AchievementManager::getDefinitionById(int id) const {
     return nullptr;
 }
 
+const std::vector<Achievement>& AchievementManager::getAllDefinitions() const {
+    return achievementDefinitions;
+}
+
 bool AchievementManager::updateAchievementDefinition(int id,
                                                      const std::string& name,
                                                      const std::string& description,
@@ -586,4 +590,23 @@ bool AchievementManager::updateAchievementDefinition(int id,
         loadAchievementDefinitions();
     }
     return updated;
+}
+
+int AchievementManager::createAchievementDefinition(const std::string& name,
+                                                    const std::string& description,
+                                                    const std::string& unlockCondition,
+                                                    int targetValue,
+                                                    int rewardXP,
+                                                    const std::string& category,
+                                                    const std::string& icon) {
+    if (!achievementDAO) {
+        return -1;
+    }
+    int id = achievementDAO->createAchievementDefinition(name, description, unlockCondition, 
+                                                         targetValue, rewardXP, category, icon);
+    if (id > 0) {
+        loadAchievementDefinitions();
+        loadUserAchievements();
+    }
+    return id;
 }
